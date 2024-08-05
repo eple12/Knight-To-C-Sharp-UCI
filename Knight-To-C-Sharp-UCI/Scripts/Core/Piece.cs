@@ -19,6 +19,18 @@ public static class Piece
     // Masks
     static readonly int typeMask = 0b00111;
     static readonly int colorMask = 0b11000;
+
+
+    public static Dictionary<char, int> charToPiece = new Dictionary<char, int>()
+    {
+        {'P', White | Pawn}, {'N', White | Knight}, {'B', White | Bishop}, 
+        {'R', White | Rook}, {'Q', White | Queen}, {'K', White | King}, 
+
+        {'p', Black | Pawn}, {'n', Black | Knight}, {'b', Black | Bishop}, 
+        {'r', Black | Rook}, {'q', Black | Queen}, {'k', Black | King}
+    };
+
+    public static string bitboardIndexToChar = "PNBRQKpnbrqkWB ";
     
     public static bool IsColor(int piece, int color)
     {
@@ -54,5 +66,10 @@ public static class Piece
     {
         int type = GetType(piece);
         return type == Rook || type == Queen;
+    }
+
+    public static char PieceToChar(int piece)
+    {
+        return bitboardIndexToChar[GetBitboardIndex(piece)];
     }
 }

@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 
 public class Board
 {
@@ -30,7 +28,6 @@ public class Board
         Bit 3: Black Queenside
     */
     public byte castlingData;
-    
 
     public bool isWhiteKingsideCastle
     {
@@ -137,6 +134,43 @@ public class Board
         castlingData = 0;
         enpassantFile = 8;
         fiftyRuleHalfClock = 0;
+    }
+
+    public void PrintLargeBoard()
+    {
+        Console.WriteLine("###################################");
+        for (int rank = 7; rank >= 0; rank--)
+        {
+            Console.WriteLine("+---+---+---+---+---+---+---+---+");
+            for (int file = 0; file < 8; file++)
+            {
+                Console.Write("| ");
+                Console.Write(Piece.PieceToChar(position[8 * rank + file]));
+                Console.Write(" ");
+            }
+            Console.Write("| ");
+            Console.WriteLine(rank + 1);
+        }
+        Console.WriteLine("+---+---+---+---+---+---+---+---+");
+        Console.WriteLine("  a   b   c   d   e   f   g   h");
+        Console.WriteLine("###################################");
+    }
+
+    public void PrintSmallBoard()
+    {
+        Console.WriteLine("#################");
+        for (int rank = 7; rank >= 0; rank--)
+        {
+            for (int file = 0; file < 8; file++)
+            {
+                char c = Piece.PieceToChar(position[8 * rank + file]);
+                Console.Write(c == ' ' ? '~' : c);
+                Console.Write(' ');
+            }
+            Console.WriteLine(rank + 1);
+        }
+        Console.WriteLine("a b c d e f g h");
+        Console.WriteLine("#################");
     }
 
     public void AfterLoadingPosition()
@@ -586,6 +620,113 @@ public class Board
         }
     }
 
+    void PlaceSinglePiece(int piece, int square)
+    {
+        if (piece == Piece.None)
+        {
+            return;
+        }
 
+        position[square] = piece;
+
+        // Add square; (Piece Squares)
+        pieceSquares[Piece.GetBitboardIndex(piece)].AddPieceAtSquare(square);
+    }
+
+    public void LoadPositionFromFen(string fen)
+    {
+        Reset();
+
+        for (int i = 0; i < 12; i++)
+        {
+            if (pieceSquares[i] == null)
+            {
+                pieceSquares[i] = new PieceList();
+            }
+            pieceSquares[i].squares = new int[16]; // Resets piece squares to 0;
+            pieceSquares[i].count = 0;
+        }
+
+        string[] splitFen = fen.Split(' ');
+
+        string fenboard = splitFen[0];
+        int file = 0;
+        int rank = 7;
+
+        foreach(char character in fenboard)
+        {
+            if (character == '/')
+            {
+                file = 0;
+                rank--;
+            }
+            else
+            {
+                if (char.IsDigit(character))
+                {
+                    file += (int)char.GetNumericValue(character);
+                }
+                else
+                {
+                    PlaceSinglePiece(Piece.charToPiece[character], Square.FileRankToSquareIndex(file, rank));
+                    file++;
+                }
+            }
+        }
+
+        // Turn;
+        isWhiteTurn = splitFen[1] == "w";
+
+        // Castle;
+        string castleFen = splitFen[2];
+        isWhiteKingsideCastle = false;
+        isWhiteQueensideCastle = false;
+        isBlackKingsideCastle = false;
+        isBlackQueensideCastle = false;
+
+        if (castleFen == "-")
+        {
+            // No CASTLING!
+        }
+        else
+        {
+            if (castleFen.Contains('K'))
+            {
+                isWhiteKingsideCastle = true;
+            }
+            if (castleFen.Contains('Q'))
+            {
+                isWhiteQueensideCastle = true;
+            }
+            if (castleFen.Contains('k'))
+            {
+                isBlackKingsideCastle = true;
+            }
+            if (castleFen.Contains('q'))
+            {
+                isBlackQueensideCastle = true;
+            }
+        }
+    
+        // En passant square;
+        string enpassantFen = splitFen[3];
+        enpassantFile = 8; // Invalid Index;
+        if (enpassantFen == "-")
+        {
+
+        }
+        else
+        {
+            enpassantFile = Square.SquareNameToIndex(enpassantFen) % 8;
+        }
+
+        // Fifty-counter;
+        fiftyRuleHalfClock = splitFen.Length >= 5 && char.IsDigit(splitFen[4].ToCharArray()[0]) ? Convert.ToInt32(splitFen[4]) : 0;
+
+        currentZobristKey = Zobrist.GetZobristKey(this);
+        positionHistory[currentZobristKey] = 1;
+
+        AfterLoadingPosition();
+    }
 
 }
