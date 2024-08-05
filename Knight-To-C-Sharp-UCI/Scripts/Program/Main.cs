@@ -14,8 +14,21 @@ public static class MainProcess
 
     public static int Update()
     {
+        int cmdResult = RecieveCommands();
 
 
+        return cmdResult;
+    }
+
+    static int RecieveCommands()
+    {
+        string command = "";
+        command = Console.ReadLine();
+
+        if (command == "quit" || command == "stop")
+        {
+            return 1;
+        }
 
         return 0;
     }
