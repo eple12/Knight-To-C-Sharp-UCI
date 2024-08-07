@@ -218,6 +218,13 @@ public class Board
         PrintBoardAndMoves();
     }
 
+    public void MakeConsoleMove(Move move)
+    {
+        MakeMove(move);
+        currentLegalMoves = MoveGen.GenerateMoves(this);
+        PrintBoardAndMoves();
+    }
+
     public void MakeMove(Move move)
     {
         if (move.moveValue == 0)

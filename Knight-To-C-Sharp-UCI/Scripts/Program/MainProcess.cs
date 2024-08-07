@@ -13,15 +13,9 @@ public static class MainProcess
     public static int Update()
     {
         int cmdResult = RecieveCommands();
-
+        Command.Update();
 
         return cmdResult;
-    }
-
-    public static void Test()
-    {
-        engine.StartSearch(6);
-        Move.PrintMove(engine.GetMove());
     }
 
     static int RecieveCommands()

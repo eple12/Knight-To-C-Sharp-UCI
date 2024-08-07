@@ -1,5 +1,19 @@
 public static class Command
 {
+    public static bool autoWhiteEngine = false;
+    public static bool autoBlackEngine = false;
+
+    public static void Update()
+    {
+        if (autoWhiteEngine && MainProcess.board.isWhiteTurn)
+        {
+            MakeEngineMove();
+        }
+        if (autoBlackEngine && !MainProcess.board.isWhiteTurn)
+        {
+            MakeEngineMove();
+        }
+    }
 
     public static int RecieveCommand(string command)
     {
@@ -59,6 +73,41 @@ public static class Command
         return 0;
     }
 
+    public static void Test()
+    {
+        MainProcess.engine.StartSearch(6);
+        Move.PrintMove(MainProcess.engine.GetMove());
+    }
+    public static void ToggleAutoWhite()
+    {
+        if (autoWhiteEngine)
+        {
+            Console.WriteLine("Toggled off");
+        }
+        else
+        {
+            Console.WriteLine("Toggled on");
+        }
+        autoWhiteEngine = !autoWhiteEngine;
+    }
+    public static void ToggleAutoBlack()
+    {
+        if (autoBlackEngine)
+        {
+            Console.WriteLine("Toggled off");
+        }
+        else
+        {
+            Console.WriteLine("Toggled on");
+        }
+        autoBlackEngine = !autoBlackEngine;
+    }
+    public static void MakeEngineMove()
+    {
+        MainProcess.engine.StartSearch(EngineSettings.searchDepth);
+        MainProcess.board.MakeConsoleMove(MainProcess.engine.GetMove());
+    }
+
     public static int RecieveCustomCommand(string command)
     {
         string[] commandList = command.Split(' ');
@@ -74,9 +123,23 @@ public static class Command
                 MainProcess.board.MakeConsoleMove(commandList[1]);
                 break;
             case "test":
-                MainProcess.Test();
+                Test();
                 break;
-
+            case "autoengine":
+                if (commandList.Length <= 1)
+                {
+                    Console.WriteLine("Auto Engine // White: " + autoWhiteEngine + " Black: " + autoBlackEngine);
+                    break;
+                }
+                if (commandList[1] == "white")
+                {
+                    ToggleAutoWhite();
+                }
+                else if (commandList[1] == "black")
+                {
+                    ToggleAutoBlack();
+                }
+                break;
 
 
             default:
