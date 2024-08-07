@@ -14,10 +14,12 @@ public static class MoveOrder
     static readonly int captureValueMultiplier = 10;
     static readonly int squareAttackedByPawnPenalty = 350;
 
-    public static void Initialize()
+    public static void Initialize(Engine engine)
     {
         // board = Main.mainBoard;
         // tt = Main.engine.tt;
+        board = engine.board;
+        tt = engine.tt;
 
         moveScores = new List<int>();
     }

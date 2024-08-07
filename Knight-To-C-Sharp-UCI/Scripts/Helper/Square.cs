@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-
 public static class Square
 {
     private static Dictionary<char, int> fileToIndexTable = new Dictionary<char, int>()

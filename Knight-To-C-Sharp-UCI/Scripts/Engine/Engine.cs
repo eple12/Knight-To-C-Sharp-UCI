@@ -1,9 +1,7 @@
-using System;
-using System.Collections.Generic;
 
 public class Engine
 {
-    Board board;
+    public Board board;
     public TranspositionTable tt;
 
     readonly int ttSize = EngineSettings.ttSize;
@@ -12,10 +10,9 @@ public class Engine
     bool isSearching;
     bool cancellationRequested;
 
-
-    public Engine()
+    public Engine(Board _board)
     {
-        // board = Main.mainBoard;
+        board = _board;
         tt = new TranspositionTable(board, ttSize);
         isSearching = false;
         cancellationRequested = false;
@@ -25,9 +22,6 @@ public class Engine
     {
         isSearching = true;
         cancellationRequested = false;
-
-        // tt.Clear();
-        // bestMove = MoveGen.GenerateMoves(board)[0];
 
         // Return Null Move
         if (maxDepth <= 0)
@@ -104,8 +98,7 @@ public class Engine
 
         if (depth == 0)
         {
-            return Evaluation.Evaluate(board);
-            // return QuiescenceSearch(alpha, beta);
+            return EngineSettings.useQSearch ? QuiescenceSearch(alpha, beta) : Evaluation.Evaluate(board);
         }
 
         List<Move> legalMoves = MoveGen.GenerateMoves(board);

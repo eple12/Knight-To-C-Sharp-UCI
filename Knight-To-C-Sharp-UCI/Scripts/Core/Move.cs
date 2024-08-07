@@ -41,7 +41,11 @@ public struct Move
             moveValue = (ushort) ((moveValue & (startSquareMask | targetSquareMask)) | (value << 12));
         }
     }
-
+    
+    public static bool IsSame(Move m1, Move m2)
+    {
+        return m1.moveValue == m2.moveValue;
+    }
     public static void PrintMoveList(List<Move> moves)
     {
         string s = "";
@@ -172,4 +176,21 @@ public readonly struct MoveFlag
         return None;
     }
 
+    public static int GetPromotionFlag(char c)
+    {
+        switch (c)
+        {
+            case 'q':
+                return PromoteToQueen;
+            case 'r':
+                return PromoteToRook;
+            case 'b':
+                return PromoteToBishop;
+            case 'n':
+                return PromoteToKnight;
+            default:
+                break;
+        }
+        return None;
+    }
 }

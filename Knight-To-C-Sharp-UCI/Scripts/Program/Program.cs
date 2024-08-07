@@ -16,7 +16,7 @@ public class Program
             int updateResult = MainProcess.Update();
             if (updateResult != 0)
             {
-                Console.WriteLine("===== Process Ended with Code " + updateResult + " =====");
+                Console.WriteLine("\n===== Process Ended with Code " + updateResult + " =====\n");
                 break;
             }
         }

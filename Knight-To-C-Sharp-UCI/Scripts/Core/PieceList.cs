@@ -1,6 +1,3 @@
-
-using System;
-
 // Always use FOR statement
 public class PieceList
 {

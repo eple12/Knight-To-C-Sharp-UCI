@@ -193,11 +193,46 @@ public class Board
         positionHistory.Clear();
     }
 
+    public void MakeConsoleMove(string move)
+    {
+        if (move.Length < 4)
+        {
+            return;
+        }
+
+        int startSquare = Square.SquareNameToIndex(move.Substring(0, 2));
+        int targetSquare = Square.SquareNameToIndex(move.Substring(2, 2));
+
+        Move m = Move.NullMove;
+        foreach (var item in currentLegalMoves)
+        {
+            if (item.startSquare == startSquare && item.targetSquare == targetSquare)
+            {
+                m = item;
+                break;
+            }
+        }
+
+        if (MoveFlag.IsPromotion(m.flag))
+        {
+            if (move.Length < 5)
+            {
+                return;
+            }
+            m.flag = MoveFlag.GetPromotionFlag(move[4]);
+        }
+
+        MakeMove(m);
+        currentLegalMoves = MoveGen.GenerateMoves(this);
+        PrintBoardAndMoves();
+    }
+
     public void MakeMove(Move move)
     {
         if (move.moveValue == 0)
         {
             Console.WriteLine("NULL MOVE => Board.MakeMove()");
+            return;
         }
 
         int startSquare = move.startSquare;
@@ -729,4 +764,9 @@ public class Board
         AfterLoadingPosition();
     }
 
+    public void PrintBoardAndMoves()
+    {
+        PrintSmallBoard();
+        Move.PrintMoveList(currentLegalMoves);
+    }
 }
