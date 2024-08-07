@@ -5,7 +5,6 @@ public class Board
     public bool isWhiteTurn;
 
     public static readonly string initialFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    public string loadFen;
 
     public List<Move> currentLegalMoves;
     public ulong currentZobristKey;
@@ -118,14 +117,6 @@ public class Board
 
         currentLegalMoves = new List<Move>();
         currentZobristKey = 0;
-
-        // EQUAL POSITION
-        // loadFen = "r2q1rk1/pppb1ppp/1bn5/1B1pP3/3Pn3/5N1P/PP3PP1/RNBQ1RK1 w - - 1 11";
-
-        loadFen = initialFen;
-
-        // Puzzle
-        // loadFen = "2k5/8/8/5p2/8/4N3/3K4/8 w - - 0 1";
 
         pieceSquares = new PieceList[12];
 
@@ -766,7 +757,25 @@ public class Board
 
     public void PrintBoardAndMoves()
     {
-        PrintSmallBoard();
+        if (ProgramSettings.useLargeBoard)
+        {
+            PrintLargeBoard();
+        }
+        else
+        {
+            PrintSmallBoard();
+        }
+        PrintCastlingData();
         Move.PrintMoveList(currentLegalMoves);
     }
+
+    public void PrintCastlingData()
+    {
+        Console.WriteLine("Castling // " + (isWhiteKingsideCastle ? "WK " : " ") + (isWhiteQueensideCastle ? "WQ " : " ") + (isBlackKingsideCastle ? "BK " : " ") + (isBlackQueensideCastle ? "BQ " : ""));
+    }
+
+
+
+
+
 }

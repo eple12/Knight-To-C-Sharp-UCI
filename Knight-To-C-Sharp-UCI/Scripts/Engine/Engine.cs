@@ -1,4 +1,7 @@
 
+using System.Net.Http.Headers;
+using System.Runtime.InteropServices;
+
 public class Engine
 {
     public Board board;
@@ -61,6 +64,7 @@ public class Engine
 
     int Search(int depth, int alpha, int beta, int plyFromRoot)
     {
+        // Console.WriteLine("Search Head PlyFromRoot " + plyFromRoot);
         if (cancellationRequested)
         {
             return 0;
@@ -120,6 +124,11 @@ public class Engine
 
         for (int i = 0; i < legalMoves.Count; i++)
         {
+            // board.PrintSmallBoard();
+            // Console.WriteLine("Search Body PlyFromRoot " + plyFromRoot + " Move " + Move.MoveString(legalMoves[i]));
+            // Move.PrintMoveList(legalMoves);
+            // board.PrintCastlingData();
+
             board.MakeMove(legalMoves[i]);
 
             int eval = -Search(depth - 1, -beta, -alpha, plyFromRoot + 1);

@@ -67,6 +67,10 @@ public static class Command
         switch (prefix)
         {
             case "move":
+                if (commandList.Length <= 1)
+                {
+                    break;
+                }
                 MainProcess.board.MakeConsoleMove(commandList[1]);
                 break;
             case "test":

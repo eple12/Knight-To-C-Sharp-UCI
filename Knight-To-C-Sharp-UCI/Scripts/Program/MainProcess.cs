@@ -20,7 +20,7 @@ public static class MainProcess
 
     public static void Test()
     {
-        engine.StartSearch(4);
+        engine.StartSearch(6);
         Move.PrintMove(engine.GetMove());
     }
 

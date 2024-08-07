@@ -73,7 +73,12 @@ public struct Move
 
     public static void PrintMove(Move move)
     {
-        Console.WriteLine($"{Square.SquareIndexToName(move.startSquare)}{Square.SquareIndexToName(move.targetSquare)}");
+        Console.WriteLine(MoveString(move));
+    }
+
+    public static string MoveString(Move move)
+    {
+        return $"{Square.SquareIndexToName(move.startSquare)}{Square.SquareIndexToName(move.targetSquare)}";
     }
 
     public Move(int startSquare, int targetSquare)
