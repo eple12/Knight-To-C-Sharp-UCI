@@ -1,6 +1,8 @@
 
 public class Board
 {
+    public bool Loaded;
+
     public int[] position;
     public bool isWhiteTurn;
 
@@ -112,6 +114,8 @@ public class Board
 
     public Board()
     {
+        Loaded = false;
+
         position = new int[64];
         isWhiteTurn = true;
 
@@ -167,10 +171,13 @@ public class Board
     public void AfterLoadingPosition()
     {
         currentLegalMoves = MoveGen.GenerateMoves(this);
+        Loaded = true;
     }
 
     public void Reset()
     {
+        Loaded = false;
+
         position = new int[64];
         pieceSquares = new PieceList[12];
         gameStateStack = new Stack<uint>();
@@ -215,14 +222,14 @@ public class Board
 
         MakeMove(m);
         currentLegalMoves = MoveGen.GenerateMoves(this);
-        PrintBoardAndMoves();
+        // PrintBoardAndMoves();
     }
 
     public void MakeConsoleMove(Move move)
     {
         MakeMove(move);
         currentLegalMoves = MoveGen.GenerateMoves(this);
-        PrintBoardAndMoves();
+        // PrintBoardAndMoves();
     }
 
     public void MakeMove(Move move)

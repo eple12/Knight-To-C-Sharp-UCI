@@ -13,7 +13,7 @@ public class Program
 
         while (true)
         {
-            int updateResult = MainProcess.Update();
+            int updateResult = MainProcess.CommandUpdate();
             if (updateResult != 0)
             {
                 Console.WriteLine("\n===== Process Ended with Code " + updateResult + " =====\n");

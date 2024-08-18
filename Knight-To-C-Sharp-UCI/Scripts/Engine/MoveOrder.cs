@@ -1,30 +1,26 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.Linq;
-
-public static class MoveOrder
+public class MoveOrder
 {
-    static Board board;
-    static TranspositionTable tt;
+    Board board;
+    TranspositionTable tt;
+    Evaluation evaluation;
 
-    static List<Move> moves;
-    static List<int> moveScores;
+    List<Move> moves;
+    List<int> moveScores;
 
-    static readonly int captureValueMultiplier = 10;
-    static readonly int squareAttackedByPawnPenalty = 350;
+    readonly int captureValueMultiplier = 10;
+    readonly int squareAttackedByPawnPenalty = 350;
 
-    public static void Initialize(Engine engine)
+    public MoveOrder(Engine engine)
     {
-        // board = Main.mainBoard;
-        // tt = Main.engine.tt;
-        board = engine.board;
-        tt = engine.tt;
+        board = engine.GetBoard();
+        tt = engine.GetTT();
+        evaluation = engine.GetEvaluation();
 
+        moves = new List<Move>();
         moveScores = new List<int>();
     }
 
-    public static List<Move> GetOrderedList(List<Move> legalMoves)
+    public List<Move> GetOrderedList(List<Move> legalMoves)
     {
         moves = legalMoves;
 
@@ -37,7 +33,7 @@ public static class MoveOrder
         return moves;
     }
 
-    static void GetScores()
+    void GetScores()
     {
         Move hashMove = tt.GetStoredMove();
 
@@ -51,7 +47,7 @@ public static class MoveOrder
             // Capture
             if (capturedPiece != Piece.None)
             {
-                score += captureValueMultiplier * Evaluation.GetAbsPieceValue(capturedPiece) - Evaluation.GetAbsPieceValue(movingPiece);
+                score += captureValueMultiplier * evaluation.GetAbsPieceValue(capturedPiece) - evaluation.GetAbsPieceValue(movingPiece);
             }
             
             if (Piece.GetType(movingPiece) == Piece.Pawn)
@@ -72,12 +68,12 @@ public static class MoveOrder
 
             if (Bitboard.Contains(MoveGen.AttackMapNoPawn(), move.targetSquare))
             {
-                score -= Evaluation.GetAbsPieceValue(board.position[move.startSquare]) / 2;
+                score -= evaluation.GetAbsPieceValue(board.position[move.startSquare]) / 2;
             }
 
             if (Bitboard.Contains(MoveGen.AttackMapNoPawn(), move.startSquare))
             {
-                score += Evaluation.GetAbsPieceValue(board.position[move.startSquare]);
+                score += evaluation.GetAbsPieceValue(board.position[move.startSquare]);
             }
 
             if (move.moveValue == hashMove.moveValue)
@@ -89,7 +85,7 @@ public static class MoveOrder
         }
     }
 
-    static void SortMoves()
+    void SortMoves()
     {
         // Bubble Sort
         for (int i = 0; i < moves.Count - 1; i++)

@@ -23,12 +23,16 @@ public class TranspositionTable
 
     public readonly ulong size;
     public bool enabled = true;
+    Engine engine;
     Board board;
+    Evaluation evaluation;
 
-    public TranspositionTable (Board board, int size)
+    public TranspositionTable (Engine _engine)
     {
-        this.board = board;
-        this.size = (ulong) size;
+        engine = _engine;
+        board = engine.GetBoard();
+        size = (ulong) engine.GetSettings().ttSize;
+        evaluation = engine.GetEvaluation();
 
         entries = new Entry[size];
     }
@@ -36,10 +40,6 @@ public class TranspositionTable
     public void Clear ()
     {
         entries = new Entry[size];
-        // for (int i = 0; i < entries.Length; i++)
-        // {
-        //     entries[i] = new Entry ();
-        // }
     }
 
     public ulong Index
@@ -106,7 +106,7 @@ public class TranspositionTable
     // Position-Based Mate Eval
     int CorrectMateScoreForStorage (int score, int numPlySearched)
     {
-        if (Evaluation.IsMateScore (score))
+        if (evaluation.IsMateScore (score))
         {
             int sign = System.Math.Sign (score);
             return (score * sign + numPlySearched) * sign;
@@ -117,7 +117,7 @@ public class TranspositionTable
     // Root-Based Mate Eval
     int CorrectRetrievedMateScore (int score, int numPlySearched)
     {
-        if (Evaluation.IsMateScore (score))
+        if (evaluation.IsMateScore (score))
         {
             int sign = System.Math.Sign (score);
             return (score * sign - numPlySearched) * sign;

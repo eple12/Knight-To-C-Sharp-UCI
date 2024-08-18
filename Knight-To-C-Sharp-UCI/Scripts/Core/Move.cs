@@ -53,7 +53,7 @@ public struct Move
         foreach (var item in moves)
         {
             // PrintMove(item);
-            s += $"{Square.SquareIndexToName(item.startSquare)}{Square.SquareIndexToName(item.targetSquare)} ";
+            s += MoveString(item) + ' ';
         }
         
         Console.WriteLine(s);
@@ -65,7 +65,7 @@ public struct Move
         foreach (var item in moves)
         {
             // PrintMove(item);
-            s += $"{Square.SquareIndexToName(item.startSquare)}{Square.SquareIndexToName(item.targetSquare)} ";
+            s += MoveString(item) + ' ';
         }
         
         Console.WriteLine(s);
@@ -78,7 +78,33 @@ public struct Move
 
     public static string MoveString(Move move)
     {
-        return $"{Square.SquareIndexToName(move.startSquare)}{Square.SquareIndexToName(move.targetSquare)}";
+        if (IsSame(move, NullMove))
+        {
+            return "(none)";
+        }
+
+        char promotion = ' ';
+        if (MoveFlag.IsPromotion(move.flag))
+        {
+            switch(move.flag)
+            {
+                case MoveFlag.PromoteToQueen:
+                    promotion = 'q';
+                    break;
+                case MoveFlag.PromoteToRook:
+                    promotion = 'r';
+                    break;
+                case MoveFlag.PromoteToBishop:
+                    promotion = 'b';
+                    break;
+                case MoveFlag.PromoteToKnight:
+                    promotion = 'n';
+                    break;
+                default:
+                    break;
+            }
+        }
+        return $"{Square.SquareIndexToName(move.startSquare)}{Square.SquareIndexToName(move.targetSquare)}" + promotion;
     }
 
     public Move(int startSquare, int targetSquare)

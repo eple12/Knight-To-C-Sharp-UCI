@@ -1,40 +1,57 @@
 
-using System.Net.Http.Headers;
-using System.Runtime.InteropServices;
-
 public class Engine
 {
-    public Board board;
-    public TranspositionTable tt;
+    Board board;
+    TranspositionTable tt;
+    MoveOrder moveOrder;
+    EngineSettings settings;
+    Evaluation evaluation;
 
-    readonly int ttSize = EngineSettings.ttSize;
-
-    public Move bestMove;
+    Move bestMove;
     bool isSearching;
     bool cancellationRequested;
 
-    public Engine(Board _board)
+    public event Action OnSearchComplete;
+
+    public Engine(Board _board, EngineSettings _settings)
     {
         board = _board;
-        tt = new TranspositionTable(board, ttSize);
+        settings = _settings;
+
+        evaluation = new Evaluation(this);
+        tt = new TranspositionTable(this);
+
+        moveOrder = new MoveOrder(this);
+        
         isSearching = false;
         cancellationRequested = false;
+
+        OnSearchComplete = () => {};
     }
 
-    public void StartSearch(int maxDepth)
+    public void StartSearch(int maxDepth, Action? onSearchComplete = null)
     {
+        List<Move> preSearchMoves = MoveGen.GenerateMoves(board);
+        bestMove = preSearchMoves.Count == 0 ? Move.NullMove : preSearchMoves[0];
+
         isSearching = true;
         cancellationRequested = false;
+
+        if (onSearchComplete != null)
+        {
+            OnSearchComplete += onSearchComplete;
+        }
 
         // Return Null Move
         if (maxDepth <= 0)
         {
-            
+            EndSearch();
+            return;
         }
-        else
+
+        if (settings.useIterativeDeepening)
         {
-            if (EngineSettings.useIterativeDeepening)
-            {
+            Task.Factory.StartNew(() => {
                 // Iterative Deepening
                 for (int depth = 1; depth <= maxDepth; depth++)
                 {
@@ -45,26 +62,27 @@ public class Engine
                         break;
                     }
 
-                    if (Evaluation.IsMateScore(evalThisIteration))
+                    if (evaluation.IsMateScore(evalThisIteration))
                     {
                         break;
                     }
                 }
-            }
-            else
-            {
-                Search(maxDepth, Infinity.negativeInfinity, Infinity.positiveInfinity, 0);
-            }
+
+                EndSearch();
+            }, TaskCreationOptions.LongRunning);
         }
-        
-        // EndSearch();
-        isSearching = false;
-        cancellationRequested = true;
+        else
+        {
+            Task.Factory.StartNew(() => {
+                Search(maxDepth, Infinity.negativeInfinity, Infinity.positiveInfinity, 0);
+
+                EndSearch();
+            }, TaskCreationOptions.LongRunning);
+        }
     }
 
     int Search(int depth, int alpha, int beta, int plyFromRoot)
     {
-        // Console.WriteLine("Search Head PlyFromRoot " + plyFromRoot);
         if (cancellationRequested)
         {
             return 0;
@@ -102,7 +120,7 @@ public class Engine
 
         if (depth == 0)
         {
-            return EngineSettings.useQSearch ? QuiescenceSearch(alpha, beta) : Evaluation.Evaluate(board);
+            return settings.useQSearch ? QuiescenceSearch(alpha, beta) : evaluation.Evaluate(board);
         }
 
         List<Move> legalMoves = MoveGen.GenerateMoves(board);
@@ -118,7 +136,7 @@ public class Engine
             return 0;
         }
 
-        MoveOrder.GetOrderedList(legalMoves);
+        moveOrder.GetOrderedList(legalMoves);
 
         int evalType = TranspositionTable.UpperBound;
 
@@ -167,18 +185,7 @@ public class Engine
 
     int QuiescenceSearch(int alpha, int beta)
     {
-        // if (cancellationRequested)
-        // {
-        //     return alpha;
-        // }
-
-        // int ttVal = tt.LookupEvaluation (0, 0, alpha, beta);
-        // if (ttVal != TranspositionTable.lookupFailed)
-        // {
-        //     return ttVal;
-        // }
-
-        int standPat = Evaluation.Evaluate(board);
+        int standPat = evaluation.Evaluate(board);
 
         if (standPat >= beta)
         {
@@ -190,7 +197,7 @@ public class Engine
         }
 
         List<Move> moves = MoveGen.GenerateMoves(board, true);
-        MoveOrder.GetOrderedList(moves);
+        moveOrder.GetOrderedList(moves);
 
         foreach (Move move in moves)
         {
@@ -199,11 +206,6 @@ public class Engine
             int eval = -QuiescenceSearch(-beta, -alpha);
 
             board.UnmakeMove(move);
-
-            // if (cancellationRequested)
-            // {
-            //     return alpha;
-            // }
 
             if (eval >= beta)
             {
@@ -218,30 +220,26 @@ public class Engine
         return alpha;
     }
 
+    void EndSearch()
+    {
+        isSearching = false;
+        cancellationRequested = false;
+        
+        OnSearchComplete?.Invoke();
+        OnSearchComplete = () => {};
+    }
+
+    public void Update()
+    {
+        if (!isSearching)
+        {
+            
+        }
+    }
+
     public Move GetMove()
     {
         return bestMove;
-    }
-
-    public void EndSearch()
-    {
-        isSearching = false;
-        cancellationRequested = true;
-    
-        // AfterThreadedSearch();
-        // EnginePlayer.OnSearchComplete();
-    }
-
-    public void TimeOut()
-    {
-        cancellationRequested = true;
-    }
-
-    public void BeforeThreadedSearch()
-    {
-        isSearching = true;
-        cancellationRequested = false;
-        bestMove = Move.NullMove;
     }
 
     public bool IsSearching()
@@ -249,8 +247,34 @@ public class Engine
         return isSearching;
     }
 
-    // void AfterThreadedSearch()
-    // {
-    //     ThreadingManager.EngineCancelled();
-    // }
+    public TranspositionTable GetTT()
+    {
+        return tt;
+    }
+
+    public Board GetBoard()
+    {
+        return board;
+    }
+    public EngineSettings GetSettings()
+    {
+        return settings;
+    }
+    public Evaluation GetEvaluation()
+    {
+        return evaluation;
+    }
+
+    public void CancelSearch()
+    {
+        cancellationRequested = true;
+    }
+
+
+
+
+
+
+
+
 }

@@ -1,15 +1,16 @@
 using System;
 
-public static class Evaluation
+public class Evaluation
 {
+    Engine engine;
+    Board board;
     public static int checkmateEval = 99999;
-    public static int maxDepth = EngineSettings.unlimitedMaxDepth;
+    int maxDepth;
 
+    
 
-    static Board board;
-    static int eval;
-
-    static int sign;
+    int eval;
+    int sign;
 
     public static readonly int pawnValue = 100;
     public static readonly int knightValue = 300;
@@ -27,7 +28,6 @@ public static class Evaluation
         5,  10,  10, -25, -25,  10,  10,   5,
         0,   0,   0,   0,   0,   0,   0,   0
     };
-
     static readonly int[] knightSquareTable = {
         -50,-40,-30,-30,-30,-30,-40,-50,
         -40,-20,  0,  0,  0,  0,-20,-40,
@@ -38,7 +38,6 @@ public static class Evaluation
         -40,-20,  0,  5,  5,  0,-20,-40,
         -50,-40,-30,-30,-30,-30,-40,-50,
     };
-
     static readonly int[] bishopSquareTable =  {
         -20,-10,-10,-10,-10,-10,-10,-20,
         -10,  0,  0,  0,  0,  0,  0,-10,
@@ -49,7 +48,6 @@ public static class Evaluation
         -10,  5,  0,  0,  0,  0,  5,-10,
         -20,-10,-10,-10,-10,-10,-10,-20,
     };
-
     static readonly int[] rookSquareTable =  {
         0,  0,  0,  0,  0,  0,  0,  0,
         5, 10, 10, 10, 10, 10, 10,  5,
@@ -60,7 +58,6 @@ public static class Evaluation
         -5,  0,  0,  0,  0,  0,  0, -5,
         -5,-10,  0,  5,  5,  5,-10, -5
     };
-
     static readonly int[] queenSquareTable =  {
         -20,-10,-10, -5, -5,-10,-10,-20,
         -10,  0,  0,  0,  0,  0,  0,-10,
@@ -71,7 +68,6 @@ public static class Evaluation
         -10,  0,  5,  0,  0,  0,  0,-10,
         -20,-10,-10, -5, -5,-10,-10,-20
     };
-
     static readonly int[] kingMidSquareTable = 
     {
         -80, -70, -70, -70, -70, -70, -70, -80, 
@@ -83,8 +79,7 @@ public static class Evaluation
         20,  20,  -5,  -5,  -5,  -5,  20,  20, 
         20,  30,  10,  -5,   0,  -5,  30,  20
     };
-
-    public static readonly int[] kingEndSquareTable = 
+    static readonly int[] kingEndSquareTable = 
     {
         -20, -10, -10, -10, -10, -10, -10, -20,
         -5,   0,   5,   5,   5,   5,   0,  -5,
@@ -100,7 +95,15 @@ public static class Evaluation
 
     static readonly int[] materialValue = {pawnValue, knightValue, bishopValue, rookValue, queenValue};
 
-    public static int Evaluate(Board _board)
+    public Evaluation(Engine _engine)
+    {
+        engine = _engine;
+        board = engine.GetBoard();
+
+        maxDepth = engine.GetSettings().unlimitedMaxDepth;
+    }
+
+    public int Evaluate(Board _board)
     {
         board = _board;
         eval = 0;
@@ -110,12 +113,10 @@ public static class Evaluation
 
         PieceSquareTable();
 
-        CastleRight();
-
         return eval;
     }
 
-    static void CountMaterial()
+    void CountMaterial()
     {
         for (int i = 0; i < 5; i++)
         {
@@ -123,12 +124,8 @@ public static class Evaluation
         }
     }
 
-    static void CastleRight()
+    void CastleRight()
     {
-        // King is in the middle of the board (d, e file)
-        // and king lost its right to castle
-        // Then it's probably bad.
-
         if (!board.isWhiteKingsideCastle && !board.isWhiteQueensideCastle && 
         !(((board.pieceSquares[5].squares[0] % 8) < 3) || ((board.pieceSquares[5].squares[0] % 8) > 4)))
         {
@@ -141,7 +138,7 @@ public static class Evaluation
         }
     }
 
-    static void PieceSquareTable()
+    void PieceSquareTable()
     {
         for (int i = 0; i < 6; i++)
         {
@@ -156,12 +153,12 @@ public static class Evaluation
         }
     }
 
-    static int GetFlippedPieceSquareIndex(int square)
+    int GetFlippedPieceSquareIndex(int square)
     {
         return (square % 8) + (7 - square / 8) * 8;
     }
 
-    public static int GetAbsPieceValue(int piece)
+    public int GetAbsPieceValue(int piece)
     {
         int pieceType = Piece.GetType(piece);
 
@@ -193,7 +190,7 @@ public static class Evaluation
 
 
 
-    public static bool IsMateScore(int score)
+    public bool IsMateScore(int score)
     {
         if (Math.Abs(score) >= checkmateEval - maxDepth)
         {

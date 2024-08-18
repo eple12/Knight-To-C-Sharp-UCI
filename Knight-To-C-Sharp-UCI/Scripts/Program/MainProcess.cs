@@ -1,24 +1,21 @@
 public static class MainProcess
 {
-    public static Board board;
-    public static Engine engine;
+    public static Board board = new Board();
+    public static EngineController engine = new EngineController(board);
 
     public static void Start()
     {
         PreCalculate();
-
-        
     }
 
-    public static int Update()
+    public static int CommandUpdate()
     {
         int cmdResult = RecieveCommands();
-        Command.Update();
 
         return cmdResult;
     }
 
-    static int RecieveCommands()
+    public static int RecieveCommands()
     {
         string? command = Console.ReadLine();
 
@@ -34,11 +31,9 @@ public static class MainProcess
 
     static void PreCalculate()
     {
-        board = new Board();
-        engine = new Engine(board);
-
-        MoveOrder.Initialize(engine);
         Zobrist.GenerateZobristTable();
         PreComputedData.Initialize();
+        
+        board.LoadPositionFromFen(Board.initialFen);
     }
 }
