@@ -6,6 +6,7 @@ public class MoveOrder
 
     List<Move> moves;
     List<int> moveScores;
+    Move bestMoveLastIteration;
 
     readonly int captureValueMultiplier = 10;
     readonly int squareAttackedByPawnPenalty = 350;
@@ -20,8 +21,23 @@ public class MoveOrder
         moveScores = new List<int>();
     }
 
+    public List<Move> GetOrderedList(List<Move> legalMoves, Move lastIteration)
+    {
+        bestMoveLastIteration = lastIteration;
+        moves = legalMoves;
+
+        GetScores();
+
+        SortMoves();
+
+        moveScores.Clear();
+
+        return moves;
+    }
+
     public List<Move> GetOrderedList(List<Move> legalMoves)
     {
+        bestMoveLastIteration = Move.NullMove;
         moves = legalMoves;
 
         GetScores();
@@ -76,9 +92,14 @@ public class MoveOrder
                 score += evaluation.GetAbsPieceValue(board.position[move.startSquare]);
             }
 
-            if (move.moveValue == hashMove.moveValue)
+            if (Move.IsSame(move, hashMove))
             {
                 score += 100000000;
+            }
+            
+            if (Move.IsSame(move, bestMoveLastIteration))
+            {
+                score += 200000000;
             }
 
             moveScores.Add(score);

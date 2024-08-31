@@ -15,6 +15,11 @@ public static class Command
         switch (prefix)
         {
             case "quit":
+                if (MainProcess.engine.IsSearching())
+                {
+                    MainProcess.engine.CancelSearch();
+                }
+
                 return 1;
             case "uci":
                 Console.WriteLine("id name Knight-To-C-Sharp");
@@ -22,6 +27,12 @@ public static class Command
                 Console.WriteLine("uciok");
                 break;
             case "ucinewgame":
+                if (MainProcess.engine.IsSearching())
+                {
+                    MainProcess.engine.CancelSearch(() => RecieveCommand(command));
+                    break;
+                }
+
                 MainProcess.board.LoadPositionFromFen(Board.initialFen);
                 break;
             case "d":
@@ -51,6 +62,13 @@ public static class Command
                 {
                     break;
                 }
+
+                if (MainProcess.engine.IsSearching())
+                {
+                    MainProcess.engine.CancelSearch(() => RecieveCommand(command));
+                    break;
+                }
+                
                 if (commandList[1] == "fen")
                 {
                     string fen;
@@ -122,7 +140,9 @@ public static class Command
                 }
                 MainProcess.board.MakeConsoleMove(commandList[1]);
                 break;
-
+            case "eval":
+                Console.WriteLine("debug cmd eval: " + MainProcess.engine.GetEngine().GetEvaluation().Evaluate(MainProcess.board));
+                break;
 
             default:
                 break;

@@ -1,6 +1,7 @@
 
 public class Engine
 {
+    // Materials
     Board board;
     TranspositionTable tt;
     MoveOrder moveOrder;
@@ -8,6 +9,12 @@ public class Engine
     Evaluation evaluation;
 
     Move bestMove;
+    Move bestMoveLastIteration;
+    int bestEval;
+
+
+
+
     bool isSearching;
     bool cancellationRequested;
 
@@ -34,6 +41,10 @@ public class Engine
         List<Move> preSearchMoves = MoveGen.GenerateMoves(board);
         bestMove = preSearchMoves.Count == 0 ? Move.NullMove : preSearchMoves[0];
 
+        bestMoveLastIteration = Move.NullMove;
+
+        bestEval = 0;
+
         isSearching = true;
         cancellationRequested = false;
 
@@ -57,6 +68,8 @@ public class Engine
                 {
                     int evalThisIteration = Search(depth, Infinity.negativeInfinity, Infinity.positiveInfinity, 0);
 
+                    bestMoveLastIteration = bestMove;
+                    
                     if (cancellationRequested)
                     {
                         break;
@@ -136,17 +149,19 @@ public class Engine
             return 0;
         }
 
-        moveOrder.GetOrderedList(legalMoves);
+        if (plyFromRoot == 0)
+        {
+            moveOrder.GetOrderedList(legalMoves, bestMoveLastIteration);
+        }
+        else
+        {
+            moveOrder.GetOrderedList(legalMoves);
+        }
 
         int evalType = TranspositionTable.UpperBound;
 
         for (int i = 0; i < legalMoves.Count; i++)
         {
-            // board.PrintSmallBoard();
-            // Console.WriteLine("Search Body PlyFromRoot " + plyFromRoot + " Move " + Move.MoveString(legalMoves[i]));
-            // Move.PrintMoveList(legalMoves);
-            // board.PrintCastlingData();
-
             board.MakeMove(legalMoves[i]);
 
             int eval = -Search(depth - 1, -beta, -alpha, plyFromRoot + 1);
@@ -171,9 +186,8 @@ public class Engine
                 
                 if (plyFromRoot == 0)
                 {
-                    // Debugger.PrintPosition(board);
                     bestMove = legalMoves[i];
-                    // Move.PrintMove(bestMove);
+                    bestEval = eval;
                 }
             }
 
@@ -222,19 +236,13 @@ public class Engine
 
     void EndSearch()
     {
-        isSearching = false;
-        cancellationRequested = false;
-        
+        Console.WriteLine($"debug info eval: {bestEval}");
+
         OnSearchComplete?.Invoke();
         OnSearchComplete = () => {};
-    }
-
-    public void Update()
-    {
-        if (!isSearching)
-        {
-            
-        }
+        
+        isSearching = false;
+        cancellationRequested = false;
     }
 
     public Move GetMove()
@@ -265,8 +273,12 @@ public class Engine
         return evaluation;
     }
 
-    public void CancelSearch()
+    public void CancelSearch(Action? onSearchComplete = null)
     {
+        if (onSearchComplete != null)
+        {
+            OnSearchComplete += onSearchComplete;
+        }
         cancellationRequested = true;
     }
 

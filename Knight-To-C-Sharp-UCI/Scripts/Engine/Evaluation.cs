@@ -7,14 +7,12 @@ public class Evaluation
     public static int checkmateEval = 99999;
     int maxDepth;
 
-    
-
     int eval;
     int sign;
 
     public static readonly int pawnValue = 100;
-    public static readonly int knightValue = 300;
-    public static readonly int bishopValue = 320;
+    public static readonly int knightValue = 320;
+    public static readonly int bishopValue = 325;
     public static readonly int rookValue = 500;
     public static readonly int queenValue = 900;
 
@@ -23,18 +21,18 @@ public class Evaluation
         50,  50,  50,  50,  50,  50,  50,  50,
         10,  10,  20,  30,  30,  20,  10,  10,
         5,   5,  10,  25,  25,  10,   5,   5,
-        0,   0,   0,  30,  30,   0,   0,   0,
-        5,  -5, -10,   0,   0, -10,  -5,   5,
+        0,  -5,  20,  20,  25,   0,  -5,   0,
+        5,  10,  10,  10,  10, -10,  10,   5,
         5,  10,  10, -25, -25,  10,  10,   5,
         0,   0,   0,   0,   0,   0,   0,   0
     };
     static readonly int[] knightSquareTable = {
         -50,-40,-30,-30,-30,-30,-40,-50,
         -40,-20,  0,  0,  0,  0,-20,-40,
-        -30,  0, 10, 15, 15, 10,  0,-30,
-        -30,  5, 15, 20, 20, 15,  5,-30,
-        -30,  0, 15, 20, 20, 15,  0,-30,
-        -30,  5, 20, 15, 15, 20,  5,-30,
+        -30,  0,  5,  5,  5,  5,  0,-30,
+        -30,  0,  5, 15, 15,  5,  0,-30,
+        -30,  0,  5, 15, 15,  5,  0,-30,
+        -30,  5, 10,  5,  5, 10,  5,-30,
         -40,-20,  0,  5,  5,  0,-20,-40,
         -50,-40,-30,-30,-30,-30,-40,-50,
     };
@@ -45,18 +43,18 @@ public class Evaluation
         -10,  5,  5, 10, 10,  5,  5,-10,
         -10,  0, 10, 10, 10, 10,  0,-10,
         -10, 10, 10, 10, 10, 10, 10,-10,
-        -10,  5,  0,  0,  0,  0,  5,-10,
-        -20,-10,-10,-10,-10,-10,-10,-20,
+        -10, 10,  0,  0,  0,  0, 10,-10,
+        -20,-10,-30,-10,-10,-30,-10,-20,
     };
     static readonly int[] rookSquareTable =  {
-        0,  0,  0,  0,  0,  0,  0,  0,
-        5, 10, 10, 10, 10, 10, 10,  5,
+         0,  0,  0,  0,  0,  0,  0,  0,
+        15, 20, 20, 20, 20, 20, 20, 15,
         -5,  0,  0,  0,  0,  0,  0, -5,
         -5,  0,  0,  0,  0,  0,  0, -5,
         -5,  0,  0,  0,  0,  0,  0, -5,
         -5,  0,  0,  0,  0,  0,  0, -5,
         -5,  0,  0,  0,  0,  0,  0, -5,
-        -5,-10,  0,  5,  5,  5,-10, -5
+        -5, -5,  0, 15, 15,  5, -5, -5
     };
     static readonly int[] queenSquareTable =  {
         -20,-10,-10, -5, -5,-10,-10,-20,
@@ -76,8 +74,8 @@ public class Evaluation
         -30, -40, -40, -50, -50, -40, -40, -30, 
         -20, -30, -30, -40, -40, -30, -30, -20, 
         -10, -20, -20, -20, -20, -20, -20, -10, 
-        20,  20,  -5,  -5,  -5,  -5,  20,  20, 
-        20,  30,  10,  -5,   0,  -5,  30,  20
+         20,  20,  -5,  -5,  -5,  -5,  20,  20, 
+         20,  30,  10,  -5,   0,  -5,  30,  20
     };
     static readonly int[] kingEndSquareTable = 
     {
@@ -124,40 +122,27 @@ public class Evaluation
         }
     }
 
-    void CastleRight()
-    {
-        if (!board.isWhiteKingsideCastle && !board.isWhiteQueensideCastle && 
-        !(((board.pieceSquares[5].squares[0] % 8) < 3) || ((board.pieceSquares[5].squares[0] % 8) > 4)))
-        {
-            eval -= 10 * sign;
-        }
-        if (!board.isBlackKingsideCastle && !board.isBlackQueensideCastle && 
-        !(((board.pieceSquares[11].squares[0] % 8) < 3) || ((board.pieceSquares[11].squares[0] % 8) > 4)))
-        {
-            eval += 10 * sign;
-        }
-    }
-
+    // Piece square table
     void PieceSquareTable()
     {
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 6; i++) // Pawn ~ King
         {
             for (int j = 0; j < board.pieceSquares[i].count; j++)
             {
-                eval += pieceSquareTables[i][board.pieceSquares[i].squares[j]] * sign;
+                eval += pieceSquareTables[i][GetFlippedPieceSquareIndex(board.pieceSquares[i].squares[j])] * sign;
             }
             for (int j = 0; j < board.pieceSquares[i + 6].count; j++)
             {
-                eval -= pieceSquareTables[i][GetFlippedPieceSquareIndex(board.pieceSquares[i + 6].squares[j])] * sign;
+                eval -= pieceSquareTables[i][board.pieceSquares[i + 6].squares[j]] * sign;
             }
         }
     }
-
     int GetFlippedPieceSquareIndex(int square)
     {
         return (square % 8) + (7 - square / 8) * 8;
     }
 
+    // Move Ordering
     public int GetAbsPieceValue(int piece)
     {
         int pieceType = Piece.GetType(piece);
@@ -187,7 +172,13 @@ public class Evaluation
         return 0;
     }
 
+    // Endgame Weight
+    public double GetEndgameWeight()
+    {
+        double weight = 0;
 
+        return weight;
+    }
 
 
     public bool IsMateScore(int score)

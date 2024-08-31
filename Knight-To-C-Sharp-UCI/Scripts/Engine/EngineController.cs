@@ -14,9 +14,9 @@ public class EngineController
         engine.StartSearch(depth, onSearchComplete);
     }
 
-    public void CancelSearch()
+    public void CancelSearch(Action? onSearchComplete = null)
     {
-        engine.CancelSearch();
+        engine.CancelSearch(onSearchComplete);
     }
 
     public Move GetMove()
