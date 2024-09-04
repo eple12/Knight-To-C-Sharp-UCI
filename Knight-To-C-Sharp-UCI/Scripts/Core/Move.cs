@@ -80,31 +80,50 @@ public struct Move
     {
         if (IsSame(move, NullMove))
         {
-            return "(none)";
+            return NullMoveString;
         }
 
-        char promotion = ' ';
+        string promotion = "";
         if (MoveFlag.IsPromotion(move.flag))
         {
             switch(move.flag)
             {
                 case MoveFlag.PromoteToQueen:
-                    promotion = 'q';
+                    promotion = "q";
                     break;
                 case MoveFlag.PromoteToRook:
-                    promotion = 'r';
+                    promotion = "r";
                     break;
                 case MoveFlag.PromoteToBishop:
-                    promotion = 'b';
+                    promotion = "b";
                     break;
                 case MoveFlag.PromoteToKnight:
-                    promotion = 'n';
+                    promotion = "n";
                     break;
                 default:
                     break;
             }
         }
-        return $"{Square.SquareIndexToName(move.startSquare)}{Square.SquareIndexToName(move.targetSquare)}" + promotion;
+        return $"{Square.Name(move.startSquare)}{Square.Name(move.targetSquare)}" + promotion;
+    }
+    public static Move FindMove(List<Move> moves, string moveString)
+    {
+        if (moves.Count < 1)
+        {
+            return NullMove;
+        }
+
+        Move move = moves[0];
+
+        foreach (var m in moves)
+        {
+            if (MoveString(m) == moveString)
+            {
+                return m;
+            }
+        }
+
+        return move;
     }
 
     public Move(int startSquare, int targetSquare)
@@ -125,6 +144,7 @@ public struct Move
         moveValue = _moveValue;
     }
 
+    public static readonly string NullMoveString = "(none)";
 }
 
 // Move flags
@@ -144,19 +164,19 @@ public readonly struct MoveFlag
         return flag >= PromoteToQueen && flag <= PromoteToBishop;
     }
 
-    public static int GetPromotionPiece(int flag, bool isWhiteTurn)
+    public static int GetPromotionPiece(int flag, bool isWhite = true)
     {
         // Returns Piece Value
         switch (flag)
         {
             case PromoteToQueen:
-                return (isWhiteTurn ? Piece.White : Piece.Black) | Piece.Queen;
+                return (isWhite ? Piece.White : Piece.Black) | Piece.Queen;
             case PromoteToKnight:
-                return (isWhiteTurn ? Piece.White : Piece.Black) | Piece.Knight;
+                return (isWhite ? Piece.White : Piece.Black) | Piece.Knight;
             case PromoteToRook:
-                return (isWhiteTurn ? Piece.White : Piece.Black) | Piece.Rook;
+                return (isWhite ? Piece.White : Piece.Black) | Piece.Rook;
             case PromoteToBishop:
-                return (isWhiteTurn ? Piece.White : Piece.Black) | Piece.Bishop;
+                return (isWhite ? Piece.White : Piece.Black) | Piece.Bishop;
         }
 
         // Just in case if the flag is not a promotion one, returns invalid Piece
@@ -165,21 +185,7 @@ public readonly struct MoveFlag
 
     public static int GetPromotionPieceValue(int flag)
     {
-        // Returns Evaluation Value
-        switch (flag)
-        {
-            case PromoteToQueen:
-                return Evaluation.queenValue;
-            case PromoteToKnight:
-                return Evaluation.knightValue;
-            case PromoteToRook:
-                return Evaluation.rookValue;
-            case PromoteToBishop:
-                return Evaluation.bishopValue;
-        }
-
-        // FailSafe
-        return 0;
+        return Evaluation.GetAbsPieceValue(GetPromotionPiece(flag));
     }
 
     public static int GetPromotionFlag(int piece)

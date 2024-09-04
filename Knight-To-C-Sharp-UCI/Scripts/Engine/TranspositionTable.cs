@@ -46,14 +46,14 @@ public class TranspositionTable
     {
         get
         {
-            return board.currentZobristKey % size;
+            return board.ZobristKey % size;
         }
     }
 
     // There might be a collision (Zobrist key), I have to check if the move is legal
     public Move GetStoredMove ()
     {
-        return entries[Index].key == board.currentZobristKey ? entries[Index].move : Move.NullMove;
+        return entries[Index].key == board.ZobristKey ? entries[Index].move : Move.NullMove;
     }
 
     public int LookupEvaluation (int depth, int plyFromRoot, int alpha, int beta)
@@ -65,7 +65,7 @@ public class TranspositionTable
 
         Entry entry = entries[Index];
 
-        if (entry.key == board.currentZobristKey)
+        if (entry.key == board.ZobristKey)
         {
             // Only use stored evaluation if it has been searched to at least the same depth as would be searched now
             if (entry.depth >= depth)
@@ -99,7 +99,7 @@ public class TranspositionTable
             return;
         }
 
-        Entry entry = new Entry (board.currentZobristKey, CorrectMateScoreForStorage (eval, numPlySearched), (byte) depth, (byte) evalType, move);
+        Entry entry = new Entry (board.ZobristKey, CorrectMateScoreForStorage (eval, numPlySearched), (byte) depth, (byte) evalType, move);
         entries[Index] = entry;
     }
 

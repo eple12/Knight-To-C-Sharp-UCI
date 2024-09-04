@@ -19,7 +19,7 @@ public static class MateChecker
             }
         }
         
-        if (board.fiftyRuleHalfClock == 100)
+        if (board.FiftyRuleHalfClock == 100)
         {
             // Fifty-move rule
             return MateState.FiftyDraw;
@@ -31,7 +31,7 @@ public static class MateChecker
             return MateState.Material;
         }
         
-        if (board.positionHistory[board.currentZobristKey] >= 3)
+        if (board.PositionHistory[board.ZobristKey] >= 3)
         {
             // Threefold repetition
             return MateState.Threefold;
@@ -56,17 +56,17 @@ public static class MateChecker
 
     public static bool IsInsufficientMaterial(Board board)
     {
-        int wq = board.pieceSquares[BitboardIndex.WhiteQueen].count;
-        int wr = board.pieceSquares[BitboardIndex.WhiteRook].count;
-        PieceList wb = board.pieceSquares[BitboardIndex.WhiteBishop];
-        int wn = board.pieceSquares[BitboardIndex.WhiteKnight].count;
-        int wp = board.pieceSquares[BitboardIndex.WhitePawn].count;
+        int wq = board.PieceSquares[BitboardIndex.WhiteQueen].count;
+        int wr = board.PieceSquares[BitboardIndex.WhiteRook].count;
+        PieceList wb = board.PieceSquares[BitboardIndex.WhiteBishop];
+        int wn = board.PieceSquares[BitboardIndex.WhiteKnight].count;
+        int wp = board.PieceSquares[BitboardIndex.WhitePawn].count;
 
-        int bq = board.pieceSquares[BitboardIndex.BlackQueen].count;
-        int br = board.pieceSquares[BitboardIndex.BlackRook].count;
-        PieceList bb = board.pieceSquares[BitboardIndex.BlackBishop];
-        int bn = board.pieceSquares[BitboardIndex.BlackKnight].count;
-        int bp = board.pieceSquares[BitboardIndex.BlackPawn].count;
+        int bq = board.PieceSquares[BitboardIndex.BlackQueen].count;
+        int br = board.PieceSquares[BitboardIndex.BlackRook].count;
+        PieceList bb = board.PieceSquares[BitboardIndex.BlackBishop];
+        int bn = board.PieceSquares[BitboardIndex.BlackKnight].count;
+        int bp = board.PieceSquares[BitboardIndex.BlackPawn].count;
 
         if (wp != 0 || wq != 0 || wr != 0 || bp != 0 || bq != 0 || br != 0)
         {

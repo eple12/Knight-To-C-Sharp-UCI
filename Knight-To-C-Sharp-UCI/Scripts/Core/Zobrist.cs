@@ -1,10 +1,8 @@
 
-using System;
-
 public static class Zobrist
 {
-    static readonly int seed = 29426028;
-    static System.Random rng = new System.Random(seed);
+    const int seed = 29426028;
+    static Random rng = new Random(seed);
 
     public static readonly ulong[,] pieceArray = new ulong[12, 64];
     public static readonly ulong[] castlingArray = new ulong[16]; // No, K, Q, KQ (4 Possible states for each side) -> 4 * 2
@@ -32,84 +30,37 @@ public static class Zobrist
         }
     }
 
-    public static ulong GetZobristKey(Board board) // Called Only Once (after LoadPositionFromFen())
+    public static ulong GetZobristKey(Board board) // Called after loading a position
     {
-        // var sw = System.Diagnostics.Stopwatch.StartNew();
-
         ulong zobristKey = 0;
 
         for (int squareIndex = 0; squareIndex < 64; squareIndex++)
         {
             // Returns invalid BitboardIndex if failed to find piece
-            // int piece = Bitboard.GetPieceBitboardIndexAtSquare(bitboards, squareIndex);
-            int pieceBitboardIndex = Piece.GetBitboardIndex(board.position[squareIndex]);
+            int pieceBitboardIndex = Piece.GetBitboardIndex(board.Squares[squareIndex]);
 
             if (pieceBitboardIndex != BitboardIndex.Invalid)
             {
                 zobristKey ^= pieceArray[pieceBitboardIndex, squareIndex];
             }
         }
+        zobristKey ^= enpassantArray[board.EnpassantFile];
 
-        // Debug.Log(IsValidEnp(bitboards, !isWhiteTurn) ? (enpassantSquareIndex % 8) : 8);
-        // Debug.Log(IsValidEnp(board, true));
-        // Debug.Log(enpassantSquareIndex);
-        zobristKey ^= enpassantArray[board.enpassantFile];
-
-        if (board.isWhiteTurn) 
+        if (board.Turn) 
         {
             zobristKey ^= sideToMove;
         }
-
-        // PrintCastleData();
-
-        zobristKey ^= castlingArray[board.castlingData];
         
-        // Debug.Log((double) sw.ElapsedTicks / 10000);
+        zobristKey ^= castlingArray[board.CastlingData];
+
         return zobristKey;
     }
 
-    static ulong NextUlong(System.Random rng)
+    static ulong NextUlong(Random rng)
     {
         byte[] buffer = new byte[8];
         rng.NextBytes(buffer);
         return BitConverter.ToUInt64(buffer, 0);
     }
-
-    // public static bool IsValidEnp(Board board, bool reverseTurn = false)
-    // {
-    //     if (board.enpassantFile == 8)
-    //     {
-    //         return false;
-    //     }
-    //     if (reverseTurn ? !board.isWhiteTurn : board.isWhiteTurn)
-    //     {
-    //         if (board.enpassantSquareIndex % 8 < 7 && 
-    //         board.position[board.enpassantSquareIndex + 9] == (Piece.Black | Piece.Pawn))
-    //         {
-    //             return true;
-    //         }
-    //         if (board.enpassantSquareIndex % 8 > 0 && 
-    //         board.position[board.enpassantSquareIndex + 7] == (Piece.Black | Piece.Pawn))
-    //         {
-    //             return true;
-    //         }
-    //     }
-    //     else
-    //     {
-    //         if (board.enpassantSquareIndex % 8 < 7 && 
-    //         board.position[board.enpassantSquareIndex - 7] == (Piece.White | Piece.Pawn))
-    //         {
-    //             return true;
-    //         }
-    //         if (board.enpassantSquareIndex % 8 > 0 && 
-    //         board.position[board.enpassantSquareIndex - 9] == (Piece.White | Piece.Pawn))
-    //         {
-    //             return true;
-    //         }
-    //     }
-
-    //     return false;
-    // }
-
 
 }

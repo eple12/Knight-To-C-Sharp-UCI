@@ -2,7 +2,6 @@ public class MoveOrder
 {
     Board board;
     TranspositionTable tt;
-    Evaluation evaluation;
 
     List<Move> moves;
     List<int> moveScores;
@@ -15,7 +14,6 @@ public class MoveOrder
     {
         board = engine.GetBoard();
         tt = engine.GetTT();
-        evaluation = engine.GetEvaluation();
 
         moves = new List<Move>();
         moveScores = new List<int>();
@@ -57,13 +55,13 @@ public class MoveOrder
         {
             int score = 0;
 
-            int movingPiece = board.position[move.startSquare];
-            int capturedPiece = board.position[move.targetSquare];
+            int movingPiece = board.Squares[move.startSquare];
+            int capturedPiece = board.Squares[move.targetSquare];
 
             // Capture
             if (capturedPiece != Piece.None)
             {
-                score += captureValueMultiplier * evaluation.GetAbsPieceValue(capturedPiece) - evaluation.GetAbsPieceValue(movingPiece);
+                score += captureValueMultiplier * Evaluation.GetAbsPieceValue(capturedPiece) - Evaluation.GetAbsPieceValue(movingPiece);
             }
             
             if (Piece.GetType(movingPiece) == Piece.Pawn)
@@ -84,22 +82,22 @@ public class MoveOrder
 
             if (Bitboard.Contains(MoveGen.AttackMapNoPawn(), move.targetSquare))
             {
-                score -= evaluation.GetAbsPieceValue(board.position[move.startSquare]) / 2;
+                score -= Evaluation.GetAbsPieceValue(board.Squares[move.startSquare]) / 2;
             }
 
             if (Bitboard.Contains(MoveGen.AttackMapNoPawn(), move.startSquare))
             {
-                score += evaluation.GetAbsPieceValue(board.position[move.startSquare]);
+                score += Evaluation.GetAbsPieceValue(board.Squares[move.startSquare]);
             }
 
             if (Move.IsSame(move, hashMove))
             {
-                score += 100000000;
+                score += Infinity.PositiveInfinity;
             }
             
             if (Move.IsSame(move, bestMoveLastIteration))
             {
-                score += 200000000;
+                score += Infinity.PositiveInfinity;
             }
 
             moveScores.Add(score);

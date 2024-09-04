@@ -60,15 +60,25 @@ public class Engine
             return;
         }
 
+        // Try to find this position in the Opening Book
+        Move bookMove = Book.GetRandomMove(board);
+        if (!Move.IsSame(bookMove, Move.NullMove))
+        {
+            bestMove = bookMove;
+            EndSearch();
+            return;
+        }
+
         if (settings.useIterativeDeepening)
         {
             Task.Factory.StartNew(() => {
                 // Iterative Deepening
                 for (int depth = 1; depth <= maxDepth; depth++)
                 {
-                    int evalThisIteration = Search(depth, Infinity.negativeInfinity, Infinity.positiveInfinity, 0);
-
+                    int evalThisIteration = Search(depth, Infinity.NegativeInfinity, Infinity.PositiveInfinity, 0);
+                    
                     bestMoveLastIteration = bestMove;
+                    Console.WriteLine($"depth {depth} move {Move.MoveString(bestMove)} eval {evalThisIteration}");
                     
                     if (cancellationRequested)
                     {
@@ -87,7 +97,7 @@ public class Engine
         else
         {
             Task.Factory.StartNew(() => {
-                Search(maxDepth, Infinity.negativeInfinity, Infinity.positiveInfinity, 0);
+                Search(maxDepth, Infinity.NegativeInfinity, Infinity.PositiveInfinity, 0);
 
                 EndSearch();
             }, TaskCreationOptions.LongRunning);
@@ -113,7 +123,7 @@ public class Engine
                 // so whenever a position is repeated, the engine ends up in a threefold draw.
                 // To prevent that, check if it's threefold once again!
                 // For simplicity, just check if previous position is already reached
-                if (board.positionHistory[board.currentZobristKey] > 1)
+                if (board.PositionHistory[board.ZobristKey] > 1)
                 {
                     return 0;
                 }
@@ -188,6 +198,11 @@ public class Engine
                 {
                     bestMove = legalMoves[i];
                     bestEval = eval;
+
+                    if (eval == -208)
+                    {
+                        Console.WriteLine("?");
+                    }
                 }
             }
 

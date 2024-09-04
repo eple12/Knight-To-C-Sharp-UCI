@@ -1,25 +1,21 @@
-using System.Security.Cryptography;
-using Microsoft.AspNetCore.Mvc.Razor.TagHelpers;
+
+using System.Collections.Concurrent;
 
 public static class Command
 {
-    public static bool autoWhiteEngine = false;
-    public static bool autoBlackEngine = false;
+    const int MaxThinkTime = 30 * 1000;
+    const int MinThinkTime = 50;
 
     public static int RecieveCommand(string command)
     {
-        string[] commandList = command.Split(' ');
-        string prefix = commandList[0];
+        string[] tokens = command.Split(' ');
+        string prefix = tokens[0];
 
         // Available Commands Pre-UCI Load
         switch (prefix)
         {
             case "quit":
-                if (MainProcess.engine.IsSearching())
-                {
-                    MainProcess.engine.CancelSearch();
-                }
-
+                MainProcess.engine.CancelAndWait();
                 return 1;
             case "uci":
                 Console.WriteLine("id name Knight-To-C-Sharp");
@@ -29,11 +25,10 @@ public static class Command
             case "ucinewgame":
                 if (MainProcess.engine.IsSearching())
                 {
-                    MainProcess.engine.CancelSearch(() => RecieveCommand(command));
-                    break;
+                    MainProcess.engine.CancelAndWait();
                 }
 
-                MainProcess.board.LoadPositionFromFen(Board.initialFen);
+                MainProcess.board.LoadPositionFromFen(Board.InitialFen);
                 break;
             case "d":
                 MainProcess.board.PrintBoardAndMoves();
@@ -52,68 +47,19 @@ public static class Command
         switch (prefix)
         {
             case "cmd":
-                if (commandList.Length > 1)
+                if (tokens.Length > 1)
                 {
                     RecieveCustomCommand(command.Substring(4));
                 }
                 break;
             case "position":
-                if (commandList.Length < 2)
-                {
-                    break;
-                }
-
-                if (MainProcess.engine.IsSearching())
-                {
-                    MainProcess.engine.CancelSearch(() => RecieveCommand(command));
-                    break;
-                }
-                
-                if (commandList[1] == "fen")
-                {
-                    string fen;
-                    if (command.Contains("moves"))
-                    {
-                        fen = command.Substring(13, command.IndexOf("move") - 14);
-                    }
-                    else
-                    {
-                        fen = command.Substring(13);
-                    }
-                    MainProcess.board.LoadPositionFromFen(fen);
-                }
-                else if (commandList[1] == "startpos")
-                {
-                    MainProcess.board.LoadPositionFromFen(Board.initialFen);
-                }
-                
-                if (commandList.Contains("moves"))
-                {
-                    int index = Array.IndexOf(commandList, "moves");
-                    for (int i = index + 1; i < commandList.Length; i++)
-                    {
-                        MainProcess.board.MakeConsoleMove(commandList[i]);
-                    }
-                }
+                ProcessPositionCommand(command, tokens);
                 break;
             case "go":
-                if (MainProcess.engine.IsSearching())
-                {
-                    break;
-                }
-                if (commandList.Contains("depth"))
-                {
-                    if (Array.IndexOf(commandList, "depth") + 1 < commandList.Length)
-                    {
-                        int depth = Convert.ToInt32(commandList[Array.IndexOf(commandList, "depth") + 1]);
-                        MainProcess.engine.StartSearch(depth, () => {
-                            Console.WriteLine("bestmove " + Move.MoveString(MainProcess.engine.GetMove()));
-                        });
-                    }
-                }
+                ProcessGoCommand(tokens);
                 break;
             case "stop":
-                MainProcess.engine.CancelSearch();
+                MainProcess.engine.CancelAndWait();
                 break;
             case "isready":
                 Console.WriteLine("readyok");
@@ -143,11 +89,214 @@ public static class Command
             case "eval":
                 Console.WriteLine("debug cmd eval: " + MainProcess.engine.GetEngine().GetEvaluation().Evaluate(MainProcess.board));
                 break;
+            case "endweight":
+                Console.WriteLine("debug cmd EndgameWeight: " + 
+                MainProcess.engine.GetEngine().GetEvaluation().GetEndgameWeight());
+                break;
+            case "zobrist":
+                Console.WriteLine("debug cmd zobrist: " + MainProcess.board.ZobristKey);
+                break;
+            case "parsebook":
+                BookParser parser = new BookParser();
+                parser.Parse();
+                break;
+            case "dir":
+                Console.WriteLine("Current Directory: " + Environment.CurrentDirectory);
+                break;
+            case "keybook":
+                if (commandList.Length > 1)
+                {
+                    ulong key = ulong.Parse(commandList[1]);
+                    PrintBookMoves(key);
+                }
+                break;
+            case "booktest":
+                Console.WriteLine(Book.GetRandomMove(MainProcess.board));
+                break;
+            case "book":
+                PrintBookMoves(MainProcess.board.ZobristKey);
+                break;
 
             default:
                 break;
         }
 
         return 0;
+    }
+
+    static void ProcessPositionCommand(string command, string[] tokens)
+    {
+        if (tokens.Length < 3)
+        {
+            return;
+        }
+
+        if (MainProcess.engine.IsSearching())
+        {
+            MainProcess.engine.CancelAndWait();
+        }
+
+        bool containsMoves = tokens.Contains("moves");
+        string subCommand = tokens[1];
+        
+        if (subCommand == "fen")
+        {
+            string fen;
+            if (containsMoves)
+            {
+                fen = command.Substring(13, command.IndexOf("moves") - 14);
+            }
+            else
+            {
+                fen = command.Substring(13);
+            }
+            MainProcess.board.LoadPositionFromFen(fen);
+        }
+        else if (subCommand == "startpos")
+        {
+            MainProcess.board.LoadPositionFromFen(Board.InitialFen);
+        }
+        
+        if (containsMoves)
+        {
+            int index = Array.IndexOf(tokens, "moves");
+            for (int i = index + 1; i < tokens.Length; i++)
+            {
+                MainProcess.board.MakeConsoleMove(tokens[i]);
+            }
+        }
+    }
+    static void ProcessGoCommand(string[] tokens)
+    {
+        if (MainProcess.engine.IsSearching())
+        {
+            MainProcess.engine.CancelAndWait();
+        }
+
+        int tokenIndex = 0;
+
+        // Search Launch Info
+        int depth = MainProcess.engine.GetEngine().GetSettings().unlimitedMaxDepth;
+        int wtime = Infinity.PositiveInfinity;
+        int btime = Infinity.PositiveInfinity;
+        int winc = 0;
+        int binc = 0;
+
+        bool infinite = false;
+        bool gotThinkTime = false;
+        int thinkTime = MinThinkTime;
+        
+        // Sub Commands
+        while (true)
+        {
+            string subCommand = tokens[tokenIndex];
+
+            if (subCommand == "depth")
+            {
+                depth = GetIntegerAfterLabel(subCommand, tokens);
+                tokenIndex++;
+                gotThinkTime = true;
+                thinkTime = MaxThinkTime;
+            }
+            else if (subCommand == "infinite")
+            {
+                depth = MainProcess.engine.GetEngine().GetSettings().unlimitedMaxDepth;
+                gotThinkTime = true;
+                infinite = true;
+            }
+            else if (subCommand == "movetime")
+            {
+                thinkTime = GetIntegerAfterLabel(subCommand, tokens);
+                
+                depth = MainProcess.engine.GetEngine().GetSettings().unlimitedMaxDepth;
+                tokenIndex++;
+                gotThinkTime = true;
+            }
+            else if (subCommand == "wtime")
+            {
+                wtime = GetIntegerAfterLabel(subCommand, tokens);
+                tokenIndex++;
+            }
+            else if (subCommand == "btime")
+            {
+                btime = GetIntegerAfterLabel(subCommand, tokens);
+                tokenIndex++;
+            }
+            else if (subCommand == "winc")
+            {
+                winc = GetIntegerAfterLabel(subCommand, tokens);
+                tokenIndex++;
+            }
+            else if (subCommand == "binc")
+            {
+                binc = GetIntegerAfterLabel(subCommand, tokens);
+                tokenIndex++;
+            }
+
+            tokenIndex++;
+
+            if (tokenIndex >= tokens.Length)
+            {
+                break;
+            }
+        }
+
+        // Choose Think Time
+        if (!gotThinkTime)
+        {
+            // Think Time
+            int myTime = MainProcess.board.Turn ? wtime : btime;
+            int myInc = MainProcess.board.Turn ? winc : binc;
+            // Get a fraction of remaining time to use for current move
+            double thinkTimeDouble = myTime / 40.0;
+            // Clamp think time if a maximum limit is imposed
+            thinkTimeDouble = Math.Min(MaxThinkTime, thinkTimeDouble);
+            // Add increment
+            if (myTime > myInc * 2)
+            {
+                thinkTimeDouble += myInc * 0.6;
+            }
+
+            double minThinkTime = Math.Min(MinThinkTime, myTime * 0.25);
+            thinkTimeDouble = Math.Ceiling(Math.Max(minThinkTime, thinkTimeDouble));
+
+            thinkTime = (int) thinkTimeDouble;
+        }
+        
+        if (infinite)
+        {
+            MainProcess.engine.StartSearch(depth);
+        }
+        else
+        {
+            MainProcess.engine.StartTimedSearch(depth, thinkTime);
+        }
+    }
+    static int GetIntegerAfterLabel(string label, string[] tokens)
+    {
+        int result = 0;
+
+        if (Array.IndexOf(tokens, label) + 1 < tokens.Length)
+        {
+            int.TryParse(tokens[Array.IndexOf(tokens, label) + 1], out result);
+        }
+
+        return result;
+    }
+    
+    static void PrintBookMoves(ulong key)
+    {
+        MainProcess.board.PrintLargeBoard();
+        Console.WriteLine("Zobrist Key: " + MainProcess.board.ZobristKey);
+
+        BookPosition bp = Book.TryToGetBookPosition(key);
+        if (bp.IsEmpty())
+        {
+            return;
+        }
+        for (int i = 0; i < bp.Moves.Count; i++)
+        {
+            Console.WriteLine(bp.Moves[i] + ' ' + bp.Num[i]);
+        }
     }
 }

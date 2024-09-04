@@ -3,24 +3,24 @@ public class Board
 {
     public bool Loaded;
 
-    public int[] position;
-    public bool isWhiteTurn;
+    public int[] Squares;
+    public bool Turn;
 
-    public static readonly string initialFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    public static readonly string InitialFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    public List<Move> currentLegalMoves;
-    public ulong currentZobristKey;
+    public List<Move> LegalMoves;
+    public ulong ZobristKey;
 
 
     // Piece Square Recognization
-    public PieceList[] pieceSquares;
+    public PieceList[] PieceSquares;
 
-    public Stack<uint> gameStateStack;
+    public Stack<uint> GameStack;
 
-    public static readonly uint castlingMask = 0b_0000_0000_0000_0000_0000_0000_0000_1111;
-    public static readonly uint capturedPieceMask = 0b_0000_0000_0000_0000_0000_0001_1111_0000;
-    public static readonly uint enpassantFileMask = 0b_0000_0000_0000_0000_0001_1110_0000_0000;
-    public static readonly uint fiftyCounterMask = 0b_1111_1111_1111_1111_1110_0000_0000_0000;
+    public static readonly uint CastlingMask = 0b_0000_0000_0000_0000_0000_0000_0000_1111;
+    public static readonly uint CapturedPieceMask = 0b_0000_0000_0000_0000_0000_0001_1111_0000;
+    public static readonly uint EnpassantFileMask = 0b_0000_0000_0000_0000_0001_1110_0000_0000;
+    public static readonly uint FiftyCounterMask = 0b_1111_1111_1111_1111_1110_0000_0000_0000;
 
     /* 
         Bit 0: White Kingside
@@ -28,107 +28,107 @@ public class Board
         Bit 2: Black Kingside
         Bit 3: Black Queenside
     */
-    public byte castlingData;
+    public byte CastlingData;
 
-    public bool isWhiteKingsideCastle
+    public bool WKCastle
     {
         get
         {
-            return (castlingData & 0b00000001) != 0;
+            return (CastlingData & 0b00000001) != 0;
         }
         set
         {
             if (value)
             {
-                castlingData |= 1;
+                CastlingData |= 1;
             }
             else
             {
-                castlingData &= byte.MaxValue ^ 1;
+                CastlingData &= byte.MaxValue ^ 1;
             }
         }
     }
-    public bool isWhiteQueensideCastle
+    public bool WQCastle
     {
         get
         {
-            return (castlingData & 0b00000010) != 0;
+            return (CastlingData & 0b00000010) != 0;
         }
         set
         {
             if (value)
             {
-                castlingData |= 1 << 1;
+                CastlingData |= 1 << 1;
             }
             else
             {
-                castlingData &= byte.MaxValue ^ (1 << 1);
+                CastlingData &= byte.MaxValue ^ (1 << 1);
             }
         }
     }
-    public bool isBlackKingsideCastle
+    public bool BKCastle
     {
         get
         {
-            return (castlingData & 0b00000100) != 0;
+            return (CastlingData & 0b00000100) != 0;
         }
         set
         {
             if (value)
             {
-                castlingData |= 1 << 2;
+                CastlingData |= 1 << 2;
             }
             else
             {
-                castlingData &= byte.MaxValue ^ (1 << 2);
+                CastlingData &= byte.MaxValue ^ (1 << 2);
             }
         }
     }
-    public bool isBlackQueensideCastle
+    public bool BQCastle
     {
         get
         {
-            return (castlingData & 0b00001000) != 0;
+            return (CastlingData & 0b00001000) != 0;
         }
         set
         {
             if (value)
             {
-                castlingData |= 1 << 3;
+                CastlingData |= 1 << 3;
             }
             else
             {
-                castlingData &= byte.MaxValue ^ (1 << 3);
+                CastlingData &= byte.MaxValue ^ (1 << 3);
             }
         }
     }
 
     // En passant file; a ~ h (0 ~ 7), 8 => No en passant available.
-    public int enpassantFile;
+    public int EnpassantFile;
 
     // If 100, draw by 50-move rule. (Since it counts half-move, after 1.Nf3 Nf6 it's 2)
-    public int fiftyRuleHalfClock;
+    public int FiftyRuleHalfClock;
 
     // For Threefold detection
-    public Dictionary<ulong, int> positionHistory = new Dictionary<ulong, int>();
+    public Dictionary<ulong, int> PositionHistory = new Dictionary<ulong, int>();
 
     public Board()
     {
         Loaded = false;
 
-        position = new int[64];
-        isWhiteTurn = true;
+        Squares = new int[64];
+        Turn = true;
 
-        currentLegalMoves = new List<Move>();
-        currentZobristKey = 0;
+        LegalMoves = new List<Move>();
+        ZobristKey = 0;
 
-        pieceSquares = new PieceList[12];
+        PieceSquares = new PieceList[12];
 
-        gameStateStack = new Stack<uint>();
+        GameStack = new Stack<uint>();
 
-        castlingData = 0;
-        enpassantFile = 8;
-        fiftyRuleHalfClock = 0;
+        CastlingData = 0;
+        EnpassantFile = 8;
+        FiftyRuleHalfClock = 0;
     }
 
     public void PrintLargeBoard()
@@ -140,7 +140,7 @@ public class Board
             for (int file = 0; file < 8; file++)
             {
                 Console.Write("| ");
-                Console.Write(Piece.PieceToChar(position[8 * rank + file]));
+                Console.Write(Piece.PieceToChar(Squares[8 * rank + file]));
                 Console.Write(" ");
             }
             Console.Write("| ");
@@ -158,7 +158,7 @@ public class Board
         {
             for (int file = 0; file < 8; file++)
             {
-                char c = Piece.PieceToChar(position[8 * rank + file]);
+                char c = Piece.PieceToChar(Squares[8 * rank + file]);
                 Console.Write(c == ' ' ? '~' : c);
                 Console.Write(' ');
             }
@@ -170,7 +170,7 @@ public class Board
 
     public void AfterLoadingPosition()
     {
-        currentLegalMoves = MoveGen.GenerateMoves(this);
+        LegalMoves = MoveGen.GenerateMoves(this);
         Loaded = true;
     }
 
@@ -178,17 +178,17 @@ public class Board
     {
         Loaded = false;
 
-        position = new int[64];
-        pieceSquares = new PieceList[12];
-        gameStateStack = new Stack<uint>();
+        Squares = new int[64];
+        PieceSquares = new PieceList[12];
+        GameStack = new Stack<uint>();
 
-        isWhiteTurn = true;
-        currentLegalMoves = new List<Move>();
-        currentZobristKey = 0;
-        castlingData = 0;
-        enpassantFile = 8;
-        fiftyRuleHalfClock = 0;
-        positionHistory.Clear();
+        Turn = true;
+        LegalMoves = new List<Move>();
+        ZobristKey = 0;
+        CastlingData = 0;
+        EnpassantFile = 8;
+        FiftyRuleHalfClock = 0;
+        PositionHistory.Clear();
     }
 
     public void MakeConsoleMove(string move)
@@ -198,11 +198,11 @@ public class Board
             return;
         }
 
-        int startSquare = Square.SquareNameToIndex(move.Substring(0, 2));
-        int targetSquare = Square.SquareNameToIndex(move.Substring(2, 2));
+        int startSquare = global::Square.Index(move.Substring(0, 2));
+        int targetSquare = global::Square.Index(move.Substring(2, 2));
 
         Move m = Move.NullMove;
-        foreach (var item in currentLegalMoves)
+        foreach (var item in LegalMoves)
         {
             if (item.startSquare == startSquare && item.targetSquare == targetSquare)
             {
@@ -221,14 +221,14 @@ public class Board
         }
 
         MakeMove(m);
-        currentLegalMoves = MoveGen.GenerateMoves(this);
+        LegalMoves = MoveGen.GenerateMoves(this);
         // PrintBoardAndMoves();
     }
 
     public void MakeConsoleMove(Move move)
     {
         MakeMove(move);
-        currentLegalMoves = MoveGen.GenerateMoves(this);
+        LegalMoves = MoveGen.GenerateMoves(this);
         // PrintBoardAndMoves();
     }
 
@@ -243,83 +243,83 @@ public class Board
         int startSquare = move.startSquare;
         int targetSquare = move.targetSquare;
 
-        int movingPiece = position[startSquare];
-        int capturedPiece = position[targetSquare];
+        int movingPiece = Squares[startSquare];
+        int capturedPiece = Squares[targetSquare];
 
         int movingPieceBitboardIndex = Piece.GetBitboardIndex(movingPiece);
 
-        gameStateStack.Push((uint) (castlingData | capturedPiece << 4 | enpassantFile << 9 | fiftyRuleHalfClock << 13));
+        GameStack.Push((uint) (CastlingData | capturedPiece << 4 | EnpassantFile << 9 | FiftyRuleHalfClock << 13));
 
-        fiftyRuleHalfClock++;
+        FiftyRuleHalfClock++;
 
         // ZOBRIST UPDATE: REMOVE PREVIOUS ENP.
-        currentZobristKey ^= Zobrist.enpassantArray[enpassantFile];
+        ZobristKey ^= Zobrist.enpassantArray[EnpassantFile];
 
         // ZOBRIST UPDATE: CASTLING RIGHTS
-        currentZobristKey ^= Zobrist.castlingArray[castlingData];
+        ZobristKey ^= Zobrist.castlingArray[CastlingData];
 
         // Resets fifty-move clock if a pawn moves
         if (Piece.GetType(movingPiece) == Piece.Pawn)
         {
-            fiftyRuleHalfClock = 0;
+            FiftyRuleHalfClock = 0;
         }
 
         // If the move is a capturing move;
         if (capturedPiece != Piece.None)
         {
-            fiftyRuleHalfClock = 0;
+            FiftyRuleHalfClock = 0;
 
             // ZOBRIST UPDATE
-            currentZobristKey ^= Zobrist.pieceArray[Piece.GetBitboardIndex(capturedPiece), targetSquare];
+            ZobristKey ^= Zobrist.pieceArray[Piece.GetBitboardIndex(capturedPiece), targetSquare];
 
             // Rook Captured -> Disable Castling;
             if (capturedPiece == (Piece.White | Piece.Rook))
             {
-                if (isWhiteKingsideCastle && targetSquare == 7)
+                if (WKCastle && targetSquare == 7)
                 {
-                    isWhiteKingsideCastle = false;
+                    WKCastle = false;
                 }
-                if (isWhiteQueensideCastle && targetSquare == 0)
+                if (WQCastle && targetSquare == 0)
                 {
-                    isWhiteQueensideCastle = false;
+                    WQCastle = false;
                 }
             }
             else if (capturedPiece == (Piece.Black | Piece.Rook))
             {
-                if (isBlackKingsideCastle && targetSquare == 63)
+                if (BKCastle && targetSquare == 63)
                 {
-                    isBlackKingsideCastle = false;
+                    BKCastle = false;
                 }
-                if (isBlackQueensideCastle && targetSquare == 56)
+                if (BQCastle && targetSquare == 56)
                 {
-                    isBlackQueensideCastle = false;
+                    BQCastle = false;
                 }
             }
         
             // PIECE SQUARE UPDATE
-            pieceSquares[Piece.GetBitboardIndex(capturedPiece)].RemovePieceAtSquare(targetSquare);
+            PieceSquares[Piece.GetBitboardIndex(capturedPiece)].RemovePieceAtSquare(targetSquare);
         }
         else // Checks if the move is enp.
         {
             if (move.flag == MoveFlag.EnpassantCapture) // En passant
             {
-                int capturedPawnSquare = Square.EnpassantFileToPawnSquare(enpassantFile, isWhiteTurn);
+                int capturedPawnSquare = global::Square.EnpassantAvailablePawnIndex(EnpassantFile, Turn);
 
-                position[capturedPawnSquare] = Piece.None;
+                Squares[capturedPawnSquare] = Piece.None;
 
                 // ZOBRIST UPDATE
-                currentZobristKey ^= Zobrist.pieceArray[isWhiteTurn ? BitboardIndex.BlackPawn : BitboardIndex.WhitePawn, capturedPawnSquare];
+                ZobristKey ^= Zobrist.pieceArray[Turn ? BitboardIndex.BlackPawn : BitboardIndex.WhitePawn, capturedPawnSquare];
 
                 // PIECE SQUARE UPDATE
-                pieceSquares[isWhiteTurn ? BitboardIndex.BlackPawn : BitboardIndex.WhitePawn].RemovePieceAtSquare(capturedPawnSquare);
+                PieceSquares[Turn ? BitboardIndex.BlackPawn : BitboardIndex.WhitePawn].RemovePieceAtSquare(capturedPawnSquare);
             }
         }
 
-        enpassantFile = 8;
+        EnpassantFile = 8;
 
-        if (move.flag == MoveFlag.PawnTwoForward && Square.IsValidEnpassantFile(targetSquare % 8, this)) // Enp. Square Calculation;
+        if (move.flag == MoveFlag.PawnTwoForward && global::Square.IsValidEnpassantFile(targetSquare % 8, this)) // Enp. Square Calculation;
         {
-            enpassantFile = targetSquare % 8;
+            EnpassantFile = targetSquare % 8;
         }
         
         // CASTLING
@@ -329,58 +329,58 @@ public class Board
             {
                 if (targetSquare == startSquare + 2)
                 {
-                    position[targetSquare + 1] = Piece.None;
-                    position[targetSquare - 1] = Piece.White | Piece.Rook;
+                    Squares[targetSquare + 1] = Piece.None;
+                    Squares[targetSquare - 1] = Piece.White | Piece.Rook;
 
                     // ZOBRIST UPDATE
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare + 1];
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare - 1];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare + 1];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare - 1];
 
                     // PIECE SQUARE UPDATE
-                    pieceSquares[BitboardIndex.WhiteRook].RemovePieceAtSquare(targetSquare + 1);
-                    pieceSquares[BitboardIndex.WhiteRook].AddPieceAtSquare(targetSquare - 1);
+                    PieceSquares[BitboardIndex.WhiteRook].RemovePieceAtSquare(targetSquare + 1);
+                    PieceSquares[BitboardIndex.WhiteRook].AddPieceAtSquare(targetSquare - 1);
                 }
                 else if (targetSquare == startSquare - 2)
                 {
-                    position[targetSquare - 2] = Piece.None;
-                    position[targetSquare + 1] = Piece.White | Piece.Rook;
+                    Squares[targetSquare - 2] = Piece.None;
+                    Squares[targetSquare + 1] = Piece.White | Piece.Rook;
 
                     // ZOBRIST UPDATE
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare - 2];
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare + 1];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare - 2];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare + 1];
 
                     // PIECE SQUARE UPDATE
-                    pieceSquares[BitboardIndex.WhiteRook].RemovePieceAtSquare(targetSquare - 2);
-                    pieceSquares[BitboardIndex.WhiteRook].AddPieceAtSquare(targetSquare + 1);
+                    PieceSquares[BitboardIndex.WhiteRook].RemovePieceAtSquare(targetSquare - 2);
+                    PieceSquares[BitboardIndex.WhiteRook].AddPieceAtSquare(targetSquare + 1);
                 }
             }
             else
             {
                 if (targetSquare == startSquare + 2)
                 {
-                    position[targetSquare + 1] = Piece.None;
-                    position[targetSquare - 1] = Piece.Black | Piece.Rook;
+                    Squares[targetSquare + 1] = Piece.None;
+                    Squares[targetSquare - 1] = Piece.Black | Piece.Rook;
 
                     // ZOBRIST UPDATE
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare + 1];
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare - 1];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare + 1];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare - 1];
 
                     // PIECE SQUARE UPDATE
-                    pieceSquares[BitboardIndex.BlackRook].RemovePieceAtSquare(targetSquare + 1);
-                    pieceSquares[BitboardIndex.BlackRook].AddPieceAtSquare(targetSquare - 1);
+                    PieceSquares[BitboardIndex.BlackRook].RemovePieceAtSquare(targetSquare + 1);
+                    PieceSquares[BitboardIndex.BlackRook].AddPieceAtSquare(targetSquare - 1);
                 }
                 else if (targetSquare == startSquare - 2)
                 {
-                    position[targetSquare - 2] = Piece.None;
-                    position[targetSquare + 1] = Piece.Black | Piece.Rook;
+                    Squares[targetSquare - 2] = Piece.None;
+                    Squares[targetSquare + 1] = Piece.Black | Piece.Rook;
 
                     // ZOBRIST UPDATE
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare - 2];
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare + 1];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare - 2];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare + 1];
 
                     // PIECE SQUARE UPDATE
-                    pieceSquares[BitboardIndex.BlackRook].RemovePieceAtSquare(targetSquare - 2);
-                    pieceSquares[BitboardIndex.BlackRook].AddPieceAtSquare(targetSquare + 1);
+                    PieceSquares[BitboardIndex.BlackRook].RemovePieceAtSquare(targetSquare - 2);
+                    PieceSquares[BitboardIndex.BlackRook].AddPieceAtSquare(targetSquare + 1);
                 }
             }
         }
@@ -390,234 +390,234 @@ public class Board
         {
             if (startSquare == 0)
             {
-                isWhiteQueensideCastle = false;
+                WQCastle = false;
             }
             else if (startSquare == 7)
             {
-                isWhiteKingsideCastle = false;
+                WKCastle = false;
             }
         }
         if (movingPiece == (Piece.Black | Piece.Rook))
         {
             if (startSquare == 56)
             {
-                isBlackQueensideCastle = false;
+                BQCastle = false;
             }
             else if (startSquare == 63)
             {
-                isBlackKingsideCastle = false;
+                BKCastle = false;
             }
         }
 
         if (movingPiece == (Piece.White | Piece.King))
         {
-            isWhiteKingsideCastle = false;
-            isWhiteQueensideCastle = false;
+            WKCastle = false;
+            WQCastle = false;
         }
         if (movingPiece == (Piece.Black | Piece.King))
         {
-            isBlackKingsideCastle = false;
-            isBlackQueensideCastle = false;
+            BKCastle = false;
+            BQCastle = false;
         }
 
         // Move the piece
-        position[targetSquare] = movingPiece;
-        position[startSquare] = Piece.None;
+        Squares[targetSquare] = movingPiece;
+        Squares[startSquare] = Piece.None;
 
         // ZOBRIST UPDATE
-        currentZobristKey ^= Zobrist.pieceArray[movingPieceBitboardIndex, startSquare];
-        currentZobristKey ^= Zobrist.pieceArray[movingPieceBitboardIndex, targetSquare];
+        ZobristKey ^= Zobrist.pieceArray[movingPieceBitboardIndex, startSquare];
+        ZobristKey ^= Zobrist.pieceArray[movingPieceBitboardIndex, targetSquare];
 
         // PIECE SQUARE UPDATE
-        pieceSquares[movingPieceBitboardIndex].RemovePieceAtSquare(startSquare);
-        pieceSquares[movingPieceBitboardIndex].AddPieceAtSquare(targetSquare);
+        PieceSquares[movingPieceBitboardIndex].RemovePieceAtSquare(startSquare);
+        PieceSquares[movingPieceBitboardIndex].AddPieceAtSquare(targetSquare);
         
         // Promotion
         if (MoveFlag.IsPromotion(move.flag))
         {
-            int promotionPiece = MoveFlag.GetPromotionPiece(move.flag, isWhiteTurn);
+            int promotionPiece = MoveFlag.GetPromotionPiece(move.flag, Turn);
             int promotionBitboardIndex = Piece.GetBitboardIndex(promotionPiece);
 
-            position[targetSquare] = promotionPiece;
+            Squares[targetSquare] = promotionPiece;
 
             // ZOBRIST UPDATE: RE-CALCULATE PIECE KEY
-            currentZobristKey ^= Zobrist.pieceArray[movingPieceBitboardIndex, targetSquare];
-            currentZobristKey ^= Zobrist.pieceArray[promotionBitboardIndex, targetSquare];
+            ZobristKey ^= Zobrist.pieceArray[movingPieceBitboardIndex, targetSquare];
+            ZobristKey ^= Zobrist.pieceArray[promotionBitboardIndex, targetSquare];
 
             // PIECE SQUARE UPDATE
-            pieceSquares[promotionBitboardIndex].AddPieceAtSquare(targetSquare);
-            pieceSquares[movingPieceBitboardIndex].RemovePieceAtSquare(targetSquare);
+            PieceSquares[promotionBitboardIndex].AddPieceAtSquare(targetSquare);
+            PieceSquares[movingPieceBitboardIndex].RemovePieceAtSquare(targetSquare);
         }
 
 
         // ZOBRIST UPDATE: ENP SQUARE
-        currentZobristKey ^= Zobrist.enpassantArray[enpassantFile];
+        ZobristKey ^= Zobrist.enpassantArray[EnpassantFile];
 
         // ZOBRIST UPDATE: CASTLING RIGHTS
-        currentZobristKey ^= Zobrist.castlingArray[castlingData];
+        ZobristKey ^= Zobrist.castlingArray[CastlingData];
 
         // ZOBRIST TURN
-        currentZobristKey ^= Zobrist.sideToMove;
+        ZobristKey ^= Zobrist.sideToMove;
 
-        isWhiteTurn = !isWhiteTurn;
+        Turn = !Turn;
         
         StorePosition();
     }
 
     public void UnmakeMove(Move move)
     {
-        positionHistory[currentZobristKey]--;
+        PositionHistory[ZobristKey]--;
         
-        isWhiteTurn = !isWhiteTurn;
+        Turn = !Turn;
 
         // ZOBRIST TURN
-        currentZobristKey ^= Zobrist.sideToMove;
+        ZobristKey ^= Zobrist.sideToMove;
 
         // ZOBRIST REMOVE CASTLING
-        currentZobristKey ^= Zobrist.castlingArray[castlingData];
+        ZobristKey ^= Zobrist.castlingArray[CastlingData];
 
         // ZOBRIST REMOVE ENP.
-        currentZobristKey ^= Zobrist.enpassantArray[enpassantFile];
+        ZobristKey ^= Zobrist.enpassantArray[EnpassantFile];
 
         int startSquare = move.startSquare;
         int targetSquare = move.targetSquare;
 
-        int movingPiece = position[targetSquare];
+        int movingPiece = Squares[targetSquare];
         int movingPieceBitboardIndex = Piece.GetBitboardIndex(movingPiece);
 
-        position[startSquare] = movingPiece;
-        position[targetSquare] = Piece.None;
+        Squares[startSquare] = movingPiece;
+        Squares[targetSquare] = Piece.None;
 
         // ZOBRIST PIECE
-        currentZobristKey ^= Zobrist.pieceArray[movingPieceBitboardIndex, targetSquare];
-        currentZobristKey ^= Zobrist.pieceArray[movingPieceBitboardIndex, startSquare];
+        ZobristKey ^= Zobrist.pieceArray[movingPieceBitboardIndex, targetSquare];
+        ZobristKey ^= Zobrist.pieceArray[movingPieceBitboardIndex, startSquare];
         
         // PIECE SQUARE UPDATE
-        pieceSquares[movingPieceBitboardIndex].RemovePieceAtSquare(targetSquare);
-        pieceSquares[movingPieceBitboardIndex].AddPieceAtSquare(startSquare);
+        PieceSquares[movingPieceBitboardIndex].RemovePieceAtSquare(targetSquare);
+        PieceSquares[movingPieceBitboardIndex].AddPieceAtSquare(startSquare);
 
-        uint previousGameState = gameStateStack.Pop();
+        uint previousGameState = GameStack.Pop();
 
         // Restore Enp. Square
-        enpassantFile = (int) (previousGameState & enpassantFileMask) >> 9;
+        EnpassantFile = (int) (previousGameState & EnpassantFileMask) >> 9;
 
         // ZOBRIST ENP.
-        currentZobristKey ^= Zobrist.enpassantArray[enpassantFile];
+        ZobristKey ^= Zobrist.enpassantArray[EnpassantFile];
 
         // Restore Fifty-Clock
-        fiftyRuleHalfClock = (int) (previousGameState & fiftyCounterMask) >> 13;
+        FiftyRuleHalfClock = (int) (previousGameState & FiftyCounterMask) >> 13;
 
         // Restore Castling Rights
-        castlingData = (byte) (previousGameState & castlingMask);
+        CastlingData = (byte) (previousGameState & CastlingMask);
         
         // ZOBRIST CASTLING
-        currentZobristKey ^= Zobrist.castlingArray[castlingData];
+        ZobristKey ^= Zobrist.castlingArray[CastlingData];
 
-        int capturedPiece = (int) (previousGameState & capturedPieceMask) >> 4;
+        int capturedPiece = (int) (previousGameState & CapturedPieceMask) >> 4;
 
         // If capture
         if (capturedPiece != Piece.None)
         {
-            position[targetSquare] = capturedPiece;
+            Squares[targetSquare] = capturedPiece;
 
             int capturedPieceBitboardIndex = Piece.GetBitboardIndex(capturedPiece);
 
             // PIECE SQUARE UPDATE
-            pieceSquares[capturedPieceBitboardIndex].AddPieceAtSquare(targetSquare);
+            PieceSquares[capturedPieceBitboardIndex].AddPieceAtSquare(targetSquare);
 
             // ZOBRIST PIECE
-            currentZobristKey ^= Zobrist.pieceArray[capturedPieceBitboardIndex, targetSquare];
+            ZobristKey ^= Zobrist.pieceArray[capturedPieceBitboardIndex, targetSquare];
         }
 
         // If En-passant
         if (move.flag == MoveFlag.EnpassantCapture)
         {
-            int enpassantPawnSquare = Square.EnpassantFileToPawnSquare(enpassantFile, isWhiteTurn);
-            position[enpassantPawnSquare] = (isWhiteTurn ? Piece.Black : Piece.White) | Piece.Pawn;
+            int enpassantPawnSquare = global::Square.EnpassantAvailablePawnIndex(EnpassantFile, Turn);
+            Squares[enpassantPawnSquare] = (Turn ? Piece.Black : Piece.White) | Piece.Pawn;
 
-            int enemyPawnBitboardIndex = isWhiteTurn ? BitboardIndex.BlackPawn : BitboardIndex.WhitePawn;
+            int enemyPawnBitboardIndex = Turn ? BitboardIndex.BlackPawn : BitboardIndex.WhitePawn;
 
             // PIECE SQUARE UPDATE
-            pieceSquares[enemyPawnBitboardIndex].AddPieceAtSquare(enpassantPawnSquare);
+            PieceSquares[enemyPawnBitboardIndex].AddPieceAtSquare(enpassantPawnSquare);
 
             // ZOBRIST ENP. CAPTURE
-            currentZobristKey ^= Zobrist.pieceArray[enemyPawnBitboardIndex, enpassantPawnSquare];
+            ZobristKey ^= Zobrist.pieceArray[enemyPawnBitboardIndex, enpassantPawnSquare];
         }
 
         // If Castling
         if (move.flag == MoveFlag.Castling)
         {
-            if (isWhiteTurn)
+            if (Turn)
             {
                 if (targetSquare == startSquare + 2)
                 {
-                    position[targetSquare - 1] = Piece.None;
-                    position[targetSquare + 1] = Piece.White | Piece.Rook;
+                    Squares[targetSquare - 1] = Piece.None;
+                    Squares[targetSquare + 1] = Piece.White | Piece.Rook;
 
                     // ZOBRIST
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare - 1];
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare + 1];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare - 1];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare + 1];
 
                     // PIECE SQUARE UPDATE
-                    pieceSquares[BitboardIndex.WhiteRook].RemovePieceAtSquare(targetSquare - 1);
-                    pieceSquares[BitboardIndex.WhiteRook].AddPieceAtSquare(targetSquare + 1);
+                    PieceSquares[BitboardIndex.WhiteRook].RemovePieceAtSquare(targetSquare - 1);
+                    PieceSquares[BitboardIndex.WhiteRook].AddPieceAtSquare(targetSquare + 1);
                 }
                 else
                 {
-                    position[targetSquare + 1] = Piece.None;
-                    position[targetSquare - 2] = Piece.White | Piece.Rook;
+                    Squares[targetSquare + 1] = Piece.None;
+                    Squares[targetSquare - 2] = Piece.White | Piece.Rook;
 
                     // ZOBRIST
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare + 1];
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare - 2];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare + 1];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.WhiteRook, targetSquare - 2];
 
                     // PIECE SQUARE UPDATE
-                    pieceSquares[BitboardIndex.WhiteRook].RemovePieceAtSquare(targetSquare + 1);
-                    pieceSquares[BitboardIndex.WhiteRook].AddPieceAtSquare(targetSquare - 2);
+                    PieceSquares[BitboardIndex.WhiteRook].RemovePieceAtSquare(targetSquare + 1);
+                    PieceSquares[BitboardIndex.WhiteRook].AddPieceAtSquare(targetSquare - 2);
                 }
             }
             else
             {
                 if (targetSquare == startSquare + 2)
                 {
-                    position[targetSquare - 1] = Piece.None;
-                    position[targetSquare + 1] = Piece.Black | Piece.Rook;
+                    Squares[targetSquare - 1] = Piece.None;
+                    Squares[targetSquare + 1] = Piece.Black | Piece.Rook;
 
                     // ZOBRIST
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare - 1];
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare + 1];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare - 1];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare + 1];
 
                     // PIECE SQUARE UPDATE
-                    pieceSquares[BitboardIndex.BlackRook].RemovePieceAtSquare(targetSquare - 1);
-                    pieceSquares[BitboardIndex.BlackRook].AddPieceAtSquare(targetSquare + 1);
+                    PieceSquares[BitboardIndex.BlackRook].RemovePieceAtSquare(targetSquare - 1);
+                    PieceSquares[BitboardIndex.BlackRook].AddPieceAtSquare(targetSquare + 1);
                 }
                 else
                 {
-                    position[targetSquare + 1] = Piece.None;
-                    position[targetSquare - 2] = Piece.Black | Piece.Rook;
+                    Squares[targetSquare + 1] = Piece.None;
+                    Squares[targetSquare - 2] = Piece.Black | Piece.Rook;
 
                     // ZOBRIST
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare + 1];
-                    currentZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare - 2];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare + 1];
+                    ZobristKey ^= Zobrist.pieceArray[BitboardIndex.BlackRook, targetSquare - 2];
 
                     // PIECE SQUARE UPDATE
-                    pieceSquares[BitboardIndex.BlackRook].RemovePieceAtSquare(targetSquare + 1);
-                    pieceSquares[BitboardIndex.BlackRook].AddPieceAtSquare(targetSquare - 2);
+                    PieceSquares[BitboardIndex.BlackRook].RemovePieceAtSquare(targetSquare + 1);
+                    PieceSquares[BitboardIndex.BlackRook].AddPieceAtSquare(targetSquare - 2);
                 }
             }
         }
 
         if (MoveFlag.IsPromotion(move.flag)) // If Promotion
         {
-            position[startSquare] = (isWhiteTurn ? Piece.White : Piece.Black) | Piece.Pawn;
+            Squares[startSquare] = (Turn ? Piece.White : Piece.Black) | Piece.Pawn;
 
             // ZOBRIST
-            currentZobristKey ^= Zobrist.pieceArray[movingPieceBitboardIndex, startSquare];
-            currentZobristKey ^= Zobrist.pieceArray[isWhiteTurn ? BitboardIndex.WhitePawn : BitboardIndex.BlackPawn, startSquare];
+            ZobristKey ^= Zobrist.pieceArray[movingPieceBitboardIndex, startSquare];
+            ZobristKey ^= Zobrist.pieceArray[Turn ? BitboardIndex.WhitePawn : BitboardIndex.BlackPawn, startSquare];
 
             // PIECE SQUARE UPDATE
-            pieceSquares[movingPieceBitboardIndex].RemovePieceAtSquare(startSquare);
-            pieceSquares[isWhiteTurn ? BitboardIndex.WhitePawn : BitboardIndex.BlackPawn].AddPieceAtSquare(startSquare);
+            PieceSquares[movingPieceBitboardIndex].RemovePieceAtSquare(startSquare);
+            PieceSquares[Turn ? BitboardIndex.WhitePawn : BitboardIndex.BlackPawn].AddPieceAtSquare(startSquare);
         }
     }
     
@@ -650,13 +650,13 @@ public class Board
 
     void StorePosition()
     {
-        if (positionHistory.ContainsKey(currentZobristKey))
+        if (PositionHistory.ContainsKey(ZobristKey))
         {
-            positionHistory[currentZobristKey]++;
+            PositionHistory[ZobristKey]++;
         }
         else
         {
-            positionHistory.Add(currentZobristKey, 1);
+            PositionHistory.Add(ZobristKey, 1);
         }
     }
 
@@ -667,10 +667,10 @@ public class Board
             return;
         }
 
-        position[square] = piece;
+        Squares[square] = piece;
 
         // Add square; (Piece Squares)
-        pieceSquares[Piece.GetBitboardIndex(piece)].AddPieceAtSquare(square);
+        PieceSquares[Piece.GetBitboardIndex(piece)].AddPieceAtSquare(square);
     }
 
     public void LoadPositionFromFen(string fen)
@@ -679,15 +679,20 @@ public class Board
 
         for (int i = 0; i < 12; i++)
         {
-            if (pieceSquares[i] == null)
+            if (PieceSquares[i] == null)
             {
-                pieceSquares[i] = new PieceList();
+                PieceSquares[i] = new PieceList();
             }
-            pieceSquares[i].squares = new int[16]; // Resets piece squares to 0;
-            pieceSquares[i].count = 0;
+            PieceSquares[i].squares = new int[16]; // Resets piece squares to 0;
+            PieceSquares[i].count = 0;
         }
 
         string[] splitFen = fen.Split(' ');
+
+        if (splitFen.Length < 1)
+        {
+            return;
+        }
 
         string fenboard = splitFen[0];
         int file = 0;
@@ -708,21 +713,31 @@ public class Board
                 }
                 else
                 {
-                    PlaceSinglePiece(Piece.charToPiece[character], Square.FileRankToSquareIndex(file, rank));
+                    PlaceSinglePiece(Piece.charToPiece[character], Square.Index(file, rank));
                     file++;
                 }
             }
         }
 
+        if (splitFen.Length < 2)
+        {
+            return;
+        }
+
         // Turn;
-        isWhiteTurn = splitFen[1] == "w";
+        Turn = splitFen[1] == "w";
+
+        if (splitFen.Length < 3)
+        {
+            return;
+        }
 
         // Castle;
         string castleFen = splitFen[2];
-        isWhiteKingsideCastle = false;
-        isWhiteQueensideCastle = false;
-        isBlackKingsideCastle = false;
-        isBlackQueensideCastle = false;
+        WKCastle = false;
+        WQCastle = false;
+        BKCastle = false;
+        BQCastle = false;
 
         if (castleFen == "-")
         {
@@ -732,60 +747,71 @@ public class Board
         {
             if (castleFen.Contains('K'))
             {
-                isWhiteKingsideCastle = true;
+                WKCastle = true;
             }
             if (castleFen.Contains('Q'))
             {
-                isWhiteQueensideCastle = true;
+                WQCastle = true;
             }
             if (castleFen.Contains('k'))
             {
-                isBlackKingsideCastle = true;
+                BKCastle = true;
             }
             if (castleFen.Contains('q'))
             {
-                isBlackQueensideCastle = true;
+                BQCastle = true;
             }
+        }
+
+        if (splitFen.Length < 4)
+        {
+            return;
         }
     
         // En passant square;
         string enpassantFen = splitFen[3];
-        enpassantFile = 8; // Invalid Index;
+        EnpassantFile = 8; // Invalid Index;
         if (enpassantFen == "-")
         {
 
         }
         else
         {
-            enpassantFile = Square.SquareNameToIndex(enpassantFen) % 8;
+            EnpassantFile = Square.Index(enpassantFen) % 8;
+        }
+
+        if (splitFen.Length < 5)
+        {
+            return;
         }
 
         // Fifty-counter;
-        fiftyRuleHalfClock = splitFen.Length >= 5 && char.IsDigit(splitFen[4].ToCharArray()[0]) ? Convert.ToInt32(splitFen[4]) : 0;
+        FiftyRuleHalfClock = Convert.ToInt32(splitFen[4]);
 
-        currentZobristKey = Zobrist.GetZobristKey(this);
-        positionHistory[currentZobristKey] = 1;
+        ZobristKey = Zobrist.GetZobristKey(this);
+        PositionHistory[ZobristKey] = 1;
 
         AfterLoadingPosition();
     }
 
     public void PrintBoardAndMoves()
     {
-        if (ProgramSettings.useLargeBoard)
-        {
-            PrintLargeBoard();
-        }
-        else
-        {
-            PrintSmallBoard();
-        }
+        // if (ProgramSettings.useLargeBoard)
+        // {
+        //     PrintLargeBoard();
+        // }
+        // else
+        // {
+        //     PrintSmallBoard();
+        // }
+        PrintLargeBoard();
         PrintCastlingData();
-        Move.PrintMoveList(currentLegalMoves);
+        Move.PrintMoveList(LegalMoves);
     }
 
     public void PrintCastlingData()
     {
-        Console.WriteLine("Castling // " + (isWhiteKingsideCastle ? "WK " : " ") + (isWhiteQueensideCastle ? "WQ " : " ") + (isBlackKingsideCastle ? "BK " : " ") + (isBlackQueensideCastle ? "BQ " : ""));
+        Console.WriteLine("Castling // " + (WKCastle ? "WK " : " ") + (WQCastle ? "WQ " : " ") + (BKCastle ? "BK " : " ") + (BQCastle ? "BQ " : ""));
     }
 
 

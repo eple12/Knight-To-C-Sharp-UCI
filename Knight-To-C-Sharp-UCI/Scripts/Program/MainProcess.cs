@@ -10,9 +10,7 @@ public static class MainProcess
 
     public static int CommandUpdate()
     {
-        int cmdResult = RecieveCommands();
-
-        return cmdResult;
+        return RecieveCommands();
     }
 
     public static int RecieveCommands()
@@ -23,10 +21,8 @@ public static class MainProcess
         {
             return 0;
         }
-
-        int commandResult = Command.RecieveCommand(command);
-
-        return commandResult;
+        
+        return Command.RecieveCommand(command);
     }
 
     static void PreCalculate()
@@ -34,6 +30,9 @@ public static class MainProcess
         Zobrist.GenerateZobristTable();
         PreComputedData.Initialize();
         
-        board.LoadPositionFromFen(Board.initialFen);
+        board.LoadPositionFromFen(Board.InitialFen);
+
+        Book.GenerateTable();
+        
     }
 }
