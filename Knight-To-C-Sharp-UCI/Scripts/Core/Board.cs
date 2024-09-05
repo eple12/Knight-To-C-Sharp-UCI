@@ -662,8 +662,6 @@ public class Board
         }
     }
 
-    // hello this is a random modification i make to test this thing
-
     void PlaceSinglePiece(int piece, int square)
     {
         if (piece == Piece.None)
