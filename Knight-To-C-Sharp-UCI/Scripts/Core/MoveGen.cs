@@ -1,47 +1,51 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public static class MoveGen
+public class MoveGenerator
 {
     static readonly int[] directionOffsets = {1, 8, -1, -8, 9, 7, -9, -7};
 
     // VARIABLES USED IN MOVE GENERATION
-    static List<Move> moves = new List<Move>();
+    List<Move> moves = new List<Move>();
 
-    static bool genQuietMoves;
+    bool genQuietMoves;
 
-    static int[] position;
-    static Board board;
-    static bool isWhiteTurn;
-    static int friendlyColor;
-    static int enemyColor;
-    static int friendlyKingSquare;
+    int[] position;
+    Board board;
+    bool isWhiteTurn;
+    int friendlyColor;
+    int enemyColor;
+    int friendlyKingSquare;
 
-    static ulong enemyAttackMap;
-    static ulong enemyAttackMapNoPawns;
-    static ulong enemySlidingAttackMap;
-    static ulong enemyKnightAttackMap;
-    static ulong enemyPawnAttackMap;
+    ulong enemyAttackMap;
+    ulong enemyAttackMapNoPawns;
+    ulong enemySlidingAttackMap;
+    ulong enemyKnightAttackMap;
+    ulong enemyPawnAttackMap;
 
-    static bool pinsExistInPosition;
-    static ulong pinRayBitmask;
+    bool pinsExistInPosition;
+    ulong pinRayBitmask;
 
-    static ulong checkRayBitmask;
-    static bool inCheck;
-    static bool inDoubleCheck;
+    ulong checkRayBitmask;
+    bool inCheck;
+    bool inDoubleCheck;
 
-    static bool kingsideCastling;
-    static bool queensideCastling;
+    bool kingsideCastling;
+    bool queensideCastling;
 
     // Bitboard Index
-    static int enemyBishopIndex;
-    static int enemyRookIndex;
-    static int enemyQueenIndex;
+    int enemyBishopIndex;
+    int enemyRookIndex;
+    int enemyQueenIndex;
     
-
-    public static List<Move> GenerateMoves(Board _board, bool genOnlyCaptures = false)
+    public MoveGenerator(Board board)
     {
-        board = _board;
+        position = new int[64];
+        this.board = board;
+    }
+
+    public List<Move> GenerateMoves(bool genOnlyCaptures = false)
+    {
         genQuietMoves = !genOnlyCaptures;
 
         Initialize();
@@ -63,7 +67,7 @@ public static class MoveGen
         return moves;
     }
 
-    static void Initialize()
+    void Initialize()
     {
         moves = new List<Move>();
 
@@ -98,22 +102,22 @@ public static class MoveGen
     }
 
     // Note: This will only return correct value only after GenerateMoves() call.
-    public static bool InCheck()
+    public bool InCheck()
     {
         return inCheck;
     }
 
-    public static ulong PawnAttackMap()
+    public ulong PawnAttackMap()
     {
         return enemyPawnAttackMap;
     }
 
-    public static ulong AttackMapNoPawn()
+    public ulong AttackMapNoPawn()
     {
         return enemyAttackMapNoPawns;
     }
 
-    static void GenerateSlidingMoves()
+    void GenerateSlidingMoves()
     {
         PieceList rooks = board.PieceSquares[isWhiteTurn ? BitboardIndex.WhiteRook : BitboardIndex.BlackRook];
         for (int i = 0; i < rooks.count; i++) {
@@ -131,7 +135,7 @@ public static class MoveGen
         }
     }
 
-    static void GenerateSingleSlider(in int startSquare, in int startDirIndex, in int endDirIndex)
+    void GenerateSingleSlider(in int startSquare, in int startDirIndex, in int endDirIndex)
     {
         bool isPinned = IsPinned(startSquare);
 
@@ -191,7 +195,7 @@ public static class MoveGen
         }
     }
     
-    static void GenerateKingMoves()
+    void GenerateKingMoves()
     {
         for (int index = 0; index < PreComputedData.kingSquares[friendlyKingSquare].Count; index++)
         {
@@ -244,7 +248,7 @@ public static class MoveGen
         }
     }
 
-    static void GenerateKnightMoves()
+    void GenerateKnightMoves()
     {
         PieceList knights = board.PieceSquares[isWhiteTurn ? BitboardIndex.WhiteKnight : BitboardIndex.BlackKnight];
 
@@ -282,7 +286,7 @@ public static class MoveGen
         }
     }
 
-    static void GeneratePawnMoves()
+    void GeneratePawnMoves()
     {
         PieceList pawns = board.PieceSquares[isWhiteTurn ? BitboardIndex.WhitePawn : BitboardIndex.BlackPawn];
 
@@ -409,7 +413,7 @@ public static class MoveGen
         }
     }
 
-    static void GeneratePromotionMoves(int startSquare, int targetSquare)
+    void GeneratePromotionMoves(int startSquare, int targetSquare)
     {
         // Generate promotion moves
         // Promote to: Queen, Rook, Knight, Bishop
@@ -420,7 +424,7 @@ public static class MoveGen
     }
 
 
-    static void CalculateAttackData()
+    void CalculateAttackData()
     {
         CalculateSlidingAttackMap();
 
@@ -540,7 +544,7 @@ public static class MoveGen
         enemyAttackMap = enemyAttackMapNoPawns | enemyPawnAttackMap;
     }
 
-    static void CalculateSlidingAttackMap()
+    void CalculateSlidingAttackMap()
     {
         PieceList enemyRooks = board.PieceSquares[enemyRookIndex];
         PieceList enemyBishops = board.PieceSquares[enemyBishopIndex];
@@ -560,7 +564,7 @@ public static class MoveGen
         }
     }
 
-    static void AddSlidingAttackMap(int startSquare, int startDirIndex, int endDirIndex)
+    void AddSlidingAttackMap(int startSquare, int startDirIndex, int endDirIndex)
     {
         for (int dirIndex = startDirIndex; dirIndex < endDirIndex; dirIndex++)
         {
@@ -587,24 +591,24 @@ public static class MoveGen
         }
     }
 
-    static bool IsPinned(int square)
+    bool IsPinned(int square)
     {
         return pinsExistInPosition && (pinRayBitmask & (ulong) 1 << square) != 0;
     }
 
-    static bool SquareIsInCheckRay (int square)
+    bool SquareIsInCheckRay (int square)
     {
         return inCheck && (checkRayBitmask & (ulong) 1 << square) != 0;
     }
 
-    static bool IsMovingAlongRay(int dirOffset, int startSquare, int targetSquare)
+    bool IsMovingAlongRay(int dirOffset, int startSquare, int targetSquare)
     {
         int moveDir = PreComputedData.directionLookup[targetSquare - startSquare + 63];
         
 		return dirOffset == moveDir || -dirOffset == moveDir;
     }
 
-    static bool IsHorizontalChecked()
+    bool IsHorizontalChecked()
     {
         for (int n = 0; n < PreComputedData.numSquaresToEdge[friendlyKingSquare, 0]; n++)
         {

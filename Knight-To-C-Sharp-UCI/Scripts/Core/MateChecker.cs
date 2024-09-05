@@ -7,7 +7,7 @@ public static class MateChecker
     {
         if (moves.Count == 0)
         {
-            if (MoveGen.InCheck())
+            if (board.MoveGen.InCheck())
             {
                 // Checkmate
                 return MateState.Checkmate;

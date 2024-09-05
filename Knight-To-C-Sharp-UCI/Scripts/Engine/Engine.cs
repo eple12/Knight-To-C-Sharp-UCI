@@ -3,6 +3,7 @@ public class Engine
 {
     // Materials
     Board board;
+    MoveGenerator MoveGen;
     TranspositionTable tt;
     MoveOrder moveOrder;
     EngineSettings settings;
@@ -23,6 +24,7 @@ public class Engine
     public Engine(Board _board, EngineSettings _settings)
     {
         board = _board;
+        MoveGen = board.MoveGen;
         settings = _settings;
 
         evaluation = new Evaluation(this);
@@ -38,7 +40,7 @@ public class Engine
 
     public void StartSearch(int maxDepth, Action? onSearchComplete = null)
     {
-        List<Move> preSearchMoves = MoveGen.GenerateMoves(board);
+        List<Move> preSearchMoves = MoveGen.GenerateMoves();
         bestMove = preSearchMoves.Count == 0 ? Move.NullMove : preSearchMoves[0];
 
         bestMoveLastIteration = Move.NullMove;
@@ -146,7 +148,7 @@ public class Engine
             return settings.useQSearch ? QuiescenceSearch(alpha, beta) : evaluation.Evaluate(board);
         }
 
-        List<Move> legalMoves = MoveGen.GenerateMoves(board);
+        List<Move> legalMoves = MoveGen.GenerateMoves();
 
         MateChecker.MateState mateState = MateChecker.GetPositionState(board, legalMoves);
         if (mateState != MateChecker.MateState.None)
@@ -225,7 +227,7 @@ public class Engine
             alpha = standPat;
         }
 
-        List<Move> moves = MoveGen.GenerateMoves(board, true);
+        List<Move> moves = MoveGen.GenerateMoves(true);
         moveOrder.GetOrderedList(moves);
 
         foreach (Move move in moves)

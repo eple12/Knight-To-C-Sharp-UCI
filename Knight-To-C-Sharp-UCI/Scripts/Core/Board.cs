@@ -2,6 +2,7 @@
 public class Board
 {
     public bool Loaded;
+    public MoveGenerator MoveGen;
 
     public int[] Squares;
     public bool Turn;
@@ -114,6 +115,7 @@ public class Board
 
     public Board()
     {
+        MoveGen = new MoveGenerator(this);
         Loaded = false;
 
         Squares = new int[64];
@@ -170,7 +172,7 @@ public class Board
 
     public void AfterLoadingPosition()
     {
-        LegalMoves = MoveGen.GenerateMoves(this);
+        LegalMoves = MoveGen.GenerateMoves();
         Loaded = true;
     }
 
@@ -198,8 +200,8 @@ public class Board
             return;
         }
 
-        int startSquare = global::Square.Index(move.Substring(0, 2));
-        int targetSquare = global::Square.Index(move.Substring(2, 2));
+        int startSquare = Square.Index(move.Substring(0, 2));
+        int targetSquare = Square.Index(move.Substring(2, 2));
 
         Move m = Move.NullMove;
         foreach (var item in LegalMoves)
@@ -221,14 +223,14 @@ public class Board
         }
 
         MakeMove(m);
-        LegalMoves = MoveGen.GenerateMoves(this);
+        LegalMoves = MoveGen.GenerateMoves();
         // PrintBoardAndMoves();
     }
 
     public void MakeConsoleMove(Move move)
     {
         MakeMove(move);
-        LegalMoves = MoveGen.GenerateMoves(this);
+        LegalMoves = MoveGen.GenerateMoves();
         // PrintBoardAndMoves();
     }
 
@@ -629,7 +631,7 @@ public class Board
         }
 
         ulong nodes = 0;
-        List<Move> legalMoves = MoveGen.GenerateMoves(this);
+        List<Move> legalMoves = MoveGen.GenerateMoves();
         
         if (depth == 1)
         {

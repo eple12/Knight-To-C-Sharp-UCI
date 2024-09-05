@@ -74,18 +74,18 @@ public class MoveOrder
             else
             {
                 // Moving to a square attacked by an enemy pawn
-                if (Bitboard.Contains(MoveGen.PawnAttackMap(), move.targetSquare))
+                if (Bitboard.Contains(board.MoveGen.PawnAttackMap(), move.targetSquare))
                 {
                     score -= squareAttackedByPawnPenalty;
                 }
             }
 
-            if (Bitboard.Contains(MoveGen.AttackMapNoPawn(), move.targetSquare))
+            if (Bitboard.Contains(board.MoveGen.AttackMapNoPawn(), move.targetSquare))
             {
                 score -= Evaluation.GetAbsPieceValue(board.Squares[move.startSquare]) / 2;
             }
 
-            if (Bitboard.Contains(MoveGen.AttackMapNoPawn(), move.startSquare))
+            if (Bitboard.Contains(board.MoveGen.AttackMapNoPawn(), move.startSquare))
             {
                 score += Evaluation.GetAbsPieceValue(board.Squares[move.startSquare]);
             }
