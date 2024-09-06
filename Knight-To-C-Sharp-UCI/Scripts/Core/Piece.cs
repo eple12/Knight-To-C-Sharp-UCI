@@ -30,7 +30,7 @@ public static class Piece
         {'r', Black | Rook}, {'q', Black | Queen}, {'k', Black | King}
     };
 
-    public static string bitboardIndexToChar = "PNBRQKpnbrqkWB ";
+    public static string PieceIndexToChar = "PNBRQKpnbrqkWB ";
     
     public static bool IsColor(int piece, int color)
     {
@@ -47,11 +47,11 @@ public static class Piece
         return piece & typeMask;
     }
 
-    public static int GetBitboardIndex(int piece)
+    public static int GetPieceIndex(int piece)
     {
         if (piece == None)
         {
-            return BitboardIndex.Invalid;
+            return PieceIndex.Invalid;
         }
         return GetType(piece) - 1 + (IsWhitePiece(piece) ? 0 : 6);
     }
@@ -70,6 +70,25 @@ public static class Piece
 
     public static char PieceToChar(int piece)
     {
-        return bitboardIndexToChar[GetBitboardIndex(piece)];
+        return PieceIndexToChar[GetPieceIndex(piece)];
     }
+}
+
+public struct PieceIndex{
+    public const int WhitePawn = 0; 
+    public const int WhiteKnight = 1; 
+    public const int WhiteBishop = 2; 
+    public const int WhiteRook = 3;
+    public const int WhiteQueen = 4;
+    public const int WhiteKing = 5;
+    public const int BlackPawn = 6;
+    public const int BlackKnight = 7; 
+    public const int BlackBishop = 8; 
+    public const int BlackRook = 9;
+    public const int BlackQueen = 10;
+    public const int BlackKing = 11;
+    public const int WhiteAll = 12;
+    public const int BlackAll = 13;
+
+    public const int Invalid = 14;
 }

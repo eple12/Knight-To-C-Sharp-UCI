@@ -56,17 +56,17 @@ public static class MateChecker
 
     public static bool IsInsufficientMaterial(Board board)
     {
-        int wq = board.PieceSquares[BitboardIndex.WhiteQueen].count;
-        int wr = board.PieceSquares[BitboardIndex.WhiteRook].count;
-        PieceList wb = board.PieceSquares[BitboardIndex.WhiteBishop];
-        int wn = board.PieceSquares[BitboardIndex.WhiteKnight].count;
-        int wp = board.PieceSquares[BitboardIndex.WhitePawn].count;
+        int wq = board.PieceSquares[PieceIndex.WhiteQueen].count;
+        int wr = board.PieceSquares[PieceIndex.WhiteRook].count;
+        PieceList wb = board.PieceSquares[PieceIndex.WhiteBishop];
+        int wn = board.PieceSquares[PieceIndex.WhiteKnight].count;
+        int wp = board.PieceSquares[PieceIndex.WhitePawn].count;
 
-        int bq = board.PieceSquares[BitboardIndex.BlackQueen].count;
-        int br = board.PieceSquares[BitboardIndex.BlackRook].count;
-        PieceList bb = board.PieceSquares[BitboardIndex.BlackBishop];
-        int bn = board.PieceSquares[BitboardIndex.BlackKnight].count;
-        int bp = board.PieceSquares[BitboardIndex.BlackPawn].count;
+        int bq = board.PieceSquares[PieceIndex.BlackQueen].count;
+        int br = board.PieceSquares[PieceIndex.BlackRook].count;
+        PieceList bb = board.PieceSquares[PieceIndex.BlackBishop];
+        int bn = board.PieceSquares[PieceIndex.BlackKnight].count;
+        int bp = board.PieceSquares[PieceIndex.BlackPawn].count;
 
         if (wp != 0 || wq != 0 || wr != 0 || bp != 0 || bq != 0 || br != 0)
         {

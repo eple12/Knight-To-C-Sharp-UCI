@@ -149,7 +149,7 @@ public class Evaluation
     int PieceSquareTable(double endgameWeight = 0)
     {
         int value = 0;
-        for (int i = BitboardIndex.WhiteKnight; i <= BitboardIndex.WhiteQueen; i++) // Knight ~ Queen
+        for (int i = PieceIndex.WhiteKnight; i <= PieceIndex.WhiteQueen; i++) // Knight ~ Queen
         {
             // White
             for (int j = 0; j < board.PieceSquares[i].count; j++)
@@ -165,33 +165,33 @@ public class Evaluation
 
         // Pawns' and Kings' middle and endgame table
         // Pawns
-        for (int j = 0; j < board.PieceSquares[BitboardIndex.WhitePawn].count; j++)
+        for (int j = 0; j < board.PieceSquares[PieceIndex.WhitePawn].count; j++)
         {
-            int pawnSquare = Square.FlipIndex(board.PieceSquares[BitboardIndex.WhitePawn].squares[j]);
+            int pawnSquare = Square.FlipIndex(board.PieceSquares[PieceIndex.WhitePawn].squares[j]);
 
-            int pawnMid = PieceSquareTables[BitboardIndex.WhitePawn][pawnSquare];
-            int pawnEnd = PieceSquareTables[BitboardIndex.WhiteKing + 1][pawnSquare];
+            int pawnMid = PieceSquareTables[PieceIndex.WhitePawn][pawnSquare];
+            int pawnEnd = PieceSquareTables[PieceIndex.WhiteKing + 1][pawnSquare];
 
             value += (int) (pawnMid + (pawnEnd - pawnMid) * endgameWeight);
         }
-        for (int j = 0; j < board.PieceSquares[BitboardIndex.BlackPawn].count; j++)
+        for (int j = 0; j < board.PieceSquares[PieceIndex.BlackPawn].count; j++)
         {
-            int pawnSquare = board.PieceSquares[BitboardIndex.BlackPawn].squares[j];
+            int pawnSquare = board.PieceSquares[PieceIndex.BlackPawn].squares[j];
 
-            int pawnMid = PieceSquareTables[BitboardIndex.WhitePawn][pawnSquare];
-            int pawnEnd = PieceSquareTables[BitboardIndex.WhiteKing + 1][pawnSquare];
+            int pawnMid = PieceSquareTables[PieceIndex.WhitePawn][pawnSquare];
+            int pawnEnd = PieceSquareTables[PieceIndex.WhiteKing + 1][pawnSquare];
 
             value -= (int) (pawnMid + (pawnEnd - pawnMid) * endgameWeight);
         }
         
         // Kings
-        int whiteKingSquare = Square.FlipIndex(board.PieceSquares[BitboardIndex.WhiteKing].squares[0]);
-        int blackKingSquare = board.PieceSquares[BitboardIndex.BlackKing].squares[0];
+        int whiteKingSquare = Square.FlipIndex(board.PieceSquares[PieceIndex.WhiteKing].squares[0]);
+        int blackKingSquare = board.PieceSquares[PieceIndex.BlackKing].squares[0];
 
-        int whiteKingMid = PieceSquareTables[BitboardIndex.WhiteKing][whiteKingSquare];
-        int blackKingMid = PieceSquareTables[BitboardIndex.WhiteKing][blackKingSquare];
-        int whiteKingEnd = PieceSquareTables[BitboardIndex.WhiteKing + 2][whiteKingSquare];
-        int blackKingEnd = PieceSquareTables[BitboardIndex.WhiteKing + 2][blackKingSquare];
+        int whiteKingMid = PieceSquareTables[PieceIndex.WhiteKing][whiteKingSquare];
+        int blackKingMid = PieceSquareTables[PieceIndex.WhiteKing][blackKingSquare];
+        int whiteKingEnd = PieceSquareTables[PieceIndex.WhiteKing + 2][whiteKingSquare];
+        int blackKingEnd = PieceSquareTables[PieceIndex.WhiteKing + 2][blackKingSquare];
 
         value += (int) (whiteKingMid + (whiteKingEnd - whiteKingMid) * endgameWeight);
         value -= (int) (blackKingMid + (blackKingEnd - blackKingMid) * endgameWeight);
@@ -232,16 +232,16 @@ public class Evaluation
     // Endgame Weight
     public double GetEndgameWeight()
     {
-        int numQueens = board.PieceSquares[BitboardIndex.WhiteQueen].count + 
-                        board.PieceSquares[BitboardIndex.BlackQueen].count;
-        int numRooks = board.PieceSquares[BitboardIndex.WhiteRook].count + 
-                        board.PieceSquares[BitboardIndex.BlackRook].count;
-        int numBishops = board.PieceSquares[BitboardIndex.WhiteBishop].count + 
-                        board.PieceSquares[BitboardIndex.BlackBishop].count;
-        int numKnights = board.PieceSquares[BitboardIndex.WhiteKnight].count + 
-                        board.PieceSquares[BitboardIndex.BlackKnight].count;
-        int numPawns = board.PieceSquares[BitboardIndex.WhitePawn].count + 
-                        board.PieceSquares[BitboardIndex.BlackPawn].count;
+        int numQueens = board.PieceSquares[PieceIndex.WhiteQueen].count + 
+                        board.PieceSquares[PieceIndex.BlackQueen].count;
+        int numRooks = board.PieceSquares[PieceIndex.WhiteRook].count + 
+                        board.PieceSquares[PieceIndex.BlackRook].count;
+        int numBishops = board.PieceSquares[PieceIndex.WhiteBishop].count + 
+                        board.PieceSquares[PieceIndex.BlackBishop].count;
+        int numKnights = board.PieceSquares[PieceIndex.WhiteKnight].count + 
+                        board.PieceSquares[PieceIndex.BlackKnight].count;
+        int numPawns = board.PieceSquares[PieceIndex.WhitePawn].count + 
+                        board.PieceSquares[PieceIndex.BlackPawn].count;
 
         int totalWeight = numQueens * QueenEndgameWeight + numRooks * RookEndgameWeight + numBishops * BishopEndgameWeight + numKnights * KnightEndgameWeight + numPawns * PawnEndgameWeight;
 

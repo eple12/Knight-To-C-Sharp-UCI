@@ -1,26 +1,4 @@
 
-using System;
-using System.Collections.Generic;
-
-public struct BitboardIndex{
-        public const int WhitePawn = 0; 
-        public const int WhiteKnight = 1; 
-        public const int WhiteBishop = 2; 
-        public const int WhiteRook = 3;
-        public const int WhiteQueen = 4;
-        public const int WhiteKing = 5;
-        public const int BlackPawn = 6;
-        public const int BlackKnight = 7; 
-        public const int BlackBishop = 8; 
-        public const int BlackRook = 9;
-        public const int BlackQueen = 10;
-        public const int BlackKing = 11;
-        public const int WhiteAll = 12;
-        public const int BlackAll = 13;
-
-        public const int Invalid = 14;
-    }
-
 public static class Bitboard
 {
 
@@ -30,16 +8,16 @@ public static class Bitboard
         {
             return;
         }
-        bitboard[Piece.GetBitboardIndex(piece)] |= (ulong) 1 << index;
+        bitboard[Piece.GetPieceIndex(piece)] |= (ulong) 1 << index;
 
         
         if (Piece.IsWhitePiece(piece))
         {
-            bitboard[BitboardIndex.WhiteAll] |= (ulong)1 << index;
+            bitboard[PieceIndex.WhiteAll] |= (ulong)1 << index;
         }
         else
         {
-            bitboard[BitboardIndex.BlackAll] |= (ulong)1 << index;
+            bitboard[PieceIndex.BlackAll] |= (ulong)1 << index;
         }
     }
 
@@ -49,15 +27,15 @@ public static class Bitboard
         {
             return;
         }
-        bitboard[Piece.GetBitboardIndex(piece)] &= ~((ulong) 1 << index);
+        bitboard[Piece.GetPieceIndex(piece)] &= ~((ulong) 1 << index);
 
         if (Piece.IsWhitePiece(piece))
         {
-            bitboard[BitboardIndex.WhiteAll] &= ~((ulong) 1 << index);
+            bitboard[PieceIndex.WhiteAll] &= ~((ulong) 1 << index);
         }
         else
         {
-            bitboard[BitboardIndex.BlackAll] &= ~((ulong) 1 << index);
+            bitboard[PieceIndex.BlackAll] &= ~((ulong) 1 << index);
         }
     }
 
@@ -68,7 +46,7 @@ public static class Bitboard
 
     public static bool IsAllBitboardEmpty(ulong[] bitboard, int index)
     {
-        return ((bitboard[BitboardIndex.WhiteAll] | bitboard[BitboardIndex.BlackAll]) 
+        return ((bitboard[PieceIndex.WhiteAll] | bitboard[PieceIndex.BlackAll]) 
                 & ((ulong) 1 << index)) == 0;
     }
 
@@ -123,7 +101,7 @@ public static class Bitboard
     {
         ulong indexMask = (ulong) 1 << index;
 
-        if ((bitboards[BitboardIndex.WhiteAll] & indexMask) != 0)
+        if ((bitboards[PieceIndex.WhiteAll] & indexMask) != 0)
         {
             for (int i = 0; i < 6; i++)
             {
@@ -133,7 +111,7 @@ public static class Bitboard
                 }
             }
         }
-        else if ((bitboards[BitboardIndex.BlackAll] & indexMask) != 0)
+        else if ((bitboards[PieceIndex.BlackAll] & indexMask) != 0)
         {
             for (int i = 6; i < 12; i++)
             {
@@ -143,7 +121,7 @@ public static class Bitboard
                 }
             }
         }
-        return BitboardIndex.Invalid; // Returns invalid BitboardIndex
+        return PieceIndex.Invalid; // Returns invalid BitboardIndex
     }
 
 

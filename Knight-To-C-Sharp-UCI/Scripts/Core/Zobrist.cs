@@ -37,9 +37,9 @@ public static class Zobrist
         for (int squareIndex = 0; squareIndex < 64; squareIndex++)
         {
             // Returns invalid BitboardIndex if failed to find piece
-            int pieceBitboardIndex = Piece.GetBitboardIndex(board.Squares[squareIndex]);
+            int pieceBitboardIndex = Piece.GetPieceIndex(board.Squares[squareIndex]);
 
-            if (pieceBitboardIndex != BitboardIndex.Invalid)
+            if (pieceBitboardIndex != PieceIndex.Invalid)
             {
                 zobristKey ^= pieceArray[pieceBitboardIndex, squareIndex];
             }
