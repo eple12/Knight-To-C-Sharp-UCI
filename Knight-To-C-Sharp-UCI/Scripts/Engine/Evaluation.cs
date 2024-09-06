@@ -100,7 +100,7 @@ public class Evaluation
         -30, -25,   0,   0,   0,   0, -25, -30,
         -50, -20, -30, -30, -30, -30, -10, -50
     };
-    static readonly int[][] PieceSquareTables = {PawnSquareTable, KnightSquareTable, BishopSquareTable, RookSquareTable, QueenSquareTable, KingMidSquareTable, PawnEndSquareTable, KingEndSquareTable};
+    static readonly int[][] PieceSquareTables = {KnightSquareTable, BishopSquareTable, RookSquareTable, QueenSquareTable};
 
     // Endgame weight constants
     const int QueenEndgameWeight = 115;
@@ -149,17 +149,17 @@ public class Evaluation
     int PieceSquareTable(double endgameWeight = 0)
     {
         int value = 0;
-        for (int i = PieceIndex.WhiteKnight; i <= PieceIndex.WhiteQueen; i++) // Knight ~ Queen
+        for (int i = 0; i < 4; i++) // Knight ~ Queen
         {
             // White
-            for (int j = 0; j < board.PieceSquares[i].count; j++)
+            for (int j = 0; j < board.PieceSquares[i + 1].count; j++)
             {
                 value += PieceSquareTables[i][Square.FlipIndex(board.PieceSquares[i].squares[j])];
             }
             // Black
-            for (int j = 0; j < board.PieceSquares[i + 6].count; j++)
+            for (int j = 0; j < board.PieceSquares[i + 7].count; j++)
             {
-                value -= PieceSquareTables[i][board.PieceSquares[i + 6].squares[j]];
+                value -= PieceSquareTables[i][board.PieceSquares[i + 7].squares[j]];
             }
         }
 
@@ -169,8 +169,8 @@ public class Evaluation
         {
             int pawnSquare = Square.FlipIndex(board.PieceSquares[PieceIndex.WhitePawn].squares[j]);
 
-            int pawnMid = PieceSquareTables[PieceIndex.WhitePawn][pawnSquare];
-            int pawnEnd = PieceSquareTables[PieceIndex.WhiteKing + 1][pawnSquare];
+            int pawnMid = PawnSquareTable[pawnSquare];
+            int pawnEnd = PawnEndSquareTable[pawnSquare];
 
             value += (int) (pawnMid + (pawnEnd - pawnMid) * endgameWeight);
         }
@@ -178,8 +178,8 @@ public class Evaluation
         {
             int pawnSquare = board.PieceSquares[PieceIndex.BlackPawn].squares[j];
 
-            int pawnMid = PieceSquareTables[PieceIndex.WhitePawn][pawnSquare];
-            int pawnEnd = PieceSquareTables[PieceIndex.WhiteKing + 1][pawnSquare];
+            int pawnMid = PawnSquareTable[pawnSquare];
+            int pawnEnd = PawnEndSquareTable[pawnSquare];
 
             value -= (int) (pawnMid + (pawnEnd - pawnMid) * endgameWeight);
         }
@@ -188,10 +188,10 @@ public class Evaluation
         int whiteKingSquare = Square.FlipIndex(board.PieceSquares[PieceIndex.WhiteKing].squares[0]);
         int blackKingSquare = board.PieceSquares[PieceIndex.BlackKing].squares[0];
 
-        int whiteKingMid = PieceSquareTables[PieceIndex.WhiteKing][whiteKingSquare];
-        int blackKingMid = PieceSquareTables[PieceIndex.WhiteKing][blackKingSquare];
-        int whiteKingEnd = PieceSquareTables[PieceIndex.WhiteKing + 2][whiteKingSquare];
-        int blackKingEnd = PieceSquareTables[PieceIndex.WhiteKing + 2][blackKingSquare];
+        int whiteKingMid = KingMidSquareTable[whiteKingSquare];
+        int blackKingMid = KingMidSquareTable[blackKingSquare];
+        int whiteKingEnd = KingEndSquareTable[whiteKingSquare];
+        int blackKingEnd = KingEndSquareTable[blackKingSquare];
 
         value += (int) (whiteKingMid + (whiteKingEnd - whiteKingMid) * endgameWeight);
         value -= (int) (blackKingMid + (blackKingEnd - blackKingMid) * endgameWeight);
