@@ -10,14 +10,14 @@ public class PieceList
 
     }
 
-    public void AddPieceAtSquare(int square)
+    public void Add(int square)
     {
 		squares[count] = square;
 		map[square] = count;
 		count++;
 	}
 
-	public void RemovePieceAtSquare(int square)
+	public void Remove(int square)
     {
 		int index = map[square]; // get the index of this element in the squares array
 		

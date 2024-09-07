@@ -116,6 +116,20 @@ public static class Command
             case "book":
                 PrintBookMoves(MainProcess.board.ZobristKey);
                 break;
+            case "bitboard":
+                if (commandList.Length > 1)
+                {
+                    if (commandList[1] == "print")
+                    {
+                        MainProcess.board.BitboardSet.Print();
+                    }
+                    else if (commandList[1] == "test")
+                    {
+                        MainProcess.board.BitboardSet.Test(MainProcess.board);
+                    }
+                }
+
+                break;
 
             default:
                 break;

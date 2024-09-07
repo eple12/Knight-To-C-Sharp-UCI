@@ -91,4 +91,34 @@ public struct PieceIndex{
     public const int BlackAll = 13;
 
     public const int Invalid = 14;
+
+    static readonly string[] names = {"WhitePawn", "WhiteKnight", "WhiteBishop", "WhiteRook", "WhiteQueen", "WhiteKing",
+    "BlackPawn", "BlackKnight", "BlackBishop", "BlackRook", "BlackQueen", "BlackKing", "WhiteAll", "BlackAll"};
+
+    public static bool IsWhite(int index)
+    {
+        if (index >= WhitePawn && index <= WhiteKing)
+        {
+            return true;
+        }
+
+        if (index == WhiteAll)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static string ToString(int index)
+    {
+        if (index >= WhitePawn && index <= BlackAll)
+        {
+            return names[index];
+        }
+        else
+        {
+            return "Invalid";
+        }
+    }
 }
