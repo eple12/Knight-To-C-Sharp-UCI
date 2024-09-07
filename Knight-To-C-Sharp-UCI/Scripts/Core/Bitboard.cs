@@ -1,4 +1,6 @@
 
+using System.Numerics;
+
 public class Bitboard
 {
     public ulong[] Bitboards;
@@ -92,7 +94,10 @@ public class Bitboard
         }
         Console.WriteLine(s);
     }
-
+    public static int Count(ulong bitboard)
+    {
+        return BitOperations.PopCount(bitboard);
+    }
 
 
     // public static string BitsString(ulong bitboard)

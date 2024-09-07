@@ -3,7 +3,7 @@ public static class MateChecker
 {
     public enum MateState {None, Checkmate, Stalemate, FiftyDraw, Threefold, Material};
 
-    public static MateState GetPositionState(Board board, List<Move> moves)
+    public static MateState GetPositionState(Board board, List<Move> moves, bool SimpleRepetition = false)
     {
         if (moves.Count == 0)
         {
@@ -31,7 +31,14 @@ public static class MateChecker
             return MateState.Material;
         }
         
-        if (board.PositionHistory[board.ZobristKey] >= 3)
+        if (SimpleRepetition)
+        {
+            if (board.PositionHistory.ContainsKey(board.ZobristKey) && board.PositionHistory[board.ZobristKey] > 1)
+            {
+                return MateState.Threefold;
+            }
+        }
+        else if (board.PositionHistory[board.ZobristKey] >= 3)
         {
             // Threefold repetition
             return MateState.Threefold;

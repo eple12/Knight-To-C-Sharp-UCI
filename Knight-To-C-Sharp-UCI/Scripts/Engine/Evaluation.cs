@@ -22,7 +22,7 @@ public class Evaluation
         25,  25,  35,  35,  35,  30,  25,  25,
         10,  10,  20,  30,  30,  20,  10,  10,
          5,   5,  10,  10,  15,  10,   5,   5,
-         0,  -5,   5,  15,  15,   0,  -5,   0,
+         0,  -5,  10,  15,  15,   5,  -5,   0,
          5,   5,   5,   5,   5, -10,   0,   5,
          5,   5,   5, -25, -25,   5,   5,   5,
          0,   0,   0,   0,   0,   0,   0,   0
@@ -39,7 +39,7 @@ public class Evaluation
     };
     static readonly int[] BishopSquareTable =  {
         -20,-10,-10,-10,-10,-10,-10,-20,
-        -10,  0,  0,  0,  0,  0,  0,-10,
+        -80,-90,-90,-90,-90,-90,-90,-80,
         -10,  0,  5, 10, 10,  5,  0,-10,
         -10,  5,  5, 10, 10,  5,  5,-10,
         -10,  0, 10, 10, 10, 10,  0,-10,
@@ -55,7 +55,7 @@ public class Evaluation
         -5,  0,  0,  0,  0,  0,  0, -5,
         -5,  0,  0,  0,  0,  0,  0, -5,
         -5,  0,  0,  0,  0,  0,  0, -5,
-        -5, -5,  0, 15, 15,  5, -5, -5
+        -5, -5,  0, 15, 15,  0, -5, -5
     };
     static readonly int[] QueenSquareTable =  {
         -20,-10,-10, -5, -5,-10,-10,-20,
@@ -111,6 +111,10 @@ public class Evaluation
     const int TotalEndgameWeight = 4 * QueenEndgameWeight + 4 * RookEndgameWeight + 4 * BishopEndgameWeight + 
     4 * KnightEndgameWeight + 16 * PawnEndgameWeight;
 
+    // King Safety
+    const int DirectKingFrontPawnBonus = 25;
+    const int DistantKingFrontPawnBonus = 15;
+
     public Evaluation(Engine _engine)
     {
         engine = _engine;
@@ -119,20 +123,85 @@ public class Evaluation
         maxDepth = engine.GetSettings().unlimitedMaxDepth;
     }
 
-    public int Evaluate(Board _board)
+    public int Evaluate()
     {
-        board = _board;
         int eval = 0;
         int sign = board.Turn ? 1 : -1;
         double endgameWeight = GetEndgameWeight();
+        double middlegameWeight = 1 - endgameWeight;
 
         eval += CountMaterial() * sign;
 
         eval += PieceSquareTable(endgameWeight) * sign;
 
+        // eval += (int) (KingSafety() * middlegameWeight) * sign;
+
         return eval;
     }
 
+    // King Safety
+    int KingSafety()
+    {
+        int r = 0;
+
+        r += FrontPieces();
+
+        return r;
+    }
+
+    int FrontPieces()
+    {
+        int r = 0;
+
+        ulong whiteDirectMask = GetFrontMask(true, isDirect: true);
+        ulong blackDirectMask = GetFrontMask(false, isDirect: true);
+
+        ulong whiteDistantMask = GetFrontMask(true, isDirect: false);
+        ulong blackDistantMask = GetFrontMask(false, isDirect: false);
+
+        // Bitboard.Print(whiteDirectMask);
+        // Bitboard.Print(whiteDistantMask);
+        // Bitboard.Print(blackDirectMask);
+        // Bitboard.Print(blackDistantMask);
+
+        r += (Bitboard.Count(whiteDirectMask & board.BitboardSet.Bitboards[PieceIndex.WhitePawn]) - 
+        Bitboard.Count(blackDirectMask & board.BitboardSet.Bitboards[PieceIndex.BlackPawn])) * DirectKingFrontPawnBonus;
+        r += (Bitboard.Count(whiteDistantMask & board.BitboardSet.Bitboards[PieceIndex.WhitePawn]) - 
+        Bitboard.Count(blackDistantMask & board.BitboardSet.Bitboards[PieceIndex.BlackPawn])) * DistantKingFrontPawnBonus;
+
+        return r;
+    }
+    ulong GetFrontMask(bool white, bool isDirect)
+    {
+        ulong mask = 0;
+
+        int kingSquare = board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing].squares[0];
+        int rank = kingSquare / 8;
+        int file = kingSquare % 8;
+        
+        int rankOffset = isDirect ? 1 : 2;
+        int offset = 8 * rankOffset;
+
+        if (white ? rank + rankOffset <= 7 : rank - rankOffset >= 0)
+        {
+            int upOffset = white ? offset : - offset;
+            
+            mask |= (ulong) 1 << (kingSquare + upOffset);
+
+            if (file > 0)
+            {
+                mask |= (ulong) 1 << (kingSquare + upOffset - 1);
+            }
+            if (file < 7)
+            {
+                mask |= (ulong) 1 << (kingSquare + upOffset + 1);
+            }
+        }
+
+        return mask;
+    }
+
+    // Material Count
     int CountMaterial()
     {
         int value = 0;
@@ -154,7 +223,7 @@ public class Evaluation
             // White
             for (int j = 0; j < board.PieceSquares[i + 1].count; j++)
             {
-                value += PieceSquareTables[i][Square.FlipIndex(board.PieceSquares[i].squares[j])];
+                value += PieceSquareTables[i][Square.FlipIndex(board.PieceSquares[i + 1].squares[j])];
             }
             // Black
             for (int j = 0; j < board.PieceSquares[i + 7].count; j++)

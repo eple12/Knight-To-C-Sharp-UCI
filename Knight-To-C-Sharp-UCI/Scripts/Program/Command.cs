@@ -87,7 +87,7 @@ public static class Command
                 MainProcess.board.MakeConsoleMove(commandList[1]);
                 break;
             case "eval":
-                Console.WriteLine("debug cmd eval: " + MainProcess.engine.GetEngine().GetEvaluation().Evaluate(MainProcess.board));
+                Console.WriteLine("debug cmd eval: " + MainProcess.engine.GetEngine().GetEvaluation().Evaluate());
                 break;
             case "endweight":
                 Console.WriteLine("debug cmd EndgameWeight: " + 

@@ -145,12 +145,12 @@ public class Engine
 
         if (depth == 0)
         {
-            return settings.useQSearch ? QuiescenceSearch(alpha, beta) : evaluation.Evaluate(board);
+            return settings.useQSearch ? QuiescenceSearch(alpha, beta) : evaluation.Evaluate();
         }
 
         List<Move> legalMoves = MoveGen.GenerateMoves();
 
-        MateChecker.MateState mateState = MateChecker.GetPositionState(board, legalMoves);
+        MateChecker.MateState mateState = MateChecker.GetPositionState(board, legalMoves, SimpleRepetition: true);
         if (mateState != MateChecker.MateState.None)
         {
             if (mateState == MateChecker.MateState.Checkmate)
@@ -216,7 +216,7 @@ public class Engine
 
     int QuiescenceSearch(int alpha, int beta)
     {
-        int standPat = evaluation.Evaluate(board);
+        int standPat = evaluation.Evaluate();
 
         if (standPat >= beta)
         {
