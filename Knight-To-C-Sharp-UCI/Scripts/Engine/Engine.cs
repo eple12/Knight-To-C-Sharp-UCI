@@ -125,8 +125,9 @@ public class Engine
                 // so whenever a position is repeated, the engine ends up in a threefold draw.
                 // To prevent that, check if it's threefold once again!
                 // For simplicity, just check if previous position is already reached
-                if (board.PositionHistory[board.ZobristKey] > 1)
+                if (board.PositionHistory[board.ZobristKey] > 2)
                 {
+                    // Console.WriteLine("ttdraw");
                     return 0;
                 }
 
@@ -136,6 +137,7 @@ public class Engine
                     if (ttMove.moveValue != Move.NullMove.moveValue)
                     {
                         bestMove = ttMove;
+                        bestEval = ttVal;
                     }
                 }
 
@@ -150,7 +152,7 @@ public class Engine
 
         List<Move> legalMoves = MoveGen.GenerateMoves();
 
-        MateChecker.MateState mateState = MateChecker.GetPositionState(board, legalMoves, SimpleRepetition: true);
+        MateChecker.MateState mateState = MateChecker.GetPositionState(board, legalMoves, SimpleRepetition: false);
         if (mateState != MateChecker.MateState.None)
         {
             if (mateState == MateChecker.MateState.Checkmate)
@@ -158,6 +160,7 @@ public class Engine
                 return -Evaluation.checkmateEval + plyFromRoot;
             }
 
+            // Console.WriteLine("matedraw");
             return 0;
         }
 
