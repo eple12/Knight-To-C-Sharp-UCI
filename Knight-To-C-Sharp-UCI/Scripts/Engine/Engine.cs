@@ -201,10 +201,6 @@ public class Engine
                     bestMove = legalMoves[i];
                     bestEval = eval;
 
-                    if (eval == -208)
-                    {
-                        Console.WriteLine("?");
-                    }
                 }
             }
 
