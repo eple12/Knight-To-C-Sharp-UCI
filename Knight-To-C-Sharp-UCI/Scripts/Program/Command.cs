@@ -130,6 +130,13 @@ public static class Command
                 }
 
                 break;
+            case "enginemove":
+                MainProcess.engine.StartTimedSearch(100, 100, () => {
+                    MainProcess.board.MakeMove(MainProcess.engine.GetMove());
+                    MainProcess.board.LegalMoves = MainProcess.board.MoveGen.GenerateMoves();
+                    MainProcess.board.PrintBoardAndMoves();
+                });
+                break;
 
             default:
                 break;
