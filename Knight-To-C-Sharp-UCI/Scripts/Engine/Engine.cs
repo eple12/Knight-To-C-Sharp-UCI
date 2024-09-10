@@ -13,8 +13,8 @@ public class Engine
     Move bestMoveLastIteration;
     int bestEval;
 
-
-
+    // Search Constants
+    const int MaxExtension = 16;
 
     bool isSearching;
     bool cancellationRequested;
@@ -118,39 +118,47 @@ public class Engine
     {
         if (cancellationRequested)
         {
+            // Console.WriteLine("cancel return 0");
             return 0;
         }
+
+        if (plyFromRoot > 1)
+        {
+            if (board.FiftyRuleHalfClock >= 100 || board.PositionHistory[board.ZobristKey] > 1)
+            {
+                return 0;
+            }
+        }
+        
 
         // Try looking up the current position in the transposition table.
         // If the same position has already been searched to at least an equal depth
         // to the search we're doing now,we can just use the recorded evaluation.
-        if (plyFromRoot != 0)
+        int ttVal = tt.LookupEvaluation (depth, plyFromRoot, alpha, beta);
+        if (ttVal != TranspositionTable.lookupFailed)
         {
-            int ttVal = tt.LookupEvaluation (depth, plyFromRoot, alpha, beta);
-            if (ttVal != TranspositionTable.lookupFailed)
+            // if (plyFromRoot == 0)
+            // {
+            //     // Console.WriteLine("found tt");
+            // }
+            Move ttMove = tt.GetStoredMove();
+            // The Transposition Table cannot store the repetition data, 
+            // so whenever a position is repeated, the engine ends up in a threefold draw.
+            // To prevent that, check if it's threefold once again!
+            // For simplicity, just check if previous position is already reached
+
+            if (plyFromRoot == 0)
             {
-                // The Transposition Table cannot store the repetition data, 
-                // so whenever a position is repeated, the engine ends up in a threefold draw.
-                // To prevent that, check if it's threefold once again!
-                // For simplicity, just check if previous position is already reached
-                if (board.PositionHistory[board.ZobristKey] > 2)
+                if (ttMove.moveValue != Move.NullMove.moveValue)
                 {
-                    // Console.WriteLine("ttdraw");
-                    return 0;
-                }
+                    bestMove = ttMove;
+                    bestEval = ttVal;
 
-                if (plyFromRoot == 0)
-                {
-                    Move ttMove = tt.GetStoredMove();
-                    if (ttMove.moveValue != Move.NullMove.moveValue)
-                    {
-                        bestMove = ttMove;
-                        bestEval = ttVal;
-                    }
+                    // Console.WriteLine("ttmove " + Move.MoveString(ttMove) + " eval " + ttVal);
                 }
-
-                return ttVal;
             }
+
+            return ttVal;
         }
 
         if (depth == 0)
@@ -160,7 +168,7 @@ public class Engine
 
         List<Move> legalMoves = MoveGen.GenerateMoves();
 
-        MateChecker.MateState mateState = MateChecker.GetPositionState(board, legalMoves, SimpleRepetition: false);
+        MateChecker.MateState mateState = MateChecker.GetPositionState(board, legalMoves, ExcludeRepetition: true, ExcludeFifty: true);
         if (mateState != MateChecker.MateState.None)
         {
             if (mateState == MateChecker.MateState.Checkmate)
@@ -170,8 +178,11 @@ public class Engine
 
             if (plyFromRoot == 0)
             {
+                // Console.WriteLine("m draw");
                 drawExit = true;
             }
+
+            // Console.WriteLine("m draw");
             return 0;
         }
 
@@ -186,6 +197,7 @@ public class Engine
 
         int evalType = TranspositionTable.UpperBound;
 
+        Move bestMoveInThisPosition = legalMoves[0];
         for (int i = 0; i < legalMoves.Count; i++)
         {
             board.MakeMove(legalMoves[i]);
@@ -208,17 +220,18 @@ public class Engine
             if (eval > alpha)
             {
                 alpha = eval;
+                bestMoveInThisPosition = legalMoves[i];
                 evalType = TranspositionTable.Exact;
                 
                 if (plyFromRoot == 0)
                 {
+                    // Console.WriteLine("found better move: " + Move.MoveString(legalMoves[i]) + " eval: " + eval + " bestEval: " + bestEval);
                     bestMove = legalMoves[i];
                     bestEval = eval;
-
                 }
             }
-
-            tt.StoreEvaluation (depth, plyFromRoot, alpha, evalType, bestMove);
+            
+            tt.StoreEvaluation (depth, plyFromRoot, alpha, evalType, bestMoveInThisPosition);
         }
 
         return alpha;

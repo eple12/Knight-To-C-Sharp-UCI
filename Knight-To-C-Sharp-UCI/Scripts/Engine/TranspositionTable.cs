@@ -99,6 +99,11 @@ public class TranspositionTable
             return;
         }
 
+        // if (board.ZobristKey == 14266748245563660247)
+        // {
+        //     board.PrintSmallBoard();
+        // }
+
         Entry entry = new Entry (board.ZobristKey, CorrectMateScoreForStorage (eval, numPlySearched), (byte) depth, (byte) evalType, move);
         entries[Index] = entry;
     }
@@ -123,6 +128,22 @@ public class TranspositionTable
             return (score * sign - numPlySearched) * sign;
         }
         return score;
+    }
+
+    public void Print()
+    {
+        Console.WriteLine("###############");
+        // for (int i = 0; i < (int) size; i++)
+        // {
+        //     if (entries[i].key != 0)
+        //     {
+        //         Entry e = entries[i];
+        //         Console.WriteLine("key: " + e.key + " val: " + e.value + " move: " + Move.MoveString(e.move) + " index: " + i);
+        //     }
+        // }
+        Entry e = entries[Index];
+        Console.WriteLine("key: " + e.key + " val: " + e.value + " move: " + Move.MoveString(e.move) + " index: " + Index);
+        Console.WriteLine("###############");
     }
 
     public struct Entry

@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 
 public static class Command
 {
-    const int MaxThinkTime = 30 * 1000;
+    const int MaxThinkTime = 3000 * 1000;
     const int MinThinkTime = 50;
 
     public static int RecieveCommand(string command)
@@ -131,13 +131,19 @@ public static class Command
 
                 break;
             case "enginemove":
-                MainProcess.engine.StartTimedSearch(100, 100, () => {
+                MainProcess.engine.StartTimedSearch(100, 1000, () => {
                     MainProcess.board.MakeMove(MainProcess.engine.GetMove());
                     MainProcess.board.LegalMoves = MainProcess.board.MoveGen.GenerateMoves();
                     MainProcess.board.PrintBoardAndMoves();
                 });
                 break;
-
+            case "tt":
+                Console.WriteLine("key: " + MainProcess.board.ZobristKey + " tt: " + MainProcess.engine.GetEngine().GetTT().LookupEvaluation(0, 0, 0, 0) + " move: " + Move.MoveString(MainProcess.engine.GetEngine().GetTT().GetStoredMove()) + " Index: " + MainProcess.engine.GetEngine().GetTT().Index);
+                break;
+            case "ttprint":
+                MainProcess.engine.GetEngine().GetTT().Print();
+                break;
+            
             default:
                 break;
         }

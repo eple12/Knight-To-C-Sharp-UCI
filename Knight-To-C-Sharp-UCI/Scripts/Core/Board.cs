@@ -171,6 +171,22 @@ public class Board
         Console.WriteLine("a b c d e f g h");
         Console.WriteLine("#################");
     }
+    public string GetSmallBoard()
+    {
+        string s = "";
+        for (int rank = 7; rank >= 0; rank--)
+        {
+            for (int file = 0; file < 8; file++)
+            {
+                char c = Piece.PieceToChar(Squares[8 * rank + file]);
+                s += (c == ' ' ? '~' : c);
+                s += (' ');
+            }
+            // Console.WriteLine(rank + 1);
+            s += '\n';
+        }
+        return s;
+    }
 
     public void AfterLoadingPosition()
     {

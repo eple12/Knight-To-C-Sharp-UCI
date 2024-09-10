@@ -1,4 +1,6 @@
 
+using Microsoft.AspNetCore.Components.Web;
+
 public class Evaluation
 {
     Engine engine;
@@ -117,9 +119,14 @@ public class Evaluation
     const int DistantKingFrontPawnPenalty = 25;
     const int DirectKingFrontPiecePenalty = 15;
     const int DistantKingFrontPiecePenalty = 10;
+    const double SecondRankKingFrontPieceMultiplier = 0.5d;
 
     const int KingOpenFilePenalty = 50;
     const int KingSideOpenFilePenalty = 25;
+
+    const int FrontQueenKingSafetyWeight = 50;
+    const int FrontRookKingSafetyWeight = 35;
+    const int TotalKingSafetyWeight = 1 * FrontQueenKingSafetyWeight + 2 * FrontRookKingSafetyWeight;
 
     // Open File
     const int OpenFileBonus = 25;
@@ -146,14 +153,24 @@ public class Evaluation
         int sign = board.Turn ? 1 : -1;
 
         double endgameWeight = GetEndgameWeight();
-        double middlegameWeight = GetMiddlegameWeight(endgameWeight);
+        // double middlegameWeight = GetMiddlegameWeight(endgameWeight);
+        // Console.WriteLine("endWeight: " + endgameWeight + " midWeight: " + middlegameWeight);
 
-        eval += CountMaterial();
+        int materialCount = CountMaterial();
+        // Console.WriteLine("material: " + materialCount);
+        eval += materialCount;
 
-        eval += PieceSquareTable(endgameWeight);
-        eval += CalculateOpenFileBonus();
+        int pieceSquareBonus = PieceSquareTable(endgameWeight);
+        // Console.WriteLine("pieceSquareBonus: " + pieceSquareBonus);
+        eval += pieceSquareBonus;
 
-        eval += (int) (KingSafety() * middlegameWeight);
+        int openFileBonus = CalculateOpenFileBonus();
+        // Console.WriteLine("openFileBonus: " + openFileBonus);
+        eval += openFileBonus;
+
+        // int kingSafety = (int) (KingSafety() * middlegameWeight);
+        // // Console.WriteLine("eval kingSafety: " + kingSafety);
+        // eval += kingSafety;
 
         return eval * sign;
     }
@@ -162,64 +179,77 @@ public class Evaluation
     int KingSafety()
     {
         int r = 0;
+        double whiteKingSafetyWeight = GetKingSafetyWeight(white: true);
+        double blackKingSafetyWeight = GetKingSafetyWeight(white: false);
 
-        r += FrontPawnsPenalty();
-        r += CalculateKingOpenFilePenalty();
+        // Console.WriteLine("white: " + whiteKingSafetyWeight + " black: " + blackKingSafetyWeight);
+
+        r += FrontPawnsPenalty(whiteKingSafetyWeight, whiteKingSafetyWeight);
+        r += CalculateKingOpenFilePenalty(whiteKingSafetyWeight, blackKingSafetyWeight);
+        
+        // Console.WriteLine("total kingSafety: " + r);
 
         return r;
     }
-    int CalculateKingOpenFilePenalty()
+    int CalculateKingOpenFilePenalty(double whiteWeight = 1, double blackWeight = 1)
     {
         int r = 0;
 
+        int white = 0;
+
         // White King: Open File Or Semi-Open File for Black
-        if (IsSemiFromOrOpenFile(whiteKingSquare, white: false))
+        if (IsSemiOpenFile(whiteKingSquare))
         {
-            r -= KingOpenFilePenalty;
+            white -= KingOpenFilePenalty;
         }
         if (whiteKingSquare % 8 > 0)
         {
-            if (IsSemiFromOrOpenFile(whiteKingSquare - 1, white: false))
+            if (IsSemiOpenFile(whiteKingSquare - 1))
             {
-                r -= KingSideOpenFilePenalty;
+                white -= KingSideOpenFilePenalty;
             }
         }
         if (whiteKingSquare % 8 < 7)
         {
-            if (IsSemiFromOrOpenFile(whiteKingSquare + 1, white: false))
+            if (IsSemiOpenFile(whiteKingSquare + 1))
             {
-                r -= KingSideOpenFilePenalty;
+                white -= KingSideOpenFilePenalty;
             }
         }
         
+        int black = 0;
+
         // Black King: Open File Or Semi-Open File for White
-        if (IsSemiFromOrOpenFile(blackKingSquare, white: true))
+        if (IsSemiOpenFile(blackKingSquare))
         {
-            r += KingOpenFilePenalty;
+            black += KingOpenFilePenalty;
         }
         if (blackKingSquare % 8 > 0)
         {
-            if (IsSemiFromOrOpenFile(whiteKingSquare - 1, white: true))
+            if (IsSemiOpenFile(blackKingSquare - 1))
             {
-                r += KingSideOpenFilePenalty;
+                black += KingSideOpenFilePenalty;
             }
         }
         if (blackKingSquare % 8 < 7)
         {
-            if (IsSemiFromOrOpenFile(whiteKingSquare + 1, white: true))
+            if (IsSemiOpenFile(blackKingSquare + 1))
             {
-                r += KingSideOpenFilePenalty;
+                black += KingSideOpenFilePenalty;
             }
         }
 
+        r += (int) (white * whiteWeight);
+        r += (int) (black * blackWeight);
+
         return r;
     }
-    int FrontPawnsPenalty()
+    int FrontPawnsPenalty(double whiteWeight = 1, double blackWeight = 1)
     {
         int r = 0;
 
-        r += CalculateKingFrontPiecePenalty(white: true);
-        r -= CalculateKingFrontPiecePenalty(white: false);
+        r += (int) (CalculateKingFrontPiecePenalty(white: true) * whiteWeight);
+        r -= (int) (CalculateKingFrontPiecePenalty(white: false) * blackWeight);
 
         return r;
     }
@@ -251,6 +281,12 @@ public class Evaluation
         r += Bitboard.Count(directMask & allBitboardNoPawns) * DirectKingFrontPiecePenalty;
         r += Bitboard.Count(distantMask & allBitboardNoPawns) * DistantKingFrontPiecePenalty;
 
+        // Second Rank Penalty
+        if ((white && kingRank == 1) || (!white && kingRank == 7))
+        {
+            r = (int) (r * SecondRankKingFrontPieceMultiplier);
+        }
+
         return r;
     }
     ulong GetFrontMask(bool white, bool isDirect)
@@ -279,6 +315,46 @@ public class Evaluation
                 mask |= (ulong) 1 << (kingSquare + upOffset + 1);
             }
         }
+
+        return mask;
+    }
+
+    double GetKingSafetyWeight(bool white)
+    {
+        int kingSquare = white ? whiteKingSquare : blackKingSquare;
+        ulong adjacentFiles = GetAdjacentFileMask(kingSquare);
+
+        int enemyQueenIndex = white ? PieceIndex.BlackQueen : PieceIndex.WhiteQueen;
+        int enemyRookIndex = white ? PieceIndex.BlackRook : PieceIndex.WhiteRook;
+
+        ulong enemyQueens = board.BitboardSet.Bitboards[enemyQueenIndex];
+        ulong enemyRooks = board.BitboardSet.Bitboards[enemyRookIndex];
+
+        // int enemyNumQueens = board.PieceSquares[enemyQueenIndex].count;
+        // int enemyNumRooks = board.PieceSquares[enemyRookIndex].count;
+
+        int queenCount = Bitboard.Count(adjacentFiles & enemyQueens);
+        int rookCount = Bitboard.Count(adjacentFiles & enemyRooks);
+
+        double weight = (queenCount * FrontQueenKingSafetyWeight + rookCount * FrontRookKingSafetyWeight) / (double) TotalKingSafetyWeight;
+
+        return Math.Min(weight, 1);
+    }
+    ulong GetAdjacentFileMask(int square)
+    {
+        ulong mask = 0;
+
+        int file = square % 8;
+        if (file > 0)
+        {
+            mask |= FileMask << (file - 1);
+        }
+        if (file < 7)
+        {
+            mask |= FileMask << (file + 1);
+        }
+
+        mask |= FileMask << file;
 
         return mask;
     }
@@ -411,6 +487,10 @@ public class Evaluation
     bool IsSemiFromOrOpenFile(int square, bool white)
     {
         return IsOpenFileFromSide(square, white) || IsOpenFile(square);
+    }
+    bool IsSemiOpenFile(int square)
+    {
+        return IsOpenFileFromSide(square, white: true) || IsOpenFileFromSide(square, white: false);
     }
 
     // Move Ordering
