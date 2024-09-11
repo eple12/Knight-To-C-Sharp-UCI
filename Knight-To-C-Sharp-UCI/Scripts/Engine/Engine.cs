@@ -114,15 +114,14 @@ public class Engine
         }
     }
 
-    int Search(int depth, int alpha, int beta, int plyFromRoot)
+    int Search(int depth, int alpha, int beta, int plyFromRoot, int numExtensions = 0)
     {
-        if (cancellationRequested)
+        if (cancellationRequested) // Return if the search is cancelled
         {
-            // Console.WriteLine("cancel return 0");
             return 0;
         }
 
-        if (plyFromRoot > 1)
+        if (plyFromRoot > 1) // Return 0 if drawn
         {
             if (board.FiftyRuleHalfClock >= 100 || board.PositionHistory[board.ZobristKey] > 1)
             {
@@ -137,37 +136,29 @@ public class Engine
         int ttVal = tt.LookupEvaluation (depth, plyFromRoot, alpha, beta);
         if (ttVal != TranspositionTable.lookupFailed)
         {
-            // if (plyFromRoot == 0)
-            // {
-            //     // Console.WriteLine("found tt");
-            // }
             Move ttMove = tt.GetStoredMove();
-            // The Transposition Table cannot store the repetition data, 
-            // so whenever a position is repeated, the engine ends up in a threefold draw.
-            // To prevent that, check if it's threefold once again!
-            // For simplicity, just check if previous position is already reached
 
-            if (plyFromRoot == 0)
+            if (plyFromRoot == 0) // Use the move stored in TT
             {
                 if (ttMove.moveValue != Move.NullMove.moveValue)
                 {
+                    // Console.WriteLine("tt move " + Move.MoveString(ttMove) + " eval " + ttVal + " depth " + depth);
                     bestMove = ttMove;
                     bestEval = ttVal;
-
-                    // Console.WriteLine("ttmove " + Move.MoveString(ttMove) + " eval " + ttVal);
                 }
             }
 
             return ttVal;
         }
 
-        if (depth == 0)
+        if (depth == 0) // Return QSearch Evaluation
         {
             return settings.useQSearch ? QuiescenceSearch(alpha, beta) : evaluation.Evaluate();
         }
 
         List<Move> legalMoves = MoveGen.GenerateMoves();
 
+        // Checkmate, Stalemate, Draws
         MateChecker.MateState mateState = MateChecker.GetPositionState(board, legalMoves, ExcludeRepetition: true, ExcludeFifty: true);
         if (mateState != MateChecker.MateState.None)
         {
@@ -178,14 +169,12 @@ public class Engine
 
             if (plyFromRoot == 0)
             {
-                // Console.WriteLine("m draw");
                 drawExit = true;
             }
-
-            // Console.WriteLine("m draw");
             return 0;
         }
 
+        // Order Moves
         if (plyFromRoot == 0)
         {
             moveOrder.GetOrderedList(legalMoves, bestMoveLastIteration);
@@ -202,7 +191,26 @@ public class Engine
         {
             board.MakeMove(legalMoves[i]);
 
-            int eval = -Search(depth - 1, -beta, -alpha, plyFromRoot + 1);
+            int extension = 0;
+
+            if (numExtensions < MaxExtension)
+            {
+                if (board.MoveGen.InCheck())
+                {
+                    extension = 1;
+                }
+            }
+                
+            // else if (Piece.GetType(board.Squares[legalMoves[i].targetSquare]) == Piece.Pawn)
+            // {
+            //     int targetSquareRank = legalMoves[i].targetSquare / 8;
+            //     if (targetSquareRank == 6 || targetSquareRank == 1)
+            //     {
+            //         extension = 1;
+            //     }
+            // }
+
+            int eval = -Search(depth - 1 + extension, -beta, -alpha, plyFromRoot + 1, numExtensions + extension);
 
             board.UnmakeMove(legalMoves[i]);
 
@@ -230,7 +238,7 @@ public class Engine
                     bestEval = eval;
                 }
             }
-            
+
             tt.StoreEvaluation (depth, plyFromRoot, alpha, evalType, bestMoveInThisPosition);
         }
 

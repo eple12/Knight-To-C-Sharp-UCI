@@ -142,7 +142,7 @@ public class TranspositionTable
         //     }
         // }
         Entry e = entries[Index];
-        Console.WriteLine("key: " + e.key + " val: " + e.value + " move: " + Move.MoveString(e.move) + " index: " + Index);
+        Console.WriteLine("key: " + e.key + " val: " + e.value + " move: " + Move.MoveString(e.move) + " index: " + Index + " depth " + e.depth + " type " + e.nodeType);
         Console.WriteLine("###############");
     }
 
