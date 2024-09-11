@@ -275,7 +275,7 @@ public static class Command
             int myTime = MainProcess.board.Turn ? wtime : btime;
             int myInc = MainProcess.board.Turn ? winc : binc;
             // Get a fraction of remaining time to use for current move
-            double thinkTimeDouble = myTime / 40.0;
+            double thinkTimeDouble = myTime / 30.0;
             // Clamp think time if a maximum limit is imposed
             thinkTimeDouble = Math.Min(MaxThinkTime, thinkTimeDouble);
             // Add increment

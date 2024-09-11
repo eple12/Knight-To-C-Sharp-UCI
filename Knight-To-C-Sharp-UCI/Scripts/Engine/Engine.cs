@@ -193,13 +193,13 @@ public class Engine
 
             int extension = 0;
 
-            if (numExtensions < MaxExtension)
-            {
-                if (board.MoveGen.InCheck())
-                {
-                    extension = 1;
-                }
-            }
+            // if (numExtensions < MaxExtension)
+            // {
+            //     if (board.MoveGen.InCheck())
+            //     {
+            //         extension = 1;
+            //     }
+            // }
                 
             // else if (Piece.GetType(board.Squares[legalMoves[i].targetSquare]) == Piece.Pawn)
             // {
