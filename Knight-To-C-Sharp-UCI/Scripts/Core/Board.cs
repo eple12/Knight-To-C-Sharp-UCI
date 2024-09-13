@@ -219,27 +219,29 @@ public class Board
             return;
         }
 
-        int startSquare = Square.Index(move.Substring(0, 2));
-        int targetSquare = Square.Index(move.Substring(2, 2));
+        // int startSquare = Square.Index(move.Substring(0, 2));
+        // int targetSquare = Square.Index(move.Substring(2, 2));
 
-        Move m = Move.NullMove;
-        foreach (var item in LegalMoves)
-        {
-            if (item.startSquare == startSquare && item.targetSquare == targetSquare)
-            {
-                m = item;
-                break;
-            }
-        }
+        // Move m = Move.NullMove;
+        // foreach (var item in LegalMoves)
+        // {
+        //     if (item.startSquare == startSquare && item.targetSquare == targetSquare)
+        //     {
+        //         m = item;
+        //         break;
+        //     }
+        // }
 
-        if (MoveFlag.IsPromotion(m.flag))
-        {
-            if (move.Length < 5)
-            {
-                return;
-            }
-            m.flag = MoveFlag.GetPromotionFlag(move[4]);
-        }
+        // if (MoveFlag.IsPromotion(m.flag))
+        // {
+        //     if (move.Length < 5)
+        //     {
+        //         return;
+        //     }
+        //     m.flag = MoveFlag.GetPromotionFlag(move[4]);
+        // }
+
+        Move m = Move.FindMove(LegalMoves, move);
 
         MakeMove(m);
         LegalMoves = MoveGen.GenerateMoves();
@@ -799,74 +801,63 @@ public class Board
             }
         }
 
-        if (splitFen.Length < 2)
+        if (splitFen.Length >= 2) // Turn
         {
-            return;
+            Turn = splitFen[1] == "w";
         }
 
-        // Turn;
-        Turn = splitFen[1] == "w";
-
-        if (splitFen.Length < 3)
+        if (splitFen.Length >= 3) // Castling
         {
-            return;
-        }
+            // Castle;
+            string castleFen = splitFen[2];
+            WKCastle = false;
+            WQCastle = false;
+            BKCastle = false;
+            BQCastle = false;
 
-        // Castle;
-        string castleFen = splitFen[2];
-        WKCastle = false;
-        WQCastle = false;
-        BKCastle = false;
-        BQCastle = false;
-
-        if (castleFen == "-")
-        {
-            // No CASTLING!
-        }
-        else
-        {
-            if (castleFen.Contains('K'))
+            if (castleFen == "-")
             {
-                WKCastle = true;
+                // No CASTLING!
             }
-            if (castleFen.Contains('Q'))
+            else
             {
-                WQCastle = true;
-            }
-            if (castleFen.Contains('k'))
-            {
-                BKCastle = true;
-            }
-            if (castleFen.Contains('q'))
-            {
-                BQCastle = true;
+                if (castleFen.Contains('K'))
+                {
+                    WKCastle = true;
+                }
+                if (castleFen.Contains('Q'))
+                {
+                    WQCastle = true;
+                }
+                if (castleFen.Contains('k'))
+                {
+                    BKCastle = true;
+                }
+                if (castleFen.Contains('q'))
+                {
+                    BQCastle = true;
+                }
             }
         }
 
-        if (splitFen.Length < 4)
+        if (splitFen.Length >= 4) // En passant
         {
-            return;
+            string enpassantFen = splitFen[3];
+            EnpassantFile = 8; // Invalid Index;
+            if (enpassantFen == "-")
+            {
+
+            }
+            else
+            {
+                EnpassantFile = Square.Index(enpassantFen) % 8;
+            }
         }
     
-        // En passant square;
-        string enpassantFen = splitFen[3];
-        EnpassantFile = 8; // Invalid Index;
-        if (enpassantFen == "-")
+        if (splitFen.Length >= 5) // Fifty-Counter
         {
-
+            FiftyRuleHalfClock = Convert.ToInt32(splitFen[4]);
         }
-        else
-        {
-            EnpassantFile = Square.Index(enpassantFen) % 8;
-        }
-
-        if (splitFen.Length < 5)
-        {
-            return;
-        }
-
-        // Fifty-counter;
-        FiftyRuleHalfClock = Convert.ToInt32(splitFen[4]);
 
         ZobristKey = Zobrist.GetZobristKey(this);
         PositionHistory[ZobristKey] = 1;

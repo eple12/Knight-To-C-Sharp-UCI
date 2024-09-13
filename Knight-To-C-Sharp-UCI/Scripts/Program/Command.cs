@@ -111,7 +111,7 @@ public static class Command
                 }
                 break;
             case "booktest":
-                Console.WriteLine(Book.GetRandomMove(MainProcess.board));
+                Console.WriteLine(Move.MoveString(Book.GetRandomMove(MainProcess.board)));
                 break;
             case "book":
                 PrintBookMoves(MainProcess.board.ZobristKey);
@@ -323,7 +323,7 @@ public static class Command
         }
         for (int i = 0; i < bp.Moves.Count; i++)
         {
-            Console.WriteLine(bp.Moves[i] + ' ' + bp.Num[i]);
+            Console.WriteLine(Move.MoveString(bp.Moves[i]) + ' ' + bp.Num[i]);
         }
     }
 }

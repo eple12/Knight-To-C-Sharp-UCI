@@ -3,7 +3,7 @@ using System.IO;
 public static class Book
 {
     public static readonly string DIR = "C:\\Users\\user\\Desktop\\WorkSpace\\Knight-To-C-Sharp-UCI\\Knight-To-C-Sharp-UCI";
-    public static readonly string PATH = "/Resource/KeyBook.txt";
+    public static readonly string PATH = "\\Resource\\Book\\book.txt";
     public static Dictionary<ulong, BookPosition> OpeningBook = new Dictionary<ulong, BookPosition>();
 
     static Random RatioRandom = new Random();
@@ -13,28 +13,28 @@ public static class Book
         // System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
         // sw.Start();
 
-        ulong key = 0;
-        List<string> moves = new List<string>();
-        List<int> nums = new List<int>();
+        
 
         foreach (string line in File.ReadLines(DIR + PATH))
         {
+            List<Move> moves = new List<Move>();
+            List<int> nums = new List<int>();
             string[] split = line.Split(' ');
-            if (split[0] == "key")
+            ulong key = ulong.Parse(split[0]);
+            
+            for (int i = 0; i < split.Length - 1; i++)
             {
-                if (moves.Count > 0)
+                if (i % 2 == 0)
                 {
-                    OpeningBook.Add(key, new BookPosition(moves, nums));
+                    moves.Add(new Move(ushort.Parse(split[i + 1])));
                 }
-                moves = new List<string>();
-                nums = new List<int>();
-                key = ulong.Parse(split[1]);
+                else
+                {
+                    nums.Add(int.Parse(split[i + 1]));
+                }
             }
-            else
-            {
-                moves.Add(split[0]);
-                nums.Add(int.Parse(split[1]));
-            }
+
+            OpeningBook[key] = new BookPosition(moves, nums);
         }
 
         // sw.Stop();
@@ -63,11 +63,9 @@ public static class Book
         if (OpeningBook.ContainsKey(board.ZobristKey))
         {
             BookPosition bookPosition = OpeningBook[board.ZobristKey];
-            string moveString = GetRandomRatio(bookPosition.Moves, bookPosition.Num);
+            Move m = GetRandomRatio(bookPosition.Moves, bookPosition.Num);
             
-            Move move = Move.FindMove(board.LegalMoves, moveString);
-
-            return move;
+            return m;
         }
         else
         {
@@ -75,11 +73,11 @@ public static class Book
         }
     }
 
-    public static string GetRandomRatio(List<string> options, List<int> ratios)
+    public static Move GetRandomRatio(List<Move> options, List<int> ratios)
     {
         if (ratios.Count != options.Count)
         {
-            return Move.NullMoveString;
+            return Move.NullMove;
         }
 
         int total = 0;
@@ -108,16 +106,16 @@ public static class Book
 
 public struct BookPosition
 {
-    public List<string> Moves;
+    public List<Move> Moves;
     public List<int> Num;
 
     public BookPosition()
     {
-        Moves = new List<string>();
+        Moves = new List<Move>();
         Num = new List<int>();
     }
 
-    public BookPosition(List<string> moves, List<int> nums)
+    public BookPosition(List<Move> moves, List<int> nums)
     {
         Moves = moves;
         Num = nums;

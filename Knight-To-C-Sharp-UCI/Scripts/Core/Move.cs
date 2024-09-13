@@ -46,6 +46,10 @@ public struct Move
     {
         return m1.moveValue == m2.moveValue;
     }
+    public static bool IsNull(Move m)
+    {
+        return IsSame(m, NullMove);
+    }
     public static void PrintMoveList(List<Move> moves)
     {
         string s = "";

@@ -67,7 +67,7 @@ public class Engine
 
         // Try to find this position in the Opening Book
         Move bookMove = Book.GetRandomMove(board);
-        if (!Move.IsSame(bookMove, Move.NullMove))
+        if (!Move.IsNull(bookMove))
         {
             bestMove = bookMove;
             EndSearch();
@@ -90,15 +90,15 @@ public class Engine
                         break;
                     }
 
-                    if (drawExit)
-                    {
-                        break;
-                    }
+                    // if (drawExit)
+                    // {
+                    //     break;
+                    // }
 
-                    if (evaluation.IsMateScore(evalThisIteration))
-                    {
-                        break;
-                    }
+                    // if (evaluation.IsMateScore(evalThisIteration))
+                    // {
+                    //     break;
+                    // }
                 }
 
                 EndSearch();
