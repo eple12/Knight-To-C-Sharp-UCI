@@ -238,9 +238,9 @@ public class Engine
                     bestEval = eval;
                 }
             }
-
-            tt.StoreEvaluation (depth, plyFromRoot, alpha, evalType, bestMoveInThisPosition);
         }
+        
+        tt.StoreEvaluation (depth, plyFromRoot, alpha, evalType, bestMoveInThisPosition);
 
         return alpha;
     }
