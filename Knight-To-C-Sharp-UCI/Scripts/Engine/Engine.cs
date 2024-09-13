@@ -18,7 +18,6 @@ public class Engine
 
     bool isSearching;
     bool cancellationRequested;
-    bool drawExit;
 
     public event Action OnSearchComplete;
 
@@ -35,7 +34,6 @@ public class Engine
         
         isSearching = false;
         cancellationRequested = false;
-        drawExit = false;
 
         OnSearchComplete = () => {};
     }
@@ -51,7 +49,6 @@ public class Engine
 
         isSearching = true;
         cancellationRequested = false;
-        drawExit = false;
 
         if (onSearchComplete != null)
         {
@@ -165,11 +162,6 @@ public class Engine
             if (mateState == MateChecker.MateState.Checkmate)
             {
                 return -Evaluation.checkmateEval + plyFromRoot;
-            }
-
-            if (plyFromRoot == 0)
-            {
-                drawExit = true;
             }
             return 0;
         }
@@ -291,7 +283,6 @@ public class Engine
         
         isSearching = false;
         cancellationRequested = false;
-        drawExit = false;
     }
 
     public Move GetMove()
