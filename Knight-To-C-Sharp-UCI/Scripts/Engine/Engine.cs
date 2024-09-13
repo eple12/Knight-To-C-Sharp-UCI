@@ -92,10 +92,10 @@ public class Engine
                     //     break;
                     // }
 
-                    // if (evaluation.IsMateScore(evalThisIteration))
-                    // {
-                    //     break;
-                    // }
+                    if (evaluation.IsMateScore(evalThisIteration))
+                    {
+                        break;
+                    }
                 }
 
                 EndSearch();
