@@ -92,10 +92,10 @@ public class Engine
                     //     break;
                     // }
 
-                    // if (evaluation.IsMateScore(evalThisIteration))
-                    // {
-                    //     break;
-                    // }
+                    if (evaluation.IsMateScore(evalThisIteration))
+                    {
+                        break;
+                    }
                 }
 
                 EndSearch();
@@ -124,6 +124,16 @@ public class Engine
             {
                 return 0;
             }
+
+            // Skip this position if a mating sequence has already been found earlier in the search, which would be shorter
+            // than any mate we could find from here. This is done by observing that alpha can't possibly be worse
+            // (and likewise beta can't  possibly be better) than being mated in the current position.
+            alpha = Math.Max(alpha, -Evaluation.CheckmateEval + plyFromRoot);
+            beta = Math.Min(beta, Evaluation.CheckmateEval - plyFromRoot);
+            if (alpha >= beta)
+            {
+                return alpha;
+            }
         }
         
 
@@ -137,6 +147,14 @@ public class Engine
 
             if (plyFromRoot == 0) // Use the move stored in TT
             {
+                // if (evaluation.IsMateScore(ttVal)) // If the tt evaluation is a checkmate value, check if it is not a draw
+                // {
+                //     if (board.FiftyRuleHalfClock >= 100 || board.PositionHistory[board.ZobristKey] > 1)
+                //     {
+                //         return 0;
+                //     }
+                // }
+
                 if (ttMove.moveValue != Move.NullMove.moveValue)
                 {
                     // Console.WriteLine("tt move " + Move.MoveString(ttMove) + " eval " + ttVal + " depth " + depth);
@@ -161,7 +179,7 @@ public class Engine
         {
             if (mateState == MateChecker.MateState.Checkmate)
             {
-                return -Evaluation.checkmateEval + plyFromRoot;
+                return -Evaluation.CheckmateEval + plyFromRoot;
             }
             return 0;
         }

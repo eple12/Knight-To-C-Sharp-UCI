@@ -7,7 +7,7 @@ public class Evaluation
     Board board;
 
     // Checkmate evaluation detection
-    public static int checkmateEval = 99999;
+    public static int CheckmateEval = 99999;
     int maxDepth;
 
     // Piece Material Values
@@ -555,7 +555,7 @@ public class Evaluation
     // Checkmate Detection
     public bool IsMateScore(int score)
     {
-        if (Math.Abs(score) >= checkmateEval - maxDepth)
+        if (Math.Abs(score) >= CheckmateEval - maxDepth)
         {
             return true;
         }
