@@ -289,6 +289,8 @@ public static class Command
 
             thinkTime = (int) thinkTimeDouble;
         }
+
+        Console.WriteLine($"debug searchtime {thinkTime}");
         
         if (infinite)
         {
