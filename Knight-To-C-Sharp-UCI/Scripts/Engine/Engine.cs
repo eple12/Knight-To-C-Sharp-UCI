@@ -74,31 +74,7 @@ public class Engine
         if (settings.useIterativeDeepening)
         {
             Task.Factory.StartNew(() => {
-                // Iterative Deepening
-                for (int depth = 1; depth <= maxDepth; depth++)
-                {
-                    int evalThisIteration = Search(depth, Infinity.NegativeInfinity, Infinity.PositiveInfinity, 0);
-                    
-                    bestMoveLastIteration = bestMove;
-                    Console.WriteLine($"depth {depth} move {Move.MoveString(bestMove)} eval {evalThisIteration}");
-                    
-                    if (cancellationRequested)
-                    {
-                        break;
-                    }
-
-                    // if (drawExit)
-                    // {
-                    //     break;
-                    // }
-
-                    if (evaluation.IsMateScore(evalThisIteration))
-                    {
-                        break;
-                    }
-                }
-
-                EndSearch();
+                IterativeDeepening(maxDepth);
             }, TaskCreationOptions.LongRunning);
         }
         else
@@ -109,6 +85,35 @@ public class Engine
                 EndSearch();
             }, TaskCreationOptions.LongRunning);
         }
+    }
+
+    void IterativeDeepening(int maxDepth)
+    {
+        // Iterative Deepening
+        for (int depth = 1; depth <= maxDepth; depth++)
+        {
+            int evalThisIteration = Search(depth, Infinity.NegativeInfinity, Infinity.PositiveInfinity, 0);
+            
+            bestMoveLastIteration = bestMove;
+            Console.WriteLine($"depth {depth} move {Move.MoveString(bestMove)} eval {evalThisIteration}");
+            
+            if (cancellationRequested)
+            {
+                break;
+            }
+
+            // if (drawExit)
+            // {
+            //     break;
+            // }
+
+            if (evaluation.IsMateScore(evalThisIteration))
+            {
+                break;
+            }
+        }
+
+        EndSearch();
     }
 
     int Search(int depth, int alpha, int beta, int plyFromRoot, int numExtensions = 0)
