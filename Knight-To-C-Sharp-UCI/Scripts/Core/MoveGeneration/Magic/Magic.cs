@@ -39,7 +39,7 @@ public static class Magic
         for (int i = 0; i < 64; i++)
         {
             RookAttacks[i] = CreateTable(i, false, PreComputedMagic.RookMagics[i], PreComputedMagic.RookShifts[i]);
-            BishopAttacks[i] = CreateTable(i, false, PreComputedMagic.BishopMagics[i], PreComputedMagic.BishopShifts[i]);
+            BishopAttacks[i] = CreateTable(i, true, PreComputedMagic.BishopMagics[i], PreComputedMagic.BishopShifts[i]);
         }
     }
 

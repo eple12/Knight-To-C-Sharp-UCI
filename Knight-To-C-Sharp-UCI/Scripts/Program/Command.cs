@@ -181,7 +181,7 @@ public static class Command
         // {
         //     Bitboard.Print(bitboard);
         // }
-        Bitboard.Print(Magic.GetRookAttacks(0, 1ul << 24 | 1ul << 3));
+        Bitboard.Print(Magic.GetBishopAttacks(Square.Index("d4"), 1ul << Square.Index("b2") | 1ul << Square.Index("c3") | 1ul << Square.Index("b6")));
     }
     
 
