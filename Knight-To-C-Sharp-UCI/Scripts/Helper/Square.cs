@@ -26,6 +26,29 @@ public static class Square
         return (square % 8) + (7 - square / 8) * 8;
     }
 
+    public static bool IsValidSquare(int square)
+    {
+        int file = square % 8;
+        int rank = square / 8;
+
+        if (file >= 0 && file < 8 && rank >= 0 && rank < 8)
+        {
+            return true;
+        }
+        return false;
+    }
+    public static bool IsValidSquareExceptOutline(int square)
+    {
+        int file = square % 8;
+        int rank = square / 8;
+
+        if (file >= 1 && file < 7 && rank >= 1 && rank < 7)
+        {
+            return true;
+        }
+        return false;
+    }
+
 
     // En passant utility
     public static int EnpassantCaptureIndex(int enpFile, bool isWhiteTurn)

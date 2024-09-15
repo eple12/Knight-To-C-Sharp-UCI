@@ -1,11 +1,10 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Security.Cryptography;
 
 public static class PreComputedData // Pre-Computed Data to speed move generation up
 {
     public static int[,] numSquaresToEdge = new int[64, 8];
+    public static Dictionary<int, int> offsetToNumEdgeIndex = new Dictionary<int, int> {
+        {1, 0}, {8, 1}, {-1, 2}, {-8, 3}, {9, 4}, {7, 5}, {-9, 6}, {-7, 7}
+    };
 
     // Pre-Computed Bitboard (ulong)
     public static ulong[] knightMap = new ulong[64];
@@ -57,6 +56,10 @@ public static class PreComputedData // Pre-Computed Data to speed move generatio
                 numSquaresToEdge[squareIndex, 7] = Math.Min(numD, numR);
             }
         }
+    }
+    public static int NumEdgeIndex(int offset)
+    {
+        return offsetToNumEdgeIndex[offset];
     }
 
     public static void GenerateMaps()

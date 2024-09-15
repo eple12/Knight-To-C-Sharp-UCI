@@ -1,6 +1,4 @@
 
-using System.Collections.Concurrent;
-
 public static class Command
 {
     const int MaxThinkTime = 3000 * 1000;
@@ -74,17 +72,17 @@ public static class Command
 
     public static int RecieveCustomCommand(string command)
     {
-        string[] commandList = command.Split(' ');
-        string prefix = commandList[0];
+        string[] tokens = command.Split(' ');
+        string prefix = tokens[0];
 
         switch (prefix)
         {
             case "move":
-                if (commandList.Length <= 1)
+                if (tokens.Length <= 1)
                 {
                     break;
                 }
-                MainProcess.board.MakeConsoleMove(commandList[1]);
+                MainProcess.board.MakeConsoleMove(tokens[1]);
                 break;
             case "eval":
                 Console.WriteLine("debug cmd eval: " + MainProcess.engine.GetEngine().GetEvaluation().Evaluate());
@@ -104,9 +102,9 @@ public static class Command
                 Console.WriteLine("Current Directory: " + Environment.CurrentDirectory);
                 break;
             case "keybook":
-                if (commandList.Length > 1)
+                if (tokens.Length > 1)
                 {
-                    ulong key = ulong.Parse(commandList[1]);
+                    ulong key = ulong.Parse(tokens[1]);
                     PrintBookMoves(key);
                 }
                 break;
@@ -117,13 +115,13 @@ public static class Command
                 PrintBookMoves(MainProcess.board.ZobristKey);
                 break;
             case "bitboard":
-                if (commandList.Length > 1)
+                if (tokens.Length > 1)
                 {
-                    if (commandList[1] == "print")
+                    if (tokens[1] == "print")
                     {
                         MainProcess.board.BitboardSet.Print();
                     }
-                    else if (commandList[1] == "test")
+                    else if (tokens[1] == "test")
                     {
                         MainProcess.board.BitboardSet.Test(MainProcess.board);
                     }
@@ -143,13 +141,49 @@ public static class Command
             case "ttprint":
                 MainProcess.engine.GetEngine().GetTT().Print();
                 break;
-            
+            case "magic":
+                string subCommand = tokens[1];
+
+                switch (subCommand)
+                {
+                    case "movement":
+                        for (int i = 0; i < 64; i++)
+                        {
+                            Console.WriteLine($"Rook, Bishop on square {Square.Name(i)}");
+                            Bitboard.Print(Magic.RookMasks[i]);
+                            Bitboard.Print(Magic.BishopMasks[i]);
+                        }
+                        break;
+
+
+                    default:
+                        break;
+                }
+
+
+                break;
+            case "temp":
+                Temp();
+                break;
+
+
+
             default:
                 break;
         }
 
         return 0;
     }
+    static void Temp()
+    {
+        // Console.WriteLine(PreComputedData.numSquaresToEdge[Square.Index("a1"), 5]);
+        // foreach (ulong bitboard in MagicHelper.CreateAllBlockerBitboards(Magic.RookMasks[0]))
+        // {
+        //     Bitboard.Print(bitboard);
+        // }
+        Bitboard.Print(Magic.GetRookAttacks(0, 1ul << 24 | 1ul << 3));
+    }
+    
 
     static void ProcessPositionCommand(string command, string[] tokens)
     {
@@ -271,23 +305,7 @@ public static class Command
         // Choose Think Time
         if (!gotThinkTime)
         {
-            // Think Time
-            int myTime = MainProcess.board.Turn ? wtime : btime;
-            int myInc = MainProcess.board.Turn ? winc : binc;
-            // Get a fraction of remaining time to use for current move
-            double thinkTimeDouble = myTime / 30.0;
-            // Clamp think time if a maximum limit is imposed
-            thinkTimeDouble = Math.Min(MaxThinkTime, thinkTimeDouble);
-            // Add increment
-            if (myTime > myInc * 2)
-            {
-                thinkTimeDouble += myInc * 0.6;
-            }
-
-            double minThinkTime = Math.Min(MinThinkTime, myTime * 0.25);
-            thinkTimeDouble = Math.Ceiling(Math.Max(minThinkTime, thinkTimeDouble));
-
-            thinkTime = (int) thinkTimeDouble;
+            thinkTime = MainProcess.engine.DecideThinkTime(wtime, btime, winc, binc, MaxThinkTime, MinThinkTime);
         }
 
         Console.WriteLine($"debug searchtime {thinkTime}");

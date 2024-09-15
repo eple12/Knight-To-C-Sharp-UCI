@@ -31,6 +31,26 @@ public class EngineController
 
         StartSearch(depth, onSearchComplete);
     }
+    public int DecideThinkTime(int wtime, int btime, int winc, int binc, int max, int min)
+    {
+        // Think Time
+        int myTime = MainProcess.board.Turn ? wtime : btime;
+        int myInc = MainProcess.board.Turn ? winc : binc;
+        // Get a fraction of remaining time to use for current move
+        double thinkTimeDouble = myTime / 30.0;
+        // Clamp think time if a maximum limit is imposed
+        thinkTimeDouble = Math.Min(max, thinkTimeDouble);
+        // Add increment
+        if (myTime > myInc * 2)
+        {
+            thinkTimeDouble += myInc * 0.6;
+        }
+
+        double minThinkTime = Math.Min(min, myTime * 0.25);
+        thinkTimeDouble = Math.Ceiling(Math.Max(minThinkTime, thinkTimeDouble));
+
+        return (int) thinkTimeDouble;
+    }
 
     public void CancelSearch(Action? onSearchComplete = null)
     {
