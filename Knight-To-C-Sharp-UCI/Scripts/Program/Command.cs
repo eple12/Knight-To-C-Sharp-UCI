@@ -13,24 +13,32 @@ public static class Command
         switch (prefix)
         {
             case "quit":
+            {
                 MainProcess.engine.CancelAndWait();
-                return 1;
+            }
+            return 1;
             case "uci":
+            {
                 Console.WriteLine("id name Knight-To-C-Sharp");
                 Console.WriteLine("id author KMS (Eaten_Apple on lichess.org)");
                 Console.WriteLine("uciok");
-                break;
+            }
+            break;
             case "ucinewgame":
+            {
                 if (MainProcess.engine.IsSearching())
                 {
                     MainProcess.engine.CancelAndWait();
                 }
 
                 MainProcess.board.LoadPositionFromFen(Board.InitialFen);
-                break;
+            }
+            break;
             case "d":
+            {
                 MainProcess.board.PrintBoardAndMoves();
-                break;
+            }
+            break;
             
             default:
                 break;
@@ -45,23 +53,33 @@ public static class Command
         switch (prefix)
         {
             case "cmd":
+            {
                 if (tokens.Length > 1)
                 {
                     RecieveCustomCommand(command.Substring(4));
                 }
-                break;
+            }
+            break;
             case "position":
+            {
                 ProcessPositionCommand(command, tokens);
-                break;
+            }
+            break;
             case "go":
+            {
                 ProcessGoCommand(tokens);
-                break;
+            }
+            break;
             case "stop":
+            {
                 MainProcess.engine.CancelAndWait();
-                break;
+            }
+            break;
             case "isready":
+            {
                 Console.WriteLine("readyok");
-                break;
+            }
+            break;
                         
             default:
                 break;
@@ -78,43 +96,62 @@ public static class Command
         switch (prefix)
         {
             case "move":
+            {
                 if (tokens.Length <= 1)
                 {
                     break;
                 }
                 MainProcess.board.MakeConsoleMove(tokens[1]);
-                break;
+            }
+            break;
             case "eval":
+            {
                 Console.WriteLine("debug cmd eval: " + MainProcess.engine.GetEngine().GetEvaluation().Evaluate());
-                break;
+            }
+            break;
             case "endweight":
+            {
                 Console.WriteLine("debug cmd EndgameWeight: " + 
                 MainProcess.engine.GetEngine().GetEvaluation().GetEndgameWeight());
-                break;
+            }
+            break;
             case "zobrist":
+            {
                 Console.WriteLine("debug cmd zobrist: " + MainProcess.board.ZobristKey);
-                break;
+            }
+            break;
             case "parsebook":
+            {
                 BookParser parser = new BookParser();
                 parser.Parse();
-                break;
+            }
+            break;
             case "dir":
+            {
                 Console.WriteLine("Current Directory: " + Environment.CurrentDirectory);
-                break;
+            }
+            break;
             case "keybook":
+            {
                 if (tokens.Length > 1)
                 {
                     ulong key = ulong.Parse(tokens[1]);
                     PrintBookMoves(key);
                 }
-                break;
+            }
+            break;
             case "booktest":
+            {
                 Console.WriteLine(Move.MoveString(Book.GetRandomMove(MainProcess.board)));
-                break;
+            }
+            break;
             case "book":
+            {
                 PrintBookMoves(MainProcess.board.ZobristKey);
-                break;
+            }
+            break;
             case "bitboard":
+            {
                 if (tokens.Length > 1)
                 {
                     if (tokens[1] == "print")
@@ -126,24 +163,30 @@ public static class Command
                         MainProcess.board.BitboardSet.Test(MainProcess.board);
                     }
                 }
-
-                break;
+            }
+            break;
             case "enginemove":
+            {
                 MainProcess.engine.StartTimedSearch(100, 1000, () => {
                     MainProcess.board.MakeMove(MainProcess.engine.GetMove());
                     MainProcess.board.LegalMoves = MainProcess.board.MoveGen.GenerateMoves();
                     MainProcess.board.PrintBoardAndMoves();
                 });
-                break;
+            }
+            break;
             case "tt":
+            {
                 Console.WriteLine("key: " + MainProcess.board.ZobristKey + " tt: " + MainProcess.engine.GetEngine().GetTT().LookupEvaluation(0, 0, 0, 0) + " move: " + Move.MoveString(MainProcess.engine.GetEngine().GetTT().GetStoredMove()) + " Index: " + MainProcess.engine.GetEngine().GetTT().Index);
-                break;
+            }
+            break;
             case "ttprint":
+            {
                 MainProcess.engine.GetEngine().GetTT().Print();
-                break;
+            }
+            break;
             case "magic":
+            {
                 string subCommand = tokens[1];
-
                 switch (subCommand)
                 {
                     case "movement":
@@ -159,21 +202,40 @@ public static class Command
                     default:
                         break;
                 }
-
-
-                break;
+            }
+            break;
             case "temp":
+            {
                 Temp();
-                break;
-
-
-
+            }
+            break;
+            case "timetest":
+            {
+                if (tokens.Length > 1)
+                {
+                    string subCommand = tokens[1];
+                    switch (subCommand)
+                    {
+                        case "movegen":
+                        {
+                            GeneralTimeTest(() => MainProcess.board.MoveGen.GenerateMoves(), testName: "Legal Move Generation", cases: 10);
+                        }
+                        break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            break;
+            
             default:
                 break;
         }
 
         return 0;
     }
+
+    // Temporary Tests
     static void Temp()
     {
         // Console.WriteLine(PreComputedData.numSquaresToEdge[Square.Index("a1"), 5]);
@@ -184,6 +246,36 @@ public static class Command
         Bitboard.Print(Magic.GetBishopAttacks(Square.Index("d4"), 1ul << Square.Index("b2") | 1ul << Square.Index("c3") | 1ul << Square.Index("b6")));
     }
     
+    // Time Tests
+    static void GeneralTimeTest(Action? action = null, string testName = "UnNamed", int cases = 1, int suiteIteration = 10)
+    {
+        Console.WriteLine("###############");
+        Console.WriteLine($"Time Test: {testName}\n");
+
+        for (int i = 0; i < cases; i++)
+        {
+            Console.WriteLine($"Case {i + 1}");
+            string s = "\tMS | ";
+            double[] msarr = new double[suiteIteration];
+            for (int suite = 0; suite < suiteIteration; suite++)
+            {
+                System.Diagnostics.Stopwatch sw = new ();
+                sw.Start();
+
+                action?.Invoke();
+
+                sw.Stop();
+                double milliseconds = sw.ElapsedTicks / (double)TimeSpan.TicksPerMillisecond;
+                s += $"{milliseconds:F5}" + "ms. ";
+                msarr[suite] = milliseconds; 
+            }
+
+            Console.WriteLine(s);
+            Console.WriteLine($"\tAVG | {msarr.Average():F5}");
+        }
+
+        Console.WriteLine("###############");
+    }
 
     static void ProcessPositionCommand(string command, string[] tokens)
     {
