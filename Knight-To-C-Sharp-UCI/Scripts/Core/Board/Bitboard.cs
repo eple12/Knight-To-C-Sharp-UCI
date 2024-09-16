@@ -98,7 +98,12 @@ public class Bitboard
     {
         return BitOperations.PopCount(bitboard);
     }
-
+    public static int PopLSB(ref ulong bitboard)
+    {
+        int i = BitOperations.TrailingZeroCount(bitboard);
+        bitboard &= bitboard - 1;
+        return i;
+    }
 
     // public static string BitsString(ulong bitboard)
     // {

@@ -52,6 +52,7 @@ public struct Move
     }
     public static void PrintMoveList(List<Move> moves)
     {
+        Console.WriteLine($"Total {moves.Count}");
         string s = "";
 
         foreach (var item in moves)

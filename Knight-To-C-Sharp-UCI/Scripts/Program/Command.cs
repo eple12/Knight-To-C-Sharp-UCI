@@ -227,12 +227,28 @@ public static class Command
                 }
             }
             break;
-            
+            case "perft":
+            {
+                Perft();
+            }
+            break;
+
             default:
                 break;
         }
 
         return 0;
+    }
+
+
+
+
+
+    // COMMAND FUNCTIONS
+
+    static void Perft()
+    {
+        PerftHelper.Go(MainProcess.board);
     }
 
     // Temporary Tests
@@ -243,7 +259,8 @@ public static class Command
         // {
         //     Bitboard.Print(bitboard);
         // }
-        Bitboard.Print(Magic.GetBishopAttacks(Square.Index("d4"), 1ul << Square.Index("b2") | 1ul << Square.Index("c3") | 1ul << Square.Index("b6")));
+        // Bitboard.Print(Magic.GetBishopAttacks(Square.Index("d4"), 1ul << Square.Index("b2") | 1ul << Square.Index("c3") | 1ul << Square.Index("b6")));
+        Bitboard.Print(PreComputedData.dirRayMask[4, Square.Index("d4")]);
     }
     
     // Time Tests
@@ -344,7 +361,13 @@ public static class Command
         {
             string subCommand = tokens[tokenIndex];
 
-            if (subCommand == "depth")
+            if (subCommand == "perft")
+            {
+                int d = GetIntegerAfterLabel(subCommand, tokens);
+                PerftHelper.Calculate(MainProcess.board, d);
+                return;
+            }
+            else if (subCommand == "depth")
             {
                 depth = GetIntegerAfterLabel(subCommand, tokens);
                 tokenIndex++;

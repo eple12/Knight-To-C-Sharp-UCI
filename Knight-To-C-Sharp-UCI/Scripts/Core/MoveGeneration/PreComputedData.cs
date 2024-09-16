@@ -5,6 +5,7 @@ public static class PreComputedData // Pre-Computed Data to speed move generatio
     public static Dictionary<int, int> offsetToNumEdgeIndex = new Dictionary<int, int> {
         {1, 0}, {8, 1}, {-1, 2}, {-8, 3}, {9, 4}, {7, 5}, {-9, 6}, {-7, 7}
     };
+    public static int[] directions = {1, 8, -1, -8, 9, 7, -9, -7};
 
     // Pre-Computed Bitboard (ulong)
     public static ulong[] knightMap = new ulong[64];
@@ -21,12 +22,18 @@ public static class PreComputedData // Pre-Computed Data to speed move generatio
     // Values with index of impossible pin ray such as 126 are invalid (targetSquare = 63, startSquare = 0 -> THIS CANNOT BE A PIN RAY)
     public static int[] directionLookup = new int[127];
 
+    // Direction-Ray Masks
+    // [Direction Index , From Square] => Ray Mask from Square in Direction
+    // Does not include the square
+    public static ulong[,] dirRayMask = new ulong[8, 64];
 
-    public static void Initialize()
+
+    static PreComputedData()
     {
         GenerateNumSquaresToEdge();
         GenerateMaps();
         GenerateDirectionLookup();
+        GenerateDirRayMask();
     }
 
     public static void GenerateNumSquaresToEdge()
@@ -232,6 +239,27 @@ public static class PreComputedData // Pre-Computed Data to speed move generatio
             }
 
             directionLookup[i] = absDir * Math.Sign(offset);
+        }
+    }
+    static void GenerateDirRayMask()
+    {
+        for (int dirIndex = 0; dirIndex < 8; dirIndex++)
+        {
+            for (int square = 0; square < 64; square++)
+            {
+                int dirOffset = directions[dirIndex];
+                int numEdge = numSquaresToEdge[square, dirIndex];
+                ulong mask = 0;
+                
+                for (int dst = 1; dst <= numEdge; dst++)
+                {
+                    int thisSquare = square + dst * dirOffset;
+
+                    mask |= (ulong) 1 << thisSquare;
+                }
+
+                dirRayMask[dirIndex, square] = mask;
+            }
         }
     }
 

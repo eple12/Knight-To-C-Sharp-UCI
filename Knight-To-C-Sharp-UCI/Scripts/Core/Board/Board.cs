@@ -116,7 +116,6 @@ public class Board
 
     public Board()
     {
-        MoveGen = new MoveGenerator(this);
         Loaded = false;
 
         Squares = new int[64];
@@ -133,6 +132,8 @@ public class Board
         CastlingData = 0;
         EnpassantFile = 8;
         FiftyRuleHalfClock = 0;
+        
+        MoveGen = new MoveGenerator(this);
     }
 
     public void PrintLargeBoard()
@@ -701,32 +702,6 @@ public class Board
         }
     }
     
-    public ulong Perft(int depth)
-    {
-        if (depth == 0)
-        {
-            return 1;
-        }
-
-        ulong nodes = 0;
-        List<Move> legalMoves = MoveGen.GenerateMoves();
-        
-        if (depth == 1)
-        {
-            return (ulong) legalMoves.Count;
-        }
-
-        foreach (Move move in legalMoves)
-        {
-            MakeMove(move);
-
-            nodes += Perft(depth - 1);
-
-            UnmakeMove(move);
-        }
-
-        return nodes;
-    }
 
     void StorePosition()
     {
