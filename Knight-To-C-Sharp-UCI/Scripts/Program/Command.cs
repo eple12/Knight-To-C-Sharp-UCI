@@ -260,7 +260,7 @@ public static class Command
         //     Bitboard.Print(bitboard);
         // }
         // Bitboard.Print(Magic.GetBishopAttacks(Square.Index("d4"), 1ul << Square.Index("b2") | 1ul << Square.Index("c3") | 1ul << Square.Index("b6")));
-        Bitboard.Print(PreComputedData.dirRayMask[4, Square.Index("d4")]);
+        Bitboard.Print(PreComputedData.DirRayMask[4, Square.Index("d4")]);
     }
     
     // Time Tests
@@ -364,7 +364,7 @@ public static class Command
             if (subCommand == "perft")
             {
                 int d = GetIntegerAfterLabel(subCommand, tokens);
-                PerftHelper.Calculate(MainProcess.board, d);
+                PerftHelper.Test(MainProcess.board, d, 0, true);
                 return;
             }
             else if (subCommand == "depth")

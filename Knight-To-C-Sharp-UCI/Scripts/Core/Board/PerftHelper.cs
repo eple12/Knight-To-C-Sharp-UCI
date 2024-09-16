@@ -33,7 +33,7 @@ public static class PerftHelper
         {
             Case(board, position.Get(5));
         }
-        // Case(board, PerftPositions[2].Get(2));
+        // Case(board, PerftPositions[1].Get(5), print: true);
         // Case(board, new PerftCase("8/2p5/3p4/KP5r/1R2Pp1k/8/6P1/8 b - - 0 1", 1, 0));
 
         board.LoadPositionFromFen(Board.InitialFen);
@@ -45,10 +45,15 @@ public static class PerftHelper
         string FEN = perftCase.fen;
         int depth = perftCase.depth;
         ulong expectation = perftCase.exp;
-
+        
         Console.WriteLine($"Running case with FEN: \"{FEN}\" | EXPECTATION: {expectation}");
         board.LoadPositionFromFen(FEN);
 
+        Test(board, depth, expectation, print);
+    }
+
+    public static void Test(Board board, int depth, ulong expectation, bool print = false)
+    {
         System.Diagnostics.Stopwatch sw = new();
         sw.Start();
 

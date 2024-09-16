@@ -496,8 +496,8 @@ public class Board
             PieceSquares[movingPieceIndex].Remove(targetSquare);
 
             // Bitboard
-            BitboardSet.Add(promotionPieceIndex, targetSquare);
             BitboardSet.Remove(movingPieceIndex, targetSquare);
+            BitboardSet.Add(promotionPieceIndex, targetSquare);
         }
 
 

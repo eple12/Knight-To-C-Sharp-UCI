@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public class MoveGenerator
 {
-    static readonly int[] directionOffsets = PreComputedData.directions;
+    static readonly int[] directionOffsets = PreComputedData.Directions;
 
     // VARIABLES USED IN MOVE GENERATION
     List<Move> moves = new List<Move>();
@@ -44,9 +44,12 @@ public class MoveGenerator
 
     // Bitboards
     ulong[] bitboards;
+    ulong friendlyAll;
+    ulong enemyAll;
     ulong allBitboard;
     ulong enemyStraightSliders;
     ulong enemyDiagonalSliders;
+    ulong moveTypeMask;
     
     public MoveGenerator(Board board)
     {
@@ -65,15 +68,15 @@ public class MoveGenerator
         
         GenerateKingMoves();
 
-        if (inDoubleCheck)
+        if (!inDoubleCheck)
         {
-            return moves;
+            GenerateSlidingMoves();
+            GenerateKnightMoves();
+            
+            GeneratePawnMoves();
         }
 
-        GenerateSlidingMoves();
-        GenerateKnightMoves();
         
-        GeneratePawnMoves();
 
         return moves;
     }
@@ -119,9 +122,12 @@ public class MoveGenerator
         enemyQueenIndex = turn ? PieceIndex.BlackQueen : PieceIndex.WhiteQueen;
 
         // Bitboards
-        allBitboard = bitboards[PieceIndex.WhiteAll] | bitboards[PieceIndex.BlackAll];
+        friendlyAll = bitboards[turn ? PieceIndex.WhiteAll : PieceIndex.BlackAll]; 
+        enemyAll = bitboards[!turn ? PieceIndex.WhiteAll : PieceIndex.BlackAll]; 
+        allBitboard = friendlyAll | enemyAll;
         enemyStraightSliders = bitboards[enemyRookIndex] | bitboards[enemyQueenIndex];
         enemyDiagonalSliders = bitboards[enemyBishopIndex] | bitboards[enemyQueenIndex];
+        moveTypeMask = genQuietMoves ? ulong.MaxValue : enemyAll;
     }
 
     // Note: This will only return correct value only after GenerateMoves() call.
@@ -178,7 +184,7 @@ public class MoveGenerator
                 continue;
             }
 
-            for (int n = 0; n < PreComputedData.numSquaresToEdge[startSquare, dirIndex]; n++)
+            for (int n = 0; n < PreComputedData.NumSquaresToEdge[startSquare, dirIndex]; n++)
             {
                 int targetSquare = startSquare + currentOffset * (n + 1);
 
@@ -220,53 +226,40 @@ public class MoveGenerator
     
     void GenerateKingMoves()
     {
-        for (int index = 0; index < PreComputedData.kingSquares[friendlyKingSquare].Count; index++)
+        ulong legalMask = ~(enemyAttackMap | friendlyAll);
+        ulong kingMoves = PreComputedData.KingMap[friendlyKingSquare] & legalMask & moveTypeMask;
+
+        while (kingMoves != 0)
         {
-            int targetSquare = PreComputedData.kingSquares[friendlyKingSquare][index];
-
-            if (Piece.IsColor(position[targetSquare], friendlyColor))
-            {
-                continue;
-            }
-
-            if (!Bitboard.Contains(enemyAttackMap, targetSquare))
-            {
-                if (genQuietMoves)
-                {
-                    moves.Add(new Move(friendlyKingSquare, targetSquare));
-                }
-                else
-                {
-                    if (Piece.IsColor(position[targetSquare], enemyColor))
-                    {
-                        moves.Add(new Move(friendlyKingSquare, targetSquare));
-                    }
-                }
-            }
+            int targetSquare = Bitboard.PopLSB(ref kingMoves);
+            moves.Add(new Move(friendlyKingSquare, targetSquare));
         }
 
-        // Kingside Castling
-        if (!inCheck && kingsideCastling)
+        // Castling
+        if (genQuietMoves && !inCheck)
         {
-            int targetSquare = friendlyKingSquare + 2;
+            ulong castlingBlockers = enemyAttackMap | allBitboard;
 
-            if (position[targetSquare - 1] == Piece.None && position[targetSquare] == Piece.None && 
-            !Bitboard.Contains(enemyAttackMap, targetSquare - 1) && !Bitboard.Contains(enemyAttackMap, targetSquare))
+            // Kingside Castling
+            if (kingsideCastling)
             {
-                moves.Add(new Move(friendlyKingSquare, targetSquare, MoveFlag.Castling));
+                ulong castlingMask = turn ? PreComputedData.WhiteKingSideCastlingMask : PreComputedData.BlackKingSideCastlingMask;
+                if ((castlingMask & castlingBlockers) == 0)
+                {
+                    int targetSquare = turn ? 6 : 62;
+                    moves.Add(new Move(friendlyKingSquare, targetSquare, MoveFlag.Castling));
+                }
             }
-        }
-        // Queenside Castling
-        if (!inCheck && queensideCastling)
-        {
-            int targetSquare = friendlyKingSquare - 2;
-
-            if (position[targetSquare - 1] == Piece.None && position[targetSquare + 1] == Piece.None && 
-            position[targetSquare] == Piece.None && 
-            !Bitboard.Contains(enemyAttackMap, targetSquare + 1) && 
-            !Bitboard.Contains(enemyAttackMap, targetSquare))
+            // Queenside Castling
+            if (queensideCastling)
             {
-                moves.Add(new Move(friendlyKingSquare, targetSquare, MoveFlag.Castling));
+                ulong castlingMask = turn ? PreComputedData.WhiteQueenSideCastlingMask : PreComputedData.BlackQueenSideCastlingMask;
+                ulong castlingBlockMask = turn ? PreComputedData.WhiteQueenSideCastlingBlockMask : PreComputedData.BlackQueenSideCastlingBlockMask;
+                if (((castlingMask & enemyAttackMap) == 0) && ((castlingBlockMask & allBitboard) == 0))
+                {
+                    int targetSquare = turn ? 2 : 58;
+                    moves.Add(new Move(friendlyKingSquare, targetSquare, MoveFlag.Castling));
+                }
             }
         }
     }
@@ -380,7 +373,7 @@ public class MoveGenerator
                     }
 
                     // En passant
-                    if (targetSquare == Square.EnpassantCaptureIndex(board.EnpassantFile, turn) && (!inCheck || SquareIsInCheckRay(targetSquare) || SquareIsInCheckRay(targetSquare + (turn ? - 8 : 8))))
+                    if (targetSquare == Square.EnpassantCaptureSquare(board.EnpassantFile, turn) && (!inCheck || SquareIsInCheckRay(targetSquare) || SquareIsInCheckRay(targetSquare + (turn ? - 8 : 8))))
                     {
                         position[targetSquare + (turn ? - 8 : 8)] = Piece.None;
                         position[startSquare] = Piece.None;
@@ -422,7 +415,7 @@ public class MoveGenerator
                     }
 
                     // En passant
-                    if (targetSquare == Square.EnpassantCaptureIndex(board.EnpassantFile, turn) && (!inCheck || SquareIsInCheckRay(targetSquare) || SquareIsInCheckRay(targetSquare + (turn ? - 8 : 8))))
+                    if (targetSquare == Square.EnpassantCaptureSquare(board.EnpassantFile, turn) && (!inCheck || SquareIsInCheckRay(targetSquare) || SquareIsInCheckRay(targetSquare + (turn ? - 8 : 8))))
                     {
                         position[targetSquare + (turn ? - 8 : 8)] = Piece.None;
                         position[startSquare] = Piece.None;
@@ -474,12 +467,12 @@ public class MoveGenerator
             ulong sliders = isDiagonal ? enemyDiagonalSliders : enemyStraightSliders;
 
             // No enemy piece that can attack in this direction
-            if ((PreComputedData.dirRayMask[dir, friendlyKingSquare] & sliders) == 0)
+            if ((PreComputedData.DirRayMask[dir, friendlyKingSquare] & sliders) == 0)
             {
                 continue;
             }
 
-            int n = PreComputedData.numSquaresToEdge[friendlyKingSquare, dir];
+            int n = PreComputedData.NumSquaresToEdge[friendlyKingSquare, dir];
             int directionOffset = directionOffsets[dir];
             bool isFriendlyPieceAlongRay = false;
             ulong rayMask = 0;
@@ -546,7 +539,7 @@ public class MoveGenerator
         for (int knightIndex = 0; knightIndex < opponentKnights.count; knightIndex++)
         {
             int startSquare = opponentKnights.squares[knightIndex];
-            enemyKnightAttackMap |= PreComputedData.knightMap[startSquare];
+            enemyKnightAttackMap |= PreComputedData.KnightMap[startSquare];
 
             if (!isKnightCheck && Bitboard.Contains(enemyKnightAttackMap, friendlyKingSquare))
             {
@@ -577,7 +570,7 @@ public class MoveGenerator
 
         int enemyKingSquare = board.PieceSquares[turn ? PieceIndex.BlackKing : PieceIndex.WhiteKing].squares[0];
 
-        enemyAttackMapNoPawns = enemySlidingAttackMap | enemyKnightAttackMap | PreComputedData.kingMap[enemyKingSquare];
+        enemyAttackMapNoPawns = enemySlidingAttackMap | enemyKnightAttackMap | PreComputedData.KingMap[enemyKingSquare];
         enemyAttackMap = enemyAttackMapNoPawns | enemyPawnAttackMap;
     }
 
@@ -615,14 +608,14 @@ public class MoveGenerator
 
     bool IsMovingAlongRay(int dirOffset, int startSquare, int targetSquare)
     {
-        int moveDir = PreComputedData.directionLookup[targetSquare - startSquare + 63];
+        int moveDir = PreComputedData.DirectionLookup[targetSquare - startSquare + 63];
         
 		return dirOffset == moveDir || -dirOffset == moveDir;
     }
 
     bool IsHorizontalChecked()
     {
-        for (int n = 0; n < PreComputedData.numSquaresToEdge[friendlyKingSquare, 0]; n++)
+        for (int n = 0; n < PreComputedData.NumSquaresToEdge[friendlyKingSquare, 0]; n++)
         {
             if (position[friendlyKingSquare + n + 1] != Piece.None)
             {
@@ -636,7 +629,7 @@ public class MoveGenerator
             }
         }
 
-        for (int n = 0; n < PreComputedData.numSquaresToEdge[friendlyKingSquare, 2]; n++)
+        for (int n = 0; n < PreComputedData.NumSquaresToEdge[friendlyKingSquare, 2]; n++)
         {
             if (position[friendlyKingSquare - n - 1] != Piece.None)
             {

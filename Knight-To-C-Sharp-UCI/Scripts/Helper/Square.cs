@@ -51,7 +51,7 @@ public static class Square
 
 
     // En passant utility
-    public static int EnpassantCaptureIndex(int enpFile, bool isWhiteTurn)
+    public static int EnpassantCaptureSquare(int enpFile, bool isWhiteTurn)
     {
         if (enpFile == 8)
         {
