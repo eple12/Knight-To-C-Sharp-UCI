@@ -26,6 +26,10 @@ public static class PreComputedData // Pre-Computed Data to speed move generatio
     // Does not include the square
     public static ulong[,] DirRayMask = new ulong[8, 64];
 
+    // Aligned Rays
+    // [ SquareA , SquareB ] => SquareA to SquareB Ray
+    public static ulong[,] AlignMask = new ulong[64, 64];
+
     // Move Generation Bitboards
     public static ulong WhiteKingSideCastlingMask = (ulong) 0b11 << 5;
     public static ulong WhiteQueenSideCastlingMask = (ulong) 0b11 << 2;
@@ -34,6 +38,14 @@ public static class PreComputedData // Pre-Computed Data to speed move generatio
     public static ulong BlackQueenSideCastlingMask = (ulong) 0b11 << 58;
     public static ulong BlackQueenSideCastlingBlockMask = (ulong) 0b111 << 57;
 
+    // Board Representation Bitboards
+    public static ulong Rank1 = 0xFF;
+    public static ulong Rank8 = Rank1 << 56;
+    public static ulong FileA = 0x0101010101010101;
+    public static ulong FileH = FileA << 7;
+    public static ulong NotFileA = ulong.MaxValue ^ FileA;
+    public static ulong NotFileH = ulong.MaxValue ^ FileH;
+
 
     static PreComputedData()
     {
@@ -41,6 +53,7 @@ public static class PreComputedData // Pre-Computed Data to speed move generatio
         GenerateMaps();
         GenerateDirectionLookup();
         GenerateDirRayMask();
+        GenerateAlignMask();
     }
 
     public static void GenerateNumSquaresToEdge()
@@ -256,6 +269,34 @@ public static class PreComputedData // Pre-Computed Data to speed move generatio
                 }
 
                 DirRayMask[dirIndex, square] = mask;
+            }
+        }
+    }
+    static void GenerateAlignMask()
+    {
+        for (int squareA = 0; squareA < 64; squareA++)
+        {
+            for (int squareB = 0; squareB < 64; squareB++)
+            {
+                int aFile = squareA % 8;
+                int aRank = squareA / 8;
+
+                int deltaFile = (squareB % 8) - aFile;
+                int deltaRank = (squareB / 8) - aRank;
+
+                int signFile = Math.Sign(deltaFile);
+                int signRank = Math.Sign(deltaRank);
+
+                for (int dst = -7; dst <= 7; dst++)
+                {
+                    int thisFile = aFile + (signFile * dst);
+                    int thisRank = aRank + (signRank * dst);
+
+                    if (Square.IsValidSquare(thisFile, thisRank))
+                    {
+                        AlignMask[squareA, squareB] |= (ulong) 1 << (thisFile + 8 * thisRank);
+                    }
+                }
             }
         }
     }

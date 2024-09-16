@@ -104,7 +104,17 @@ public class Bitboard
         bitboard &= bitboard - 1;
         return i;
     }
-
+    public static ulong Shift(ulong bitboard, int shift)
+    {
+        if (shift >= 0)
+        {
+            return bitboard << shift;
+        }
+        else
+        {
+            return bitboard >> -shift;
+        }
+    }
     // public static string BitsString(ulong bitboard)
     // {
     //     ulong mask = (ulong)1;

@@ -26,11 +26,8 @@ public static class Square
         return (square % 8) + (7 - square / 8) * 8;
     }
 
-    public static bool IsValidSquare(int square)
+    public static bool IsValidSquare(int file, int rank)
     {
-        int file = square % 8;
-        int rank = square / 8;
-
         if (file >= 0 && file < 8 && rank >= 0 && rank < 8)
         {
             return true;

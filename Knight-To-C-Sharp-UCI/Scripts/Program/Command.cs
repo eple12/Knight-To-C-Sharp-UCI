@@ -260,7 +260,8 @@ public static class Command
         //     Bitboard.Print(bitboard);
         // }
         // Bitboard.Print(Magic.GetBishopAttacks(Square.Index("d4"), 1ul << Square.Index("b2") | 1ul << Square.Index("c3") | 1ul << Square.Index("b6")));
-        Bitboard.Print(PreComputedData.DirRayMask[4, Square.Index("d4")]);
+        // Bitboard.Print(PreComputedData.DirRayMask[4, Square.Index("d4")]);
+        Bitboard.Print(PreComputedData.AlignMask[Square.Index("d5"), Square.Index("e8")]);
     }
     
     // Time Tests
