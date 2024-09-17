@@ -107,10 +107,10 @@ public class Engine
             //     break;
             // }
 
-            if (evaluation.IsMateScore(evalThisIteration))
-            {
-                break;
-            }
+            // if (evaluation.IsMateScore(evalThisIteration))
+            // {
+            //     break;
+            // }
         }
 
         EndSearch();
@@ -176,11 +176,11 @@ public class Engine
             return settings.useQSearch ? QuiescenceSearch(alpha, beta) : evaluation.Evaluate();
         }
 
-        Span<Move> legalMoves = stackalloc Move[256];
-        MoveGen.GenerateMoves(ref legalMoves, genOnlyCaptures: false);
+        Span<Move> moves = stackalloc Move[256];
+        MoveGen.GenerateMoves(ref moves, genOnlyCaptures: false);
 
         // Checkmate, Stalemate, Draws
-        MateChecker.MateState mateState = MateChecker.GetPositionState(board, legalMoves, ExcludeRepetition: true, ExcludeFifty: true);
+        MateChecker.MateState mateState = MateChecker.GetPositionState(board, moves, ExcludeRepetition: true, ExcludeFifty: true);
         if (mateState != MateChecker.MateState.None)
         {
             if (mateState == MateChecker.MateState.Checkmate)
@@ -193,42 +193,41 @@ public class Engine
         // Order Moves
         if (plyFromRoot == 0)
         {
-            moveOrder.GetOrderedList(legalMoves, bestMoveLastIteration);
+            moveOrder.GetOrderedList(moves, bestMoveLastIteration);
         }
         else
         {
-            moveOrder.GetOrderedList(legalMoves);
+            moveOrder.GetOrderedList(moves);
         }
 
         int evalType = TranspositionTable.UpperBound;
 
-        Move bestMoveInThisPosition = legalMoves[0];
-        for (int i = 0; i < legalMoves.Length; i++)
+        Move bestMoveInThisPosition = moves[0];
+        for (int i = 0; i < moves.Length; i++)
         {
-            board.MakeMove(legalMoves[i]);
+            board.MakeMove(moves[i]);
 
             int extension = 0;
 
-            // if (numExtensions < MaxExtension)
-            // {
-            //     if (board.MoveGen.InCheck())
-            //     {
-            //         extension = 1;
-            //     }
-            // }
-                
-            // else if (Piece.GetType(board.Squares[legalMoves[i].targetSquare]) == Piece.Pawn)
-            // {
-            //     int targetSquareRank = legalMoves[i].targetSquare / 8;
-            //     if (targetSquareRank == 6 || targetSquareRank == 1)
-            //     {
-            //         extension = 1;
-            //     }
-            // }
+            if (numExtensions < MaxExtension)
+            {
+                if (board.InCheck())
+                {
+                    extension = 1;
+                }
+                else
+                {
+                    int targetSquare = moves[i].targetSquare;
+                    if (Piece.GetType(board.Squares[targetSquare]) == Piece.Pawn && (targetSquare / 8 == 1 || targetSquare / 8 == 6))
+                    {
+                        extension = 1;
+                    }
+                }
+            }
 
             int eval = -Search(depth - 1 + extension, -beta, -alpha, plyFromRoot + 1, numExtensions + extension);
 
-            board.UnmakeMove(legalMoves[i]);
+            board.UnmakeMove(moves[i]);
 
             if (cancellationRequested)
             {
@@ -237,20 +236,20 @@ public class Engine
 
             if (eval >= beta)
             {
-                tt.StoreEvaluation (depth, plyFromRoot, beta, TranspositionTable.LowerBound, legalMoves[i]);
+                tt.StoreEvaluation (depth, plyFromRoot, beta, TranspositionTable.LowerBound, moves[i]);
                 return beta;
             }
 
             if (eval > alpha)
             {
                 alpha = eval;
-                bestMoveInThisPosition = legalMoves[i];
+                bestMoveInThisPosition = moves[i];
                 evalType = TranspositionTable.Exact;
                 
                 if (plyFromRoot == 0)
                 {
                     // Console.WriteLine("found better move: " + Move.MoveString(legalMoves[i]) + " eval: " + eval + " bestEval: " + bestEval);
-                    bestMove = legalMoves[i];
+                    bestMove = moves[i];
                     bestEval = eval;
                 }
             }
