@@ -31,7 +31,7 @@ public class TranspositionTable
     {
         engine = _engine;
         board = engine.GetBoard();
-        size = (ulong) engine.GetSettings().ttSize;
+        size = (ulong) (engine.GetSettings().TTSizeInMB * 1024 * 1024 / Entry.GetSize());
         evaluation = engine.GetEvaluation();
 
         entries = new Entry[size];
@@ -151,7 +151,7 @@ public class TranspositionTable
         Console.WriteLine("###############");
     }
 
-    public struct Entry
+    public struct Entry // 16 bytes.
     {
         public readonly ulong key;
         public readonly int value;

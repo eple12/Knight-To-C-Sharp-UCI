@@ -167,7 +167,7 @@ public static class Command
             break;
             case "enginemove":
             {
-                MainProcess.engine.StartTimedSearch(100, 1000, () => {
+                MainProcess.engine.StartTimedSearch(MainProcess.engine.GetEngine().GetSettings().unlimitedMaxDepth, 3000, () => {
                     MainProcess.board.MakeMove(MainProcess.engine.GetMove());
                     MainProcess.board.UpdateLegalMoves();
                     MainProcess.board.PrintBoardAndMoves();
@@ -267,7 +267,10 @@ public static class Command
         // }
         // Bitboard.Print(Magic.GetBishopAttacks(Square.Index("d4"), 1ul << Square.Index("b2") | 1ul << Square.Index("c3") | 1ul << Square.Index("b6")));
         // Bitboard.Print(PreComputedData.DirRayMask[4, Square.Index("d4")]);
-        Bitboard.Print(PreComputedData.AlignMask[Square.Index("d5"), Square.Index("e8")]);
+        // Bitboard.Print(PreComputedData.AlignMask[Square.Index("d5"), Square.Index("e8")]);
+        // Console.WriteLine(TranspositionTable.Entry.GetSize() + "bytes.");
+        // Console.WriteLine($"Move: {System.Runtime.InteropServices.Marshal.SizeOf<Move>()}");
+        Console.WriteLine(MainProcess.engine.GetEngine().GetTT().size);
     }
     
     // Time Tests
