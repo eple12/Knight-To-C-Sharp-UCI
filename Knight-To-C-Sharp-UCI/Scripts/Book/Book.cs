@@ -55,7 +55,7 @@ public static class Book
 
     public static Move GetRandomMove(Board board)
     {
-        if (board.LegalMoves.Count < 1)
+        if (board.LegalMoves.Length < 1)
         {
             return Move.NullMove;
         }

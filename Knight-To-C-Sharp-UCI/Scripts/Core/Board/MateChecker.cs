@@ -3,9 +3,9 @@ public static class MateChecker
 {
     public enum MateState {None, Checkmate, Stalemate, FiftyDraw, Threefold, Material};
 
-    public static MateState GetPositionState(Board board, List<Move> moves, bool ExcludeRepetition = false, bool ExcludeFifty = false)
+    public static MateState GetPositionState(Board board, Span<Move> moves, bool ExcludeRepetition = false, bool ExcludeFifty = false)
     {
-        if (moves.Count == 0)
+        if (moves.Length == 0)
         {
             if (board.MoveGen.InCheck())
             {

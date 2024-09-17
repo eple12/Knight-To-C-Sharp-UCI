@@ -111,9 +111,9 @@ public struct Move
         }
         return $"{Square.Name(move.startSquare)}{Square.Name(move.targetSquare)}" + promotion;
     }
-    public static Move FindMove(List<Move> moves, string moveString)
+    public static Move FindMove(Move[] moves, string moveString)
     {
-        if (moves.Count < 1)
+        if (moves.Length < 1)
         {
             return NullMove;
         }

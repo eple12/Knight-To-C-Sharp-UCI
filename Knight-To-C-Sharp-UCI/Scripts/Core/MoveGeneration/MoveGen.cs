@@ -1,35 +1,39 @@
-using System.Collections;
-using System.Collections.Generic;
-
 public class MoveGenerator
 {
+    public const int MaxMoves = 218;
     static readonly int[] directionOffsets = PreComputedData.Directions;
 
-    // VARIABLES USED IN MOVE GENERATION
-    List<Move> moves = new List<Move>();
+    // Move array
+    int currMoveIndex;
 
+    // QSearch
     bool genQuietMoves;
 
-    int[] position;
+    // Board
     Board board;
+    int[] position;
     bool turn;
     int friendlyColor;
     int enemyColor;
     int friendlyKingSquare;
 
+    // Attack Data
     ulong enemyAttackMap;
     ulong enemyAttackMapNoPawns;
     ulong enemySlidingAttackMap;
     ulong enemyKnightAttackMap;
     ulong enemyPawnAttackMap;
 
+    // Pins
     bool pinsExistInPosition;
     ulong pinRayBitmask;
 
+    // Checks
     ulong checkRayBitmask;
     bool inCheck;
     bool inDoubleCheck;
 
+    // Castling rights
     bool kingsideCastling;
     bool queensideCastling;
 
@@ -40,7 +44,6 @@ public class MoveGenerator
     int enemyBishopIndex;
     int enemyRookIndex;
     int enemyQueenIndex;
-
 
     // Bitboards
     ulong[] bitboards;
@@ -59,11 +62,19 @@ public class MoveGenerator
     public MoveGenerator(Board board)
     {
         this.board = board;
+
         position = board.Squares;
         bitboards = board.BitboardSet.Bitboards;
     }
 
-    public List<Move> GenerateMoves(bool genOnlyCaptures = false)
+    public Span<Move> GenerateMoves(bool genOnlyCaptures = false)
+    {
+        Span<Move> moves = new Move[MaxMoves];
+        GenerateMoves(ref moves, genOnlyCaptures);
+        return moves;
+    }
+
+    public Span<Move> GenerateMoves(ref Span<Move> moves, bool genOnlyCaptures = false)
     {
         genQuietMoves = !genOnlyCaptures;
 
@@ -71,24 +82,25 @@ public class MoveGenerator
 
         CalculateAttackData();
         
-        GenerateKingMoves();
+        GenerateKingMoves(moves);
 
         if (!inDoubleCheck)
         {
-            GenerateSlidingMoves();
-            GenerateKnightMoves();
+            GenerateSlidingMoves(moves);
+            GenerateKnightMoves(moves);
             
-            GeneratePawnMoves();
+            GeneratePawnMoves(moves);
         }
 
-        
+        moves = moves.Slice(0, currMoveIndex);
 
         return moves;
     }
 
     void Initialize()
     {
-        moves = new List<Move>();
+        // moves = new List<Move>();
+        currMoveIndex = 0;
 
         position = board.Squares;
         bitboards = board.BitboardSet.Bitboards;
@@ -157,7 +169,7 @@ public class MoveGenerator
         return enemyAttackMapNoPawns;
     }
 
-    void GenerateSlidingMoves()
+    void GenerateSlidingMoves(Span<Move> moves)
     {
         // Limit the moves to empty or enemy squares, resolve the check if the king is in check
         ulong moveMask = emptyOrEnemySquares & checkRayBitmask & moveTypeMask;
@@ -186,7 +198,7 @@ public class MoveGenerator
             while (moveSquares != 0)
             {
                 int targetSquare = Bitboard.PopLSB(ref moveSquares);
-                moves.Add(new Move(startSquare, targetSquare));
+                moves[currMoveIndex++] = new Move(startSquare, targetSquare);
             }
         }
 
@@ -205,12 +217,12 @@ public class MoveGenerator
             while (moveSquares != 0)
             {
                 int targetSquare = Bitboard.PopLSB(ref moveSquares);
-                moves.Add(new Move(startSquare, targetSquare));
+                moves[currMoveIndex++] = new Move(startSquare, targetSquare);
             }
         }
     }
     
-    void GenerateKingMoves()
+    void GenerateKingMoves(Span<Move> moves)
     {
         ulong legalMask = ~(enemyAttackMap | friendlyAll);
         ulong kingMoves = PreComputedData.KingMap[friendlyKingSquare] & legalMask & moveTypeMask;
@@ -218,7 +230,7 @@ public class MoveGenerator
         while (kingMoves != 0)
         {
             int targetSquare = Bitboard.PopLSB(ref kingMoves);
-            moves.Add(new Move(friendlyKingSquare, targetSquare));
+            moves[currMoveIndex++] = new Move(friendlyKingSquare, targetSquare);
         }
 
         // Castling
@@ -233,7 +245,7 @@ public class MoveGenerator
                 if ((castlingMask & castlingBlockers) == 0)
                 {
                     int targetSquare = turn ? 6 : 62;
-                    moves.Add(new Move(friendlyKingSquare, targetSquare, MoveFlag.Castling));
+                    moves[currMoveIndex++] = new Move(friendlyKingSquare, targetSquare, MoveFlag.Castling);
                 }
             }
             // Queenside Castling
@@ -244,13 +256,13 @@ public class MoveGenerator
                 if (((castlingMask & enemyAttackMap) == 0) && ((castlingBlockMask & allBitboard) == 0))
                 {
                     int targetSquare = turn ? 2 : 58;
-                    moves.Add(new Move(friendlyKingSquare, targetSquare, MoveFlag.Castling));
+                    moves[currMoveIndex++] = new Move(friendlyKingSquare, targetSquare, MoveFlag.Castling);
                 }
             }
         }
     }
 
-    void GenerateKnightMoves()
+    void GenerateKnightMoves(Span<Move> moves)
     {
         ulong knights = bitboards[turn ? PieceIndex.WhiteKnight : PieceIndex.BlackKnight] & ~pinRayBitmask;
 
@@ -264,12 +276,12 @@ public class MoveGenerator
             while (moveSquares != 0)
             {
                 int targetSquare = Bitboard.PopLSB(ref moveSquares);
-                moves.Add(new Move(knightSquare, targetSquare));
+                moves[currMoveIndex++] = new Move(knightSquare, targetSquare);
             }
         }
     }
 
-    void GeneratePawnMoves()
+    void GeneratePawnMoves(Span<Move> moves)
     {
         int pushDir = turn ? 1 : -1;
         int pushOffset = pushDir * 8;
@@ -306,7 +318,7 @@ public class MoveGenerator
                 int startSquare = targetSquare - pushOffset;
                 if (!IsPinned(startSquare) || PreComputedData.AlignMask[startSquare, friendlyKingSquare] == PreComputedData.AlignMask[targetSquare, friendlyKingSquare])
                 {
-                    moves.Add(new Move(startSquare, targetSquare));
+                    moves[currMoveIndex++] = new Move(startSquare, targetSquare);
                 }
             }
 
@@ -320,7 +332,7 @@ public class MoveGenerator
                 int startSquare = targetSquare - pushOffset * 2;
                 if (!IsPinned(startSquare) || PreComputedData.AlignMask[startSquare, friendlyKingSquare] == PreComputedData.AlignMask[targetSquare, friendlyKingSquare])
                 {
-                    moves.Add(new Move(startSquare, targetSquare, MoveFlag.PawnTwoForward));
+                    moves[currMoveIndex++] = new Move(startSquare, targetSquare, MoveFlag.PawnTwoForward);
                 }
             }
         }
@@ -333,7 +345,7 @@ public class MoveGenerator
 
             if (!IsPinned(startSquare) || PreComputedData.AlignMask[startSquare, friendlyKingSquare] == PreComputedData.AlignMask[targetSquare, friendlyKingSquare])
             {
-                moves.Add(new Move(startSquare, targetSquare));
+                moves[currMoveIndex++] = new Move(startSquare, targetSquare);
             }
         }
 
@@ -344,7 +356,7 @@ public class MoveGenerator
 
             if (!IsPinned(startSquare) || PreComputedData.AlignMask[startSquare, friendlyKingSquare] == PreComputedData.AlignMask[targetSquare, friendlyKingSquare])
             {
-                moves.Add(new Move(startSquare, targetSquare));
+                moves[currMoveIndex++] = new Move(startSquare, targetSquare);
             }
         }
 
@@ -355,7 +367,7 @@ public class MoveGenerator
             int startSquare = targetSquare - pushOffset;
             if (!IsPinned(startSquare))
             {
-                GeneratePromotionMoves(startSquare, targetSquare);
+                GeneratePromotionMoves(moves, startSquare, targetSquare);
             }
         }
 
@@ -367,7 +379,7 @@ public class MoveGenerator
 
             if (!IsPinned(startSquare) || PreComputedData.AlignMask[startSquare, friendlyKingSquare] == PreComputedData.AlignMask[targetSquare, friendlyKingSquare])
             {
-                GeneratePromotionMoves(startSquare, targetSquare);
+                GeneratePromotionMoves(moves, startSquare, targetSquare);
             }
         }
 
@@ -378,7 +390,7 @@ public class MoveGenerator
 
             if (!IsPinned(startSquare) || PreComputedData.AlignMask[startSquare, friendlyKingSquare] == PreComputedData.AlignMask[targetSquare, friendlyKingSquare])
             {
-                GeneratePromotionMoves(startSquare, targetSquare);
+                GeneratePromotionMoves(moves, startSquare, targetSquare);
             }
         }
 
@@ -401,7 +413,7 @@ public class MoveGenerator
                     {
                         if (!InCheckAfterEnPassant(startSquare, targetSquare, capturedPawnSquare))
                         {
-                            moves.Add(new Move(startSquare, targetSquare, MoveFlag.EnpassantCapture));
+                            moves[currMoveIndex++] = new Move(startSquare, targetSquare, MoveFlag.EnpassantCapture);
                         }
                     }
                 }
@@ -409,18 +421,18 @@ public class MoveGenerator
         }
     }
 
-    void GeneratePromotionMoves(int startSquare, int targetSquare)
+    void GeneratePromotionMoves(Span<Move> moves, int startSquare, int targetSquare)
     {
         // Generate promotion moves
         // Promote to: Queen, Rook, Knight, Bishop
-        moves.Add(new Move(startSquare, targetSquare, MoveFlag.PromoteToQueen));
+        moves[currMoveIndex++] = new Move(startSquare, targetSquare, MoveFlag.PromoteToQueen);
 
         // Generate only Queen Promotion in QSearch
         if (genQuietMoves)
         {
-            moves.Add(new Move(startSquare, targetSquare, MoveFlag.PromoteToRook));
-            moves.Add(new Move(startSquare, targetSquare, MoveFlag.PromoteToKnight));
-            moves.Add(new Move(startSquare, targetSquare, MoveFlag.PromoteToBishop));
+            moves[currMoveIndex++] = new Move(startSquare, targetSquare, MoveFlag.PromoteToRook);
+            moves[currMoveIndex++] = new Move(startSquare, targetSquare, MoveFlag.PromoteToKnight);
+            moves[currMoveIndex++] = new Move(startSquare, targetSquare, MoveFlag.PromoteToBishop);
         }
     }
 
@@ -585,51 +597,6 @@ public class MoveGenerator
     bool IsPinned(int square)
     {
         return pinsExistInPosition && (pinRayBitmask & (ulong) 1 << square) != 0;
-    }
-
-    bool SquareIsInCheckRay (int square)
-    {
-        return inCheck && (checkRayBitmask & (ulong) 1 << square) != 0;
-    }
-
-    bool IsMovingAlongRay(int dirOffset, int startSquare, int targetSquare)
-    {
-        int moveDir = PreComputedData.DirectionLookup[targetSquare - startSquare + 63];
-        
-		return dirOffset == moveDir || -dirOffset == moveDir;
-    }
-
-    bool IsHorizontalChecked()
-    {
-        for (int n = 0; n < PreComputedData.NumSquaresToEdge[friendlyKingSquare, 0]; n++)
-        {
-            if (position[friendlyKingSquare + n + 1] != Piece.None)
-            {
-                if (Piece.IsColor(position[friendlyKingSquare + n + 1], enemyColor) && 
-                Piece.IsStraightPiece(position[friendlyKingSquare + n + 1]))
-                {
-                    return true;
-                }
-
-                break;
-            }
-        }
-
-        for (int n = 0; n < PreComputedData.NumSquaresToEdge[friendlyKingSquare, 2]; n++)
-        {
-            if (position[friendlyKingSquare - n - 1] != Piece.None)
-            {
-                if (Piece.IsColor(position[friendlyKingSquare - n - 1], enemyColor) && 
-                Piece.IsStraightPiece(position[friendlyKingSquare - n - 1]))
-                {
-                    return true;
-                }
-                
-                break;
-            }
-        }
-
-        return false;
     }
     bool InCheckAfterEnPassant(int startSquare, int targetSquare, int epCaptureSquare)
     {

@@ -72,16 +72,17 @@ public static class PerftHelper
         }
 
         ulong nodes = 0;
-        List<Move> legalMoves = board.MoveGen.GenerateMoves();
+        Span<Move> legalMoves = stackalloc Move[256];
+        board.MoveGen.GenerateMoves(ref legalMoves, genOnlyCaptures: false);
         
         if (depth == 1)
         {
             if (plyFromRoot == 0)
             {
-                Console.WriteLine($"total {legalMoves.Count}");
+                Console.WriteLine($"total {legalMoves.Length}");
             }
             
-            return (ulong) legalMoves.Count;
+            return (ulong) legalMoves.Length;
         }
 
         foreach (Move move in legalMoves)

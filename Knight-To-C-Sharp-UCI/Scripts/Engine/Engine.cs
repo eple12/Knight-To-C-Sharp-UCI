@@ -40,8 +40,8 @@ public class Engine
 
     public void StartSearch(int maxDepth, Action? onSearchComplete = null)
     {
-        List<Move> preSearchMoves = MoveGen.GenerateMoves();
-        bestMove = preSearchMoves.Count == 0 ? Move.NullMove : preSearchMoves[0];
+        Span<Move> preSearchMoves = MoveGen.GenerateMoves();
+        bestMove = preSearchMoves.Length == 0 ? Move.NullMove : preSearchMoves[0];
 
         bestMoveLastIteration = Move.NullMove;
 
@@ -176,7 +176,8 @@ public class Engine
             return settings.useQSearch ? QuiescenceSearch(alpha, beta) : evaluation.Evaluate();
         }
 
-        List<Move> legalMoves = MoveGen.GenerateMoves();
+        Span<Move> legalMoves = stackalloc Move[256];
+        MoveGen.GenerateMoves(ref legalMoves, genOnlyCaptures: false);
 
         // Checkmate, Stalemate, Draws
         MateChecker.MateState mateState = MateChecker.GetPositionState(board, legalMoves, ExcludeRepetition: true, ExcludeFifty: true);
@@ -202,7 +203,7 @@ public class Engine
         int evalType = TranspositionTable.UpperBound;
 
         Move bestMoveInThisPosition = legalMoves[0];
-        for (int i = 0; i < legalMoves.Count; i++)
+        for (int i = 0; i < legalMoves.Length; i++)
         {
             board.MakeMove(legalMoves[i]);
 
@@ -273,7 +274,8 @@ public class Engine
             alpha = standPat;
         }
 
-        List<Move> moves = MoveGen.GenerateMoves(true);
+        Span<Move> moves = stackalloc Move[256];
+        MoveGen.GenerateMoves(ref moves, genOnlyCaptures: true);
         moveOrder.GetOrderedList(moves);
 
         foreach (Move move in moves)

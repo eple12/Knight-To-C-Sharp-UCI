@@ -3,7 +3,6 @@ public class MoveOrder
     Board board;
     TranspositionTable tt;
 
-    List<Move> moves;
     List<int> moveScores;
     Move bestMoveLastIteration;
 
@@ -15,39 +14,36 @@ public class MoveOrder
         board = engine.GetBoard();
         tt = engine.GetTT();
 
-        moves = new List<Move>();
         moveScores = new List<int>();
     }
 
-    public List<Move> GetOrderedList(List<Move> legalMoves, Move lastIteration)
+    public Span<Move> GetOrderedList(Span<Move> legalMoves, Move lastIteration)
     {
         bestMoveLastIteration = lastIteration;
-        moves = legalMoves;
 
-        GetScores();
+        GetScores(legalMoves);
 
-        SortMoves();
+        SortMoves(legalMoves);
 
         moveScores.Clear();
 
-        return moves;
+        return legalMoves;
     }
 
-    public List<Move> GetOrderedList(List<Move> legalMoves)
+    public Span<Move> GetOrderedList(Span<Move> legalMoves)
     {
         bestMoveLastIteration = Move.NullMove;
-        moves = legalMoves;
 
-        GetScores();
+        GetScores(legalMoves);
 
-        SortMoves();
+        SortMoves(legalMoves);
 
         moveScores.Clear();
 
-        return moves;
+        return legalMoves;
     }
 
-    void GetScores()
+    void GetScores(Span<Move> moves)
     {
         Move hashMove = tt.GetStoredMove();
 
@@ -104,10 +100,10 @@ public class MoveOrder
         }
     }
 
-    void SortMoves()
+    void SortMoves(Span<Move> moves)
     {
         // Bubble Sort
-        for (int i = 0; i < moves.Count - 1; i++)
+        for (int i = 0; i < moves.Length - 1; i++)
         {
             for (int j = i + 1; j > 0; j--)
             {

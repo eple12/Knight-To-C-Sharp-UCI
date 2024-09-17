@@ -169,7 +169,7 @@ public static class Command
             {
                 MainProcess.engine.StartTimedSearch(100, 1000, () => {
                     MainProcess.board.MakeMove(MainProcess.engine.GetMove());
-                    MainProcess.board.LegalMoves = MainProcess.board.MoveGen.GenerateMoves();
+                    MainProcess.board.UpdateLegalMoves();
                     MainProcess.board.PrintBoardAndMoves();
                 });
             }
@@ -297,11 +297,6 @@ public static class Command
 
     static void ProcessPositionCommand(string command, string[] tokens)
     {
-        if (tokens.Length < 3)
-        {
-            return;
-        }
-
         if (MainProcess.engine.IsSearching())
         {
             MainProcess.engine.CancelAndWait();
@@ -312,6 +307,11 @@ public static class Command
         
         if (subCommand == "fen")
         {
+                if (tokens.Length < 3)
+            {
+                return;
+            }
+
             string fen;
             if (containsMoves)
             {

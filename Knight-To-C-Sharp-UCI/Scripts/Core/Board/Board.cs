@@ -9,7 +9,7 @@ public class Board
 
     public static readonly string InitialFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-    public List<Move> LegalMoves;
+    public Move[] LegalMoves;
     public ulong ZobristKey;
 
 
@@ -121,7 +121,7 @@ public class Board
         Squares = new int[64];
         Turn = true;
 
-        LegalMoves = new List<Move>();
+        LegalMoves = new Move[MoveGenerator.MaxMoves];
         ZobristKey = 0;
 
         PieceSquares = new PieceList[12];
@@ -191,7 +191,7 @@ public class Board
 
     public void AfterLoadingPosition()
     {
-        LegalMoves = MoveGen.GenerateMoves();
+        UpdateLegalMoves();
         Loaded = true;
     }
 
@@ -205,7 +205,7 @@ public class Board
         GameStack = new Stack<uint>();
 
         Turn = true;
-        LegalMoves = new List<Move>();
+        LegalMoves = new Move[MoveGenerator.MaxMoves];
         ZobristKey = 0;
         CastlingData = 0;
         EnpassantFile = 8;
@@ -245,14 +245,14 @@ public class Board
         Move m = Move.FindMove(LegalMoves, move);
 
         MakeMove(m);
-        LegalMoves = MoveGen.GenerateMoves();
+        UpdateLegalMoves();
         // PrintBoardAndMoves();
     }
 
     public void MakeConsoleMove(Move move)
     {
         MakeMove(move);
-        LegalMoves = MoveGen.GenerateMoves();
+        UpdateLegalMoves();
         // PrintBoardAndMoves();
     }
 
@@ -702,7 +702,10 @@ public class Board
         }
     }
     
-
+    public void UpdateLegalMoves()
+    {
+        LegalMoves = MoveGen.GenerateMoves().ToArray();
+    }
     void StorePosition()
     {
         if (PositionHistory.ContainsKey(ZobristKey))
@@ -732,6 +735,7 @@ public class Board
 
     public void LoadPositionFromFen(string fen)
     {
+        Console.WriteLine(fen);
         Reset();
 
         for (int i = 0; i < 12; i++)
@@ -852,6 +856,7 @@ public class Board
         // }
         PrintLargeBoard();
         PrintCastlingData();
+        Console.WriteLine($"Total {LegalMoves.Length}");
         Move.PrintMoveList(LegalMoves);
     }
 
