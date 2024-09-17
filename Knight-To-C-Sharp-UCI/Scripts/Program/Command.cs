@@ -221,6 +221,12 @@ public static class Command
                             GeneralTimeTest(() => MainProcess.board.MoveGen.GenerateMoves(), testName: "Legal Move Generation", cases: 10);
                         }
                         break;
+                        case "perft":
+                        {
+                            GeneralTimeTest(Perft, testName: "Perft", cases: 5, suiteIteration: 3);
+                        }
+                        break;
+                        
                         default:
                             break;
                     }
@@ -307,7 +313,7 @@ public static class Command
         
         if (subCommand == "fen")
         {
-                if (tokens.Length < 3)
+            if (tokens.Length < 3)
             {
                 return;
             }
