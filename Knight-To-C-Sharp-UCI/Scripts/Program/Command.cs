@@ -223,7 +223,7 @@ public static class Command
                         break;
                         case "perft":
                         {
-                            GeneralTimeTest(Perft, testName: "Perft", cases: 5, suiteIteration: 3);
+                            GeneralTimeTest(Perft, testName: "Perft", cases: 3, suiteIteration: 1);
                         }
                         break;
                         

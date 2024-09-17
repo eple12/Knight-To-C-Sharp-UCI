@@ -104,6 +104,11 @@ public class TranspositionTable
         //     board.PrintSmallBoard();
         // }
 
+        if (entries[Index].depth > depth)
+        {
+            return;
+        }
+
         Entry entry = new Entry (board.ZobristKey, CorrectMateScoreForStorage (eval, numPlySearched), (byte) depth, (byte) evalType, move);
         entries[Index] = entry;
     }

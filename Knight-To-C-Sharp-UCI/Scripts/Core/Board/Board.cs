@@ -735,7 +735,7 @@ public class Board
 
     public void LoadPositionFromFen(string fen)
     {
-        Console.WriteLine(fen);
+        // Console.WriteLine(fen);
         Reset();
 
         for (int i = 0; i < 12; i++)
