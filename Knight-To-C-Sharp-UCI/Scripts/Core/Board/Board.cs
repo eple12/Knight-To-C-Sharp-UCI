@@ -846,14 +846,6 @@ public class Board
 
     public void PrintBoardAndMoves()
     {
-        // if (ProgramSettings.useLargeBoard)
-        // {
-        //     PrintLargeBoard();
-        // }
-        // else
-        // {
-        //     PrintSmallBoard();
-        // }
         PrintLargeBoard();
         PrintCastlingData();
         Console.WriteLine($"Total {LegalMoves.Length}");
