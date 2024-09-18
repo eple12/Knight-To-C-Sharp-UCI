@@ -114,6 +114,10 @@ public class Evaluation
     const int TotalEndgameWeight = 4 * QueenEndgameWeight + 4 * RookEndgameWeight + 4 * BishopEndgameWeight + 
     4 * KnightEndgameWeight + 16 * PawnEndgameWeight + 8 * NumPieceEndgameWeight;
 
+    // Pawns
+    static readonly int[] PassedPawnBonus = { 0, 120, 80, 60, 40, 30, 30, 0 };
+    static readonly int[] IsolatedPawnPenaltyByCount = { 0, 10, 25, 50, 75, 75, 75, 75, 75 };
+
     // King Safety
     const int DirectKingFrontPawnPenalty = 30;
     const int DistantKingFrontPawnPenalty = 25;
@@ -168,11 +172,68 @@ public class Evaluation
         // Console.WriteLine("openFileBonus: " + openFileBonus);
         eval += openFileBonus;
 
+        int pawnBonus = PawnBonus();
+        eval += pawnBonus;
+
         // int kingSafety = (int) (KingSafety() * middlegameWeight);
         // // Console.WriteLine("eval kingSafety: " + kingSafety);
         // eval += kingSafety;
 
         return eval * sign;
+    }
+
+    // Pawns
+    int PawnBonus()
+    {
+        int eval = 0;
+
+        eval += PassedPawns(true) + IsolatedPawns(true);
+        eval -= PassedPawns(false) + IsolatedPawns(false);
+        
+        return eval;
+    }
+    int PassedPawns(bool white)
+    {
+        int eval = 0;
+        PieceList pawns = board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
+        ulong enemyPawns = board.BitboardSet.Bitboards[white ? PieceIndex.BlackPawn : PieceIndex.WhitePawn];
+
+        for (int i = 0; i < pawns.count; i++)
+        {
+            int square = pawns.squares[i];
+
+            ulong passMask = (white ? Bits.WhitePassedPawnMask : Bits.BlackPassedPawnMask)[square];
+            if ((passMask & enemyPawns) == 0)
+            {
+                int numSquareFromPromotion = white ? 7 - (square / 8) : square / 8;
+                eval += PassedPawnBonus[numSquareFromPromotion];
+                // Console.WriteLine(numSquareFromPromotion);
+            }
+        }
+
+        return eval;
+    }
+    int IsolatedPawns(bool white)
+    {
+        int eval = 0;
+        PieceList pawns = board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
+        ulong friendlyPawns = board.BitboardSet.Bitboards[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
+        int numIsolatedPawns = 0;
+
+        for (int i = 0; i < pawns.count; i++)
+        {
+            int square = pawns.squares[i];
+
+            ulong adjMask = Bits.AdjacentFilesMask[square % 8];
+            if ((adjMask & friendlyPawns) == 0)
+            {
+                numIsolatedPawns++;
+            }
+        }
+
+        eval -= IsolatedPawnPenaltyByCount[numIsolatedPawns];
+
+        return eval;
     }
 
     // King Safety

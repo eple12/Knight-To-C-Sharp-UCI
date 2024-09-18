@@ -291,15 +291,15 @@ public class MoveGenerator
 
         ulong pawns = bitboards[turn ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
 
-        ulong promotionRankMask = turn ? PreComputedData.Rank8 : PreComputedData.Rank1;
+        ulong promotionRankMask = turn ? Bits.Rank8 : Bits.Rank1;
 
         ulong singlePush = (Bitboard.Shift(pawns, pushOffset)) & emptySquares;
 
         ulong pushPromotions = singlePush & promotionRankMask & checkRayBitmask;
 
 
-        ulong captureEdgeFileMask = turn ? PreComputedData.NotFileA : PreComputedData.NotFileH;
-        ulong captureEdgeFileMask2 = turn ? PreComputedData.NotFileH : PreComputedData.NotFileA;
+        ulong captureEdgeFileMask = turn ? Bits.NotFileA : Bits.NotFileH;
+        ulong captureEdgeFileMask2 = turn ? Bits.NotFileH : Bits.NotFileA;
         ulong captureA = Bitboard.Shift(pawns & captureEdgeFileMask, pushDir * 7) & enemyAll;
         ulong captureB = Bitboard.Shift(pawns & captureEdgeFileMask2, pushDir * 9) & enemyAll;
 
@@ -326,7 +326,7 @@ public class MoveGenerator
             }
 
             // Generate double pawn pushes
-            ulong doublePushTargetRankMask = PreComputedData.Rank1 << (turn ? 24 : 32);
+            ulong doublePushTargetRankMask = Bits.Rank1 << (turn ? 24 : 32);
             ulong doublePush = Bitboard.Shift(singlePush, pushOffset) & emptySquares & doublePushTargetRankMask & checkRayBitmask;
 
             while (doublePush != 0)

@@ -38,14 +38,6 @@ public static class PreComputedData // Pre-Computed Data to speed move generatio
     public static ulong BlackQueenSideCastlingMask = (ulong) 0b11 << 58;
     public static ulong BlackQueenSideCastlingBlockMask = (ulong) 0b111 << 57;
 
-    // Board Representation Bitboards
-    public static ulong Rank1 = 0xFF;
-    public static ulong Rank8 = Rank1 << 56;
-    public static ulong FileA = 0x0101010101010101;
-    public static ulong FileH = FileA << 7;
-    public static ulong NotFileA = ulong.MaxValue ^ FileA;
-    public static ulong NotFileH = ulong.MaxValue ^ FileH;
-
 
     static PreComputedData()
     {

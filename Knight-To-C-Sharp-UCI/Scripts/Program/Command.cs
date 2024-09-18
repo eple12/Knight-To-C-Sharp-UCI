@@ -270,7 +270,9 @@ public static class Command
         // Bitboard.Print(PreComputedData.AlignMask[Square.Index("d5"), Square.Index("e8")]);
         // Console.WriteLine(TranspositionTable.Entry.GetSize() + "bytes.");
         // Console.WriteLine($"Move: {System.Runtime.InteropServices.Marshal.SizeOf<Move>()}");
-        Console.WriteLine(MainProcess.engine.GetEngine().GetTT().size);
+        // Console.WriteLine(MainProcess.engine.GetEngine().GetTT().size);
+        Bitboard.Print(Bits.WhitePassedPawnMask[Square.Index("e4")]);
+        Bitboard.Print(Bits.BlackPassedPawnMask[Square.Index("h7")]);
     }
     
     // Time Tests
