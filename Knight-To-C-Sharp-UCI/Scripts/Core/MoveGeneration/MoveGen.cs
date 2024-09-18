@@ -159,11 +159,14 @@ public class MoveGenerator
         return inCheck;
     }
 
+    public ulong OpponentAttackMap()
+    {
+        return enemyAttackMap;
+    }
     public ulong PawnAttackMap()
     {
         return enemyPawnAttackMap;
     }
-
     public ulong AttackMapNoPawn()
     {
         return enemyAttackMapNoPawns;

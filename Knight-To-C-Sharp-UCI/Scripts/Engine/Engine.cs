@@ -15,6 +15,7 @@ public class Engine
 
     // Search Constants
     const int MaxExtension = 16;
+    const int Reduction = 1;
 
     bool isSearching;
     bool cancellationRequested;
@@ -225,7 +226,19 @@ public class Engine
                 }
             }
 
-            int eval = -Search(depth - 1 + extension, -beta, -alpha, plyFromRoot + 1, numExtensions + extension);
+            bool needFullSearch = true;
+            int eval = 0;
+
+            if (extension == 0 && depth >= 3 && i >= 3 && board.Squares[moves[i].targetSquare] != Piece.None)
+            {
+                eval = -Search(depth - 1 - Reduction, -alpha - 1, -alpha, plyFromRoot + 1, numExtensions);
+                needFullSearch = eval > alpha;
+            }
+            if (needFullSearch)
+            {
+                eval = -Search(depth - 1 + extension, -beta, -alpha, plyFromRoot + 1, numExtensions + extension);
+            }
+            // int eval = -Search(depth - 1 + extension, -beta, -alpha, plyFromRoot + 1, numExtensions + extension);
 
             board.UnmakeMove(moves[i]);
 
