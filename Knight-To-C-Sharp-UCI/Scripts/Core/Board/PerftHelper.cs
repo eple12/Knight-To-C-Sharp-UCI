@@ -23,7 +23,7 @@ public static class PerftHelper
         ];
     }
 
-    public static void Go(Board board)
+    public static void Go(Board board, bool qSearch = false)
     {
         Console.WriteLine("##############################");
         Console.WriteLine("Perft Tests\n");
@@ -31,7 +31,7 @@ public static class PerftHelper
         // Move Generation Speed Test: Depth 5
         foreach (PerftPosition position in PerftPositions)
         {
-            Case(board, position.Get(5));
+            Case(board, position.Get(5), qSearch: false);
         }
         // Case(board, PerftPositions[1].Get(5), print: true);
         // Case(board, new PerftCase("8/2p5/3p4/KP5r/1R2Pp1k/8/6P1/8 b - - 0 1", 1, 0));
@@ -40,7 +40,7 @@ public static class PerftHelper
         Console.WriteLine("##############################");
     }
 
-    static void Case(Board board, PerftCase perftCase, bool print = false)
+    static void Case(Board board, PerftCase perftCase, bool print = false, bool qSearch = false)
     {
         string FEN = perftCase.fen;
         int depth = perftCase.depth;
@@ -49,22 +49,52 @@ public static class PerftHelper
         Console.WriteLine($"Running case with FEN: \"{FEN}\" | EXPECTATION: {expectation}");
         board.LoadPositionFromFen(FEN);
 
-        Test(board, depth, expectation, print);
+        Test(board, depth, expectation, print, qSearch);
     }
 
-    public static void Test(Board board, int depth, ulong expectation, bool print = false)
+    public static void Test(Board board, int depth, ulong expectation, bool print = false, bool qSearch = false)
     {
         System.Diagnostics.Stopwatch sw = new();
         sw.Start();
 
-        ulong result = Calculate(board, depth, print: print);
+        ulong result = Calculate(board, depth, print: print, qSearch: qSearch);
 
         sw.Stop();
         double milliseconds = sw.ElapsedTicks / (double)TimeSpan.TicksPerMillisecond;
         Console.WriteLine($"\tResult: {(result == expectation ? "PASS" : "FAIL")} | Output: {result} | EXPECTATION {expectation} | Time: {milliseconds:F5}ms. ({milliseconds / 1000d:F5}sec.)\n");
     }
 
-    public static ulong Calculate(Board board, int depth, int plyFromRoot = 0, bool print = false)
+    public static ulong CalculateInfiniteQSearch(Board board, int plyFromRoot = 0, bool print = false)
+    {
+        ulong nodes = 0;
+        Span<Move> legalMoves = stackalloc Move[128];
+        board.MoveGen.GenerateMoves(ref legalMoves, genOnlyCaptures: true);
+
+        if (legalMoves.Length == 0)
+        {
+            return 1;
+        }
+
+        foreach (Move move in legalMoves)
+        {
+            board.MakeMove(move);
+
+            ulong n = CalculateInfiniteQSearch(board, plyFromRoot + 1);
+            nodes += n;
+
+            board.UnmakeMove(move);
+
+            if (plyFromRoot == 0 && print)
+            {
+                Move.PrintMove(move);
+                Console.WriteLine($"Nodes: {n}");
+            }
+        }
+
+        return nodes;
+    }
+
+    public static ulong Calculate(Board board, int depth, int plyFromRoot = 0, bool print = false, bool qSearch = false)
     {
         if (depth == 0)
         {
@@ -73,7 +103,7 @@ public static class PerftHelper
 
         ulong nodes = 0;
         Span<Move> legalMoves = stackalloc Move[256];
-        board.MoveGen.GenerateMoves(ref legalMoves, genOnlyCaptures: false);
+        board.MoveGen.GenerateMoves(ref legalMoves, genOnlyCaptures: qSearch);
         
         if (depth == 1)
         {
@@ -89,7 +119,7 @@ public static class PerftHelper
         {
             board.MakeMove(move);
 
-            ulong n = Calculate(board, depth - 1, plyFromRoot + 1);
+            ulong n = Calculate(board, depth - 1, plyFromRoot + 1, qSearch: qSearch);
             nodes += n;
 
             board.UnmakeMove(move);

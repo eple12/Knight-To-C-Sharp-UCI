@@ -226,7 +226,7 @@ public static class Command
                             GeneralTimeTest(Perft, testName: "Perft", cases: 3, suiteIteration: 1);
                         }
                         break;
-                        
+
                         default:
                             break;
                     }
@@ -271,8 +271,16 @@ public static class Command
         // Console.WriteLine(TranspositionTable.Entry.GetSize() + "bytes.");
         // Console.WriteLine($"Move: {System.Runtime.InteropServices.Marshal.SizeOf<Move>()}");
         // Console.WriteLine(MainProcess.engine.GetEngine().GetTT().size);
-        Bitboard.Print(Bits.WhitePassedPawnMask[Square.Index("e4")]);
-        Bitboard.Print(Bits.BlackPassedPawnMask[Square.Index("h7")]);
+        // Bitboard.Print(Bits.WhitePassedPawnMask[Square.Index("e4")]);
+        // Bitboard.Print(Bits.BlackPassedPawnMask[Square.Index("h7")]);
+
+        // Move.PrintMoveList(MainProcess.board.MoveGen.GenerateMoves(true).ToArray());
+
+        // PerftHelper.Test(MainProcess.board, 10, 0, qSearch: true, print: true);
+        Console.WriteLine(PerftHelper.CalculateInfiniteQSearch(MainProcess.board, print: true));
+        // Span<Move> moves = stackalloc Move[128];
+        // moves = MainProcess.board.MoveGen.GenerateMoves(ref moves, true);
+        // Console.WriteLine(moves.Length);
     }
     
     // Time Tests

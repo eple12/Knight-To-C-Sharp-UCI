@@ -29,3 +29,13 @@ Castling // WK WQ BK BQ
 e1f1 e1e2 e1d2 e1g1 a1b1 a1c1 h1g1 h1f1 g5h6 g5f6 g5f4 g5e3 g5d2 g5c1 g5h4 c4d5 c4e6 c4f7 c4b5 c4a6 c4b3 d1d2 d1c1 d1b1 d1e2 c3d5 c3b5 c3a4 c3b1 c3e2 f3h4 f3e5 f3d4 f3d2 f3g1 d3d4 a2a3 a2a4 b2b3 b2b4 g2g3 h2h3 h2h4
 
 8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1
+
+FEN 3rr1k1/1bq1bppp/pn1p1n2/1ppPpN2/4P3/1PP2N1P/P1B2PP1/R1BQR1K1 b - - 4 17
+THIS POSITION TAKES FOREVER TO SEARCH
+QSearch is taking so long
+
+FOUND OUT SOMETHING HERE:
+at depth 1:
+CodingAdventureBot: Qsearch 1234 times
+My BOT: Qsearch 512629 times
+^^^^ That doesnt make any sense, check it out and pls fix plssssssssssssssss

@@ -20,6 +20,8 @@ public class Engine
     bool isSearching;
     bool cancellationRequested;
 
+    int numQs;
+
     public event Action OnSearchComplete;
 
     public Engine(Board _board, EngineSettings _settings)
@@ -45,6 +47,7 @@ public class Engine
         bestMove = preSearchMoves.Length == 0 ? Move.NullMove : preSearchMoves[0];
 
         bestMoveLastIteration = Move.NullMove;
+        moveOrder.ClearHistory();
 
         bestEval = 0;
 
@@ -93,7 +96,9 @@ public class Engine
         // Iterative Deepening
         for (int depth = 1; depth <= maxDepth; depth++)
         {
+            numQs = 0;
             int evalThisIteration = Search(depth, Infinity.NegativeInfinity, Infinity.PositiveInfinity, 0);
+            // Console.WriteLine(numQs);
             
             bestMoveLastIteration = bestMove;
             Console.WriteLine($"depth {depth} move {Move.MoveString(bestMove)} eval {evalThisIteration}");
@@ -119,6 +124,7 @@ public class Engine
 
     int Search(int depth, int alpha, int beta, int plyFromRoot, int numExtensions = 0)
     {
+        // Console.WriteLine($"Search Head Depth {depth}");
         if (cancellationRequested) // Return if the search is cancelled
         {
             return 0;
@@ -174,7 +180,9 @@ public class Engine
 
         if (depth == 0) // Return QSearch Evaluation
         {
-            return settings.useQSearch ? QuiescenceSearch(alpha, beta) : evaluation.Evaluate();
+            // return evaluation.Evaluate();
+            // board.PrintSmallBoard();
+            return QuiescenceSearch(alpha, beta);
         }
 
         Span<Move> moves = stackalloc Move[256];
@@ -192,14 +200,8 @@ public class Engine
         }
 
         // Order Moves
-        if (plyFromRoot == 0)
-        {
-            moveOrder.GetOrderedList(moves, bestMoveLastIteration);
-        }
-        else
-        {
-            moveOrder.GetOrderedList(moves);
-        }
+        Move prevBestMove = plyFromRoot == 0 ? bestMoveLastIteration : tt.GetStoredMove();
+        moveOrder.GetOrderedList(moves, bestMoveLastIteration, inQSearch: false, plyFromRoot);
 
         int evalType = TranspositionTable.UpperBound;
 
@@ -229,6 +231,8 @@ public class Engine
             bool needFullSearch = true;
             int eval = 0;
 
+            // Console.WriteLine($"current Depth {depth} ext {extension} totalExt {numExtensions}");
+
             if (extension == 0 && depth >= 3 && i >= 3 && board.Squares[moves[i].targetSquare] != Piece.None)
             {
                 eval = -Search(depth - 1 - Reduction, -alpha - 1, -alpha, plyFromRoot + 1, numExtensions);
@@ -250,6 +254,20 @@ public class Engine
             if (eval >= beta)
             {
                 tt.StoreEvaluation (depth, plyFromRoot, beta, TranspositionTable.LowerBound, moves[i]);
+
+                // Killer Moves, History
+                // If this move is not a capture
+                // Does not store captures since they are ranked highly in Move Ordering anyway
+                if (board.Squares[moves[i].targetSquare] == Piece.None)
+                {
+                    if (plyFromRoot < MoveOrder.MaxKillerPly)
+                    {
+                        moveOrder.KillerMoves[plyFromRoot].Add(moves[i]);
+                    }
+                    int historyScore = depth * depth;
+                    moveOrder.History[board.Turn ? 0 : 1, moves[i].startSquare, moves[i].targetSquare] += historyScore;
+                }
+
                 return beta;
             }
 
@@ -275,28 +293,30 @@ public class Engine
 
     int QuiescenceSearch(int alpha, int beta)
     {
-        int standPat = evaluation.Evaluate();
+        numQs++;
+        int eval = evaluation.Evaluate();
 
-        if (standPat >= beta)
+        if (eval >= beta)
         {
             return beta;
         }
-        if (alpha < standPat)
+        if (alpha < eval)
         {
-            alpha = standPat;
+            alpha = eval;
         }
 
-        Span<Move> moves = stackalloc Move[256];
+        Span<Move> moves = stackalloc Move[128];
         MoveGen.GenerateMoves(ref moves, genOnlyCaptures: true);
-        moveOrder.GetOrderedList(moves);
+        moveOrder.GetOrderedList(moves, Move.NullMove, inQSearch: true, 0);
+        // Console.WriteLine(moves.Length);
 
-        foreach (Move move in moves)
+        for (int i = 0; i < moves.Length; i++)
         {
-            board.MakeMove(move);
+            board.MakeMove(moves[i]);
 
-            int eval = -QuiescenceSearch(-beta, -alpha);
+            eval = -QuiescenceSearch(-beta, -alpha);
 
-            board.UnmakeMove(move);
+            board.UnmakeMove(moves[i]);
 
             if (eval >= beta)
             {
