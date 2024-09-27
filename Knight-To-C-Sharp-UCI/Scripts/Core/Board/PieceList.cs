@@ -1,7 +1,7 @@
 // Always use FOR statement
 public class PieceList
 {
-    public int[] squares = new int[16];
+    public int[] squares = new int[64];
     int[] map = new int[64];
     public int count = 0;
 

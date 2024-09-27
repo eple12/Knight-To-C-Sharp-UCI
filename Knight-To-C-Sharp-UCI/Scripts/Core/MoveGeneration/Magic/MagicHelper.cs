@@ -13,7 +13,7 @@ public class MagicHelper
 
         foreach (int offset in directions)
         {
-            int numToEdge = PreComputedData.NumSquaresToEdge[square, PreComputedData.NumEdgeIndex(offset)];
+            int numToEdge = PreComputedMoveGenData.NumSquaresToEdge[square, PreComputedMoveGenData.NumEdgeIndex(offset)];
             for (int dst = 1; dst <= numToEdge; dst++)
             {
                 int thisSquare = square + dst * offset;
@@ -68,7 +68,7 @@ public class MagicHelper
         
         foreach (int offset in directions)
         {
-            int numToEdge = PreComputedData.NumSquaresToEdge[square, PreComputedData.NumEdgeIndex(offset)];
+            int numToEdge = PreComputedMoveGenData.NumSquaresToEdge[square, PreComputedMoveGenData.NumEdgeIndex(offset)];
 
             for (int dst = 1; dst <= numToEdge; dst++)
             {

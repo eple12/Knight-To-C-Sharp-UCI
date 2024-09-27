@@ -1,5 +1,5 @@
 
-public static class PreComputedData // Pre-Computed Data to speed move generation up
+public static class PreComputedMoveGenData // Pre-Computed Data to speed move generation up
 {
     public static int[,] NumSquaresToEdge = new int[64, 8];
     public static Dictionary<int, int> OffsetToNumEdgeIndex = new Dictionary<int, int> {
@@ -39,7 +39,7 @@ public static class PreComputedData // Pre-Computed Data to speed move generatio
     public static ulong BlackQueenSideCastlingBlockMask = (ulong) 0b111 << 57;
 
 
-    static PreComputedData()
+    static PreComputedMoveGenData()
     {
         GenerateNumSquaresToEdge();
         GenerateMaps();

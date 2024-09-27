@@ -529,7 +529,17 @@ public class Board
 
     public void UnmakeMove(Move move)
     {
+        // try
+        // {
         PositionHistory[ZobristKey]--;
+        // }
+        // catch (Exception)
+        // {
+        //     PrintSmallBoard();
+        //     throw;
+        // }
+        
+        
         
         Turn = !Turn;
 
@@ -808,27 +818,36 @@ public class Board
             BKCastle = false;
             BQCastle = false;
 
+            int whiteKingFile = PieceSquares[PieceIndex.WhiteKing].squares[0] % 8;
+            int blackKingFile = PieceSquares[PieceIndex.BlackKing].squares[0] % 8;
+
             if (castleFen == "-")
             {
                 // No CASTLING!
             }
             else
             {
-                if (castleFen.Contains('K'))
+                if (whiteKingFile == 4)
                 {
-                    WKCastle = true;
+                    if (castleFen.Contains('K'))
+                    {
+                        WKCastle = true;
+                    }
+                    if (castleFen.Contains('Q'))
+                    {
+                        WQCastle = true;
+                    }
                 }
-                if (castleFen.Contains('Q'))
+                if (blackKingFile == 4)
                 {
-                    WQCastle = true;
-                }
-                if (castleFen.Contains('k'))
-                {
-                    BKCastle = true;
-                }
-                if (castleFen.Contains('q'))
-                {
-                    BQCastle = true;
+                    if (castleFen.Contains('k'))
+                    {
+                        BKCastle = true;
+                    }
+                    if (castleFen.Contains('q'))
+                    {
+                        BQCastle = true;
+                    }
                 }
             }
         }
@@ -914,13 +933,13 @@ public class Board
         }
 
         ulong enemyKnights = BitboardSet.Bitboards[Turn ? PieceIndex.BlackKnight : PieceIndex.WhiteKnight];
-        if ((PreComputedData.KnightMap[friendlyKingSquare] & enemyKnights) != 0)
+        if ((PreComputedMoveGenData.KnightMap[friendlyKingSquare] & enemyKnights) != 0)
         {
             return true;
         }
 
         ulong enemyPawns = BitboardSet.Bitboards[Turn ? PieceIndex.BlackPawn : PieceIndex.WhitePawn];
-        ulong pawnAttackMask = Turn ? PreComputedData.whitePawnAttackMap[friendlyKingSquare] : PreComputedData.blackPawnAttackMap[friendlyKingSquare];
+        ulong pawnAttackMask = Turn ? PreComputedMoveGenData.whitePawnAttackMap[friendlyKingSquare] : PreComputedMoveGenData.blackPawnAttackMap[friendlyKingSquare];
         if ((pawnAttackMask & enemyPawns) != 0)
         {
             return true;

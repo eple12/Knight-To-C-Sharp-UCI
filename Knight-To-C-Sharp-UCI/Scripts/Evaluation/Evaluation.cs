@@ -75,6 +75,9 @@ public class Evaluation
         whiteEval.pieceSquareScore = PieceSquareTableScore(white: true, blackMaterial.endgameWeight);
         blackEval.pieceSquareScore = PieceSquareTableScore(white: false, whiteMaterial.endgameWeight);
 
+        whiteEval.mopUpScore = CalculateMopUpScore(white: true);
+        blackEval.mopUpScore = CalculateMopUpScore(white: false);
+
         // int openFileBonus = CalculateOpenFileBonus();
         // // Console.WriteLine("openFileBonus: " + openFileBonus);
         // eval += openFileBonus;
@@ -358,6 +361,31 @@ public class Evaluation
         return value;
     }
     
+    // Mop-Up
+    int CalculateMopUpScore(bool white)
+    {
+        int myMaterial = (white? whiteMaterial : blackMaterial).materialValue;
+        int enemyMaterial = (white ? blackMaterial : whiteMaterial).materialValue;
+
+        double enemyEndgameWeight = (white ? blackMaterial : whiteMaterial).endgameWeight;
+
+        if (myMaterial >= enemyMaterial + MaterialInfo.PawnValue * 2 && enemyEndgameWeight > 0d)
+        {
+            int mopUpScore = 0;
+            int friendlyKingSquare = (white ? whiteMaterial : blackMaterial).kingSquare;
+            int enemyKingSquare = (white ? blackMaterial : whiteMaterial).kingSquare;
+
+            mopUpScore += (14 - PreComputedEvalData.DistanceFromSquare[friendlyKingSquare, enemyKingSquare]) * 4;
+
+            mopUpScore += PreComputedEvalData.DistanceFromCenter[enemyKingSquare] * 10;
+
+            return (int) (mopUpScore * enemyEndgameWeight);
+        }
+
+        return 0;
+    }
+
+
     // Open Files
     int CalculateOpenFileBonus(bool white)
     {
@@ -541,12 +569,13 @@ public class Evaluation
     {
         public int materialScore;
         public int pieceSquareScore;
+        public int mopUpScore;
         public int openFileScore;
         public int pawnScore;
 
         public int Sum()
         {
-            return materialScore + pieceSquareScore + openFileScore + pawnScore;
+            return materialScore + pieceSquareScore + mopUpScore + openFileScore + pawnScore;
         }
     }
 
