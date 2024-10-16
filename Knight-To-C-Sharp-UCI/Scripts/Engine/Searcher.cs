@@ -114,7 +114,7 @@ public class Searcher
         for (int depth = 1; depth <= maxDepth; depth++)
         {
             numQs = 0;
-            int evalThisIteration = Search(depth, Infinity.NegativeInfinity, Infinity.PositiveInfinity, 0);
+            Search(depth, Infinity.NegativeInfinity, Infinity.PositiveInfinity, 0);
             // Console.WriteLine(numQs);
             
             bestMoveLastIteration = bestMove;
@@ -130,10 +130,10 @@ public class Searcher
             //     break;
             // }
 
-            // if (evaluation.IsMateScore(evalThisIteration))
-            // {
-            //     break;
-            // }
+            if (evaluation.IsMateScore(bestEval) && (evaluation.MateInPly(bestEval) <= depth))
+            {
+                break;
+            }
         }
 
         EndSearch();

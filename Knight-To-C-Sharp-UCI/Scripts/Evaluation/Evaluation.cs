@@ -511,6 +511,12 @@ public class Evaluation
         return false;
     }
 
+    public int MateInPly(int mateScore)
+    {
+        return CheckmateEval - Math.Abs(mateScore);
+    }
+    
+
     struct MaterialInfo
     {
         // Piece Material Values
