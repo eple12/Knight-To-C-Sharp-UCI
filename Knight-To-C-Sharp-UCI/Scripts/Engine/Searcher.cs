@@ -118,7 +118,7 @@ public class Searcher
             // Console.WriteLine(numQs);
             
             bestMoveLastIteration = bestMove;
-            Console.WriteLine($"depth {depth} move {Move.MoveString(bestMove)} eval {evalThisIteration}");
+            Console.WriteLine($"info depth {depth} score cp {bestEval} pv {Move.MoveString(bestMove)} multipv 1");
             
             if (cancellationRequested)
             {
