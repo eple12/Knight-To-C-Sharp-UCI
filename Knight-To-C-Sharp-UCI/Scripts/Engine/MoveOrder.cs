@@ -19,7 +19,7 @@ public class MoveOrder
     public Killers[] KillerMoves;
     public const int MaxKillerPly = 32;
 
-    public MoveOrder(Engine engine)
+    public MoveOrder(Searcher engine)
     {
         board = engine.GetBoard();
         tt = engine.GetTT();

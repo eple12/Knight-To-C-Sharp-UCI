@@ -1,7 +1,7 @@
 
-public class Engine
+public class Searcher
 {
-    // Materials
+    // Engine Classes
     Board board;
     MoveGenerator MoveGen;
     TranspositionTable tt;
@@ -9,14 +9,18 @@ public class Engine
     EngineSettings settings;
     Evaluation evaluation;
 
+    // Search Info
     Move bestMove;
     Move bestMoveLastIteration;
     int bestEval;
+    SearchRequestInfo searchRequestInfo;
 
     // Search Constants
     const int MaxExtension = 16;
     const int Reduction = 1;
 
+    // Search Flags
+    bool searchRequested;
     bool isSearching;
     bool cancellationRequested;
 
@@ -24,7 +28,7 @@ public class Engine
 
     public event Action OnSearchComplete;
 
-    public Engine(Board _board, EngineSettings _settings)
+    public Searcher(Board _board, EngineSettings _settings)
     {
         board = _board;
         MoveGen = board.MoveGen;
@@ -35,14 +39,31 @@ public class Engine
 
         moveOrder = new MoveOrder(this);
         
+        searchRequested = false;
         isSearching = false;
         cancellationRequested = false;
 
         OnSearchComplete = () => {};
+
+
+        Task.Factory.StartNew(SearchThread, TaskCreationOptions.LongRunning);
     }
 
-    public void StartSearch(int maxDepth, Action? onSearchComplete = null)
+    public void RequestSearch(int maxDepth, Action? onSearchComplete = null)
     {
+        if (isSearching)
+        {
+            Console.WriteLine("The current search is not complete. Search request failed.");
+            return;
+        }
+        searchRequestInfo = new SearchRequestInfo(maxDepth, onSearchComplete);
+        searchRequested = true;
+    }
+
+    void StartSearch(int maxDepth, Action? onSearchComplete = null)
+    {
+        searchRequested = false;
+
         Span<Move> preSearchMoves = MoveGen.GenerateMoves();
         bestMove = preSearchMoves.Length == 0 ? Move.NullMove : preSearchMoves[0];
 
@@ -77,17 +98,13 @@ public class Engine
 
         if (settings.useIterativeDeepening)
         {
-            Task.Factory.StartNew(() => {
-                IterativeDeepening(maxDepth);
-            }, TaskCreationOptions.LongRunning);
+            IterativeDeepening(maxDepth);
         }
         else
         {
-            Task.Factory.StartNew(() => {
-                Search(maxDepth, Infinity.NegativeInfinity, Infinity.PositiveInfinity, 0);
+            Search(maxDepth, Infinity.NegativeInfinity, Infinity.PositiveInfinity, 0);
 
-                EndSearch();
-            }, TaskCreationOptions.LongRunning);
+            EndSearch();
         }
     }
 
@@ -384,6 +401,27 @@ public class Engine
 
 
 
+    void SearchThread()
+    {
+        while (true)
+        {
+            if (searchRequested)
+            {
+                StartSearch(searchRequestInfo.MaxDepth, searchRequestInfo.OnSearchComplete);
+            }
+        }
+    }
 
+    struct SearchRequestInfo
+    {
+        public int MaxDepth;
+        public Action? OnSearchComplete;
+
+        public SearchRequestInfo(int maxDepth, Action? onSearchComplete)
+        {
+            MaxDepth = maxDepth;
+            OnSearchComplete = onSearchComplete;
+        }
+    }
 
 }

@@ -1,7 +1,7 @@
 public static class MainProcess
 {
     public static Board board = new Board();
-    public static EngineController engine = new EngineController(board);
+    public static Bot engine = new Bot(board);
 
     public static void Start()
     {

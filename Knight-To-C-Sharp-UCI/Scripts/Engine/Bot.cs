@@ -1,12 +1,12 @@
-public class EngineController
+public class Bot
 {
     EngineSettings settings;
-    Engine engine;
+    Searcher engine;
 
-    public EngineController(Board _board)
+    public Bot(Board _board)
     {
         settings = new EngineSettings();
-        engine = new Engine(_board, settings);
+        engine = new Searcher(_board, settings);
     }
 
     public void StartSearch(int depth, Action? onSearchComplete = null)
@@ -14,7 +14,7 @@ public class EngineController
         onSearchComplete += () => {
             Console.WriteLine("bestmove " + Move.MoveString(MainProcess.engine.GetMove()));
         };
-        engine.StartSearch(depth, onSearchComplete);
+        engine.RequestSearch(depth, onSearchComplete);
     }
     public void StartTimedSearch(int depth, int timeMS, Action? onSearchComplete = null)
     {
@@ -81,7 +81,7 @@ public class EngineController
     {
         return engine.IsSearching();
     }
-    public Engine GetEngine()
+    public Searcher GetEngine()
     {
         return engine;
     }

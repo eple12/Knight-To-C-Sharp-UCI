@@ -93,7 +93,7 @@ public static class Square
             }
         }
 
-        // There is no pawn which can en-passant on this file
+        // There is no pawn that can en-passant on this file
         return false;
     }
 }

@@ -1,7 +1,7 @@
 
 public class Evaluation
 {
-    Engine engine;
+    Searcher engine;
     Board board;
 
     // Checkmate evaluation detection
@@ -39,7 +39,7 @@ public class Evaluation
     EvaluationData blackEval;
 
 
-    public Evaluation(Engine _engine)
+    public Evaluation(Searcher _engine)
     {
         engine = _engine;
         board = engine.GetBoard();

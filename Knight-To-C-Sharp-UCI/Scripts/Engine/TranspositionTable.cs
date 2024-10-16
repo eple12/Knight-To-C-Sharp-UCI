@@ -23,11 +23,11 @@ public class TranspositionTable
 
     public readonly ulong size;
     public bool enabled = true;
-    Engine engine;
+    Searcher engine;
     Board board;
     Evaluation evaluation;
 
-    public TranspositionTable (Engine _engine)
+    public TranspositionTable (Searcher _engine)
     {
         engine = _engine;
         board = engine.GetBoard();
