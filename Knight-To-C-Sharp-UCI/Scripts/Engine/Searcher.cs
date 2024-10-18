@@ -49,6 +49,12 @@ public class Searcher
         Task.Factory.StartNew(SearchThread, TaskCreationOptions.LongRunning);
     }
 
+    // Set the best move to the book move that has been already found
+    public void SetBookMove(Move bookMove)
+    {
+        bestMove = bookMove;
+    }
+    
     public void RequestSearch(int maxDepth, Action? onSearchComplete = null)
     {
         if (isSearching)
@@ -56,6 +62,7 @@ public class Searcher
             Console.WriteLine("The current search is not complete. Search request failed.");
             return;
         }
+        
         searchRequestInfo = new SearchRequestInfo(maxDepth, onSearchComplete);
         searchRequested = true;
     }
@@ -83,15 +90,6 @@ public class Searcher
         // Return Null Move
         if (maxDepth <= 0)
         {
-            EndSearch();
-            return;
-        }
-
-        // Try to find this position in the Opening Book
-        Move bookMove = Book.GetRandomMove(board);
-        if (!Move.IsNull(bookMove))
-        {
-            bestMove = bookMove;
             EndSearch();
             return;
         }
@@ -350,8 +348,6 @@ public class Searcher
 
     void EndSearch()
     {
-        Console.WriteLine($"debug info eval: {bestEval}");
-
         OnSearchComplete?.Invoke();
         OnSearchComplete = () => {};
         

@@ -2,32 +2,54 @@ public class Bot
 {
     EngineSettings settings;
     Searcher engine;
+    Board board;
 
     public Bot(Board _board)
     {
         settings = new EngineSettings();
         engine = new Searcher(_board, settings);
+        board = _board;
     }
 
     public void StartSearch(int depth, Action? onSearchComplete = null)
     {
+        if (TryToGetBookMove(onSearchComplete))
+        {
+            return;
+        }
+
+        // Best move report
         onSearchComplete += () => {
-            Console.WriteLine("bestmove " + Move.MoveString(MainProcess.engine.GetMove()));
+            ReportBestMove(GetMove());
         };
         engine.RequestSearch(depth, onSearchComplete);
     }
     public void StartTimedSearch(int depth, int timeMS, Action? onSearchComplete = null)
     {
-        CancellationTokenSource cts = new CancellationTokenSource();
-        Task.Factory.StartNew(() => {Thread.Sleep(timeMS);}, cts.Token)
-        .ContinueWith((t) => {
-            CancelAndWait();
-        });
+        // Console.WriteLine("starttimed");
+        // if (TryToGetBookMove(onSearchComplete))
+        // {
+        //     return;
+        // }
 
-        onSearchComplete += () => {
-            cts.Cancel();
-            cts.Dispose();
-        };
+        if (timeMS > 0)
+        {
+            CancellationTokenSource cts = new CancellationTokenSource();
+            Task.Delay(timeMS, cts.Token)
+            .ContinueWith((t) => {
+                CancelAndWait();
+            });
+
+            onSearchComplete += () => {
+                cts.Cancel();
+                cts.Dispose();
+            };
+        }
+
+        if (depth <= 0)
+        {
+            depth = settings.unlimitedMaxDepth;
+        }
 
         StartSearch(depth, onSearchComplete);
     }
@@ -51,6 +73,27 @@ public class Bot
 
         return (int) thinkTimeDouble;
     }
+    
+    // Returns if it found a book move or not
+    bool TryToGetBookMove(Action? onSearchComplete)
+    {
+        // Console.WriteLine("book try");
+
+        // Try to find this position in the Opening Book
+        Move bookMove = Book.GetRandomMove(board);
+
+        if (!Move.IsNull(bookMove))
+        {
+            engine.SetBookMove(bookMove);
+            ReportBestMove(bookMove);
+            
+            onSearchComplete?.Invoke();
+
+            return true;
+        }
+
+        return false;
+    }
 
     public void CancelSearch(Action? onSearchComplete = null)
     {
@@ -61,6 +104,8 @@ public class Bot
     }
     public void CancelAndWait()
     {
+        // Console.WriteLine("Cancel and Wait");
+
         if (!IsSearching())
         {
             return;
@@ -86,6 +131,9 @@ public class Bot
         return engine;
     }
 
-
+    public void ReportBestMove(Move move)
+    {
+        Console.WriteLine("bestmove " + Move.MoveString(move));
+    }
 
 }

@@ -167,11 +167,17 @@ public static class Command
             break;
             case "enginemove":
             {
-                MainProcess.engine.StartTimedSearch(MainProcess.engine.GetEngine().GetSettings().unlimitedMaxDepth, 3000, () => {
-                    MainProcess.board.MakeMove(MainProcess.engine.GetMove());
-                    MainProcess.board.UpdateLegalMoves();
-                    MainProcess.board.PrintBoardAndMoves();
-                });
+                if (tokens.Length > 1)
+                {
+                    int time = int.Parse(tokens[1]);
+                    
+                    MainProcess.engine.StartTimedSearch(0, time, () => {
+                        MainProcess.board.MakeMove(MainProcess.engine.GetMove());
+                        MainProcess.board.UpdateLegalMoves();
+                        MainProcess.board.PrintBoardAndMoves();
+                    });
+                }
+                
             }
             break;
             case "tt":
@@ -238,6 +244,8 @@ public static class Command
                 Perft();
             }
             break;
+
+
 
             default:
                 break;
@@ -443,14 +451,17 @@ public static class Command
             thinkTime = MainProcess.engine.DecideThinkTime(wtime, btime, winc, binc, MaxThinkTime, MinThinkTime);
         }
 
-        Console.WriteLine($"debug searchtime {thinkTime}");
+        Console.WriteLine($"info string searchtime {(!infinite ? thinkTime : "infinite")}");
+        // Console.WriteLine("huh");
         
         if (infinite)
         {
-            MainProcess.engine.StartSearch(depth);
+            // Console.WriteLine("inf");
+            MainProcess.engine.StartTimedSearch(depth, -1);
         }
         else
         {
+            // Console.WriteLine("not inf");
             MainProcess.engine.StartTimedSearch(depth, thinkTime);
         }
     }
