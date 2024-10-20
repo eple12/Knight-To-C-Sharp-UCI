@@ -1,5 +1,4 @@
 
-using System.Diagnostics.Eventing.Reader;
 
 public class Evaluation
 {
@@ -237,20 +236,23 @@ public class Evaluation
 
         int kingFile = (white ? whiteMaterial : blackMaterial).kingSquare % 8;
         
-        if (IsSemiFromOrOpenFile(kingFile, white))
+        if (IsOpenFile(kingFile) || IsSemiOpenFile(kingFile))
+        // if (IsSemiFromOrOpenFile(kingFile, white))
         {
             r += KingOpenPenalty;
         }
         if (kingFile < 7)
         {
-            if (IsSemiFromOrOpenFile(kingFile + 1, white))
+            if (IsOpenFile(kingFile + 1) || IsSemiOpenFile(kingFile + 1))
+            // if (IsSemiFromOrOpenFile(kingFile + 1, white))
             {
                 r += KingAdjacentOpenPenalty;
             }
         }
         if (kingFile > 0)
         {
-            if (IsSemiFromOrOpenFile(kingFile - 1, white))
+            if (IsOpenFile(kingFile - 1) || IsSemiOpenFile(kingFile - 1))
+            // if (IsSemiFromOrOpenFile(kingFile - 1, white))
             {
                 r += KingAdjacentOpenPenalty;
             }
@@ -417,7 +419,8 @@ public class Evaluation
 
         // Console.WriteLine($"attack {attacked}");
 
-        return (middleSquared + 3 *attacked) / 4.0d;
+        return (middleSquared + 3*attacked) / 4.0d;
+        // return middleSquared;
     }
 
     // Piece square table
@@ -430,13 +433,16 @@ public class Evaluation
         value += ReadPieceSquareTable(PieceSquareTable.Rook, board.PieceSquares[white ? PieceIndex.WhiteRook : PieceIndex.BlackRook], white);
         value += ReadPieceSquareTable(PieceSquareTable.Queen, board.PieceSquares[white ? PieceIndex.WhiteQueen : PieceIndex.BlackQueen], white);
 
-        double reverseEndWeight = 1 - endgameWeight;
+        double endSquare = endgameWeight * endgameWeight;
+        double reverseEndWeightSquare = 1 - endSquare;
 
-        value += (int) (ReadPieceSquareTable(PieceSquareTable.Pawn, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white) * reverseEndWeight);
-        value += (int) (ReadPieceSquareTable(PieceSquareTable.Pawn, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white) * endgameWeight);
+        // value += (int) (ReadPieceSquareTable(PieceSquareTable.Pawn, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white) * reverseEndWeightSquare);
+        // value += (int) (ReadPieceSquareTable(PieceSquareTable.PawnEnd, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white) * endSquare);
+        value += ReadPieceSquareTable(PieceSquareTable.Pawn, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white);
 
-        value += (int) (ReadPieceSquareTable(PieceSquareTable.King, board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing], white) * reverseEndWeight);
-        value += (int) (ReadPieceSquareTable(PieceSquareTable.King, board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing], white) * endgameWeight);
+        // value += (int) (ReadPieceSquareTable(PieceSquareTable.King, board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing], white) * reverseEndWeightSquare);
+        // value += (int) (ReadPieceSquareTable(PieceSquareTable.KingEnd, board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing], white) * endSquare);
+        value += ReadPieceSquareTable(PieceSquareTable.King, board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing], white);
 
         return value;
     }
