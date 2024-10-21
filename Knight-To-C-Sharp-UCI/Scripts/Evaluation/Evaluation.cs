@@ -10,7 +10,7 @@ public class Evaluation
     int maxDepth;
 
     // Pawns
-    static readonly int[] PassedPawnBonus = { 0, 120, 80, 60, 40, 30, 30, 0 };
+    static readonly int[] PassedPawnBonus = { 0, 120, 80, 60, 40, 30, 15, 15 };
     static readonly int[] IsolatedPawnPenaltyByCount = { 0, 10, 25, 50, 75, 75, 75, 75, 75 };
 
     // King Safety
@@ -37,8 +37,8 @@ public class Evaluation
     // const int TotalKingSafetyWeight = 1 * FrontQueenKingSafetyWeight + 2 * FrontRookKingSafetyWeight;
 
     // Open File
-    const int OpenFileBonus = 15;
-    const int SemiOpenFileBonus = 15;
+    const int OpenFileBonus = 20;
+    const int SemiOpenFileBonus = 20;
     const ulong FileMask = 0x0101010101010101; // Represents A file
 
     // Calculation Variables
@@ -103,8 +103,8 @@ public class Evaluation
 
         // int pawnBonus = PawnBonus();
         // eval += pawnBonus;
-        whiteEval.pawnScore = PawnBonus(white: true);
-        blackEval.pawnScore = PawnBonus(white: false);
+        whiteEval.pawnScore = EvaluatePawns(white: true);
+        blackEval.pawnScore = EvaluatePawns(white: false);
 
         // int kingSafety = (int) (KingSafety() * reverseEndWeight);
         // // // Console.WriteLine("eval kingSafety: " + kingSafety);
@@ -118,50 +118,33 @@ public class Evaluation
     }
 
     // Pawns
-    int PawnBonus(bool white)
-    {
-        return PassedPawns(white: white) + IsolatedPawns(white: white);
-    }
-    int PassedPawns(bool white)
+    int EvaluatePawns(bool white)
     {
         int eval = 0;
-        PieceList pawns = board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
-        ulong enemyPawns = board.BitboardSet.Bitboards[white ? PieceIndex.BlackPawn : PieceIndex.WhitePawn];
+        ulong frinedlyPawns = white ? bitboards.whitePawns : bitboards.blackPawns;
+        ulong enemyPawns = white ? bitboards.blackPawns : bitboards.whitePawns;
 
+        int numIsolated = 0;
+
+        PieceList pawns = board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
         for (int i = 0; i < pawns.count; i++)
         {
             int square = pawns.squares[i];
 
-            ulong passMask = (white ? Bits.WhitePassedPawnMask : Bits.BlackPassedPawnMask)[square];
-            if ((passMask & enemyPawns) == 0)
+            ulong passedPawnMask = (white ? Bits.WhitePassedPawnMask : Bits.BlackPassedPawnMask)[square];
+            if ((passedPawnMask & enemyPawns) == 0)
             {
-                int numSquareFromPromotion = white ? 7 - (square / 8) : square / 8;
-                eval += PassedPawnBonus[numSquareFromPromotion];
-                // Console.WriteLine(numSquareFromPromotion);
+                int rank = square / 8;
+                eval += PassedPawnBonus[white ? 7 - rank : rank];
+            }
+
+            if ((frinedlyPawns & Bits.AdjacentFilesMask[square % 8]) == 0)
+            {
+                numIsolated++;
             }
         }
 
-        return eval;
-    }
-    int IsolatedPawns(bool white)
-    {
-        int eval = 0;
-        PieceList pawns = board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
-        ulong friendlyPawns = board.BitboardSet.Bitboards[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
-        int numIsolatedPawns = 0;
-
-        for (int i = 0; i < pawns.count; i++)
-        {
-            int square = pawns.squares[i];
-
-            ulong adjMask = Bits.AdjacentFilesMask[square % 8];
-            if ((adjMask & friendlyPawns) == 0)
-            {
-                numIsolatedPawns++;
-            }
-        }
-
-        eval -= IsolatedPawnPenaltyByCount[numIsolatedPawns];
+        eval -= IsolatedPawnPenaltyByCount[numIsolated];
 
         return eval;
     }
@@ -419,7 +402,7 @@ public class Evaluation
 
         // Console.WriteLine($"attack {attacked}");
 
-        return (middleSquared + 3*attacked) / 4.0d;
+        return (middleSquared + 3 * attacked) / 4.0d;
         // return middleSquared;
     }
 
@@ -433,16 +416,15 @@ public class Evaluation
         value += ReadPieceSquareTable(PieceSquareTable.Rook, board.PieceSquares[white ? PieceIndex.WhiteRook : PieceIndex.BlackRook], white);
         value += ReadPieceSquareTable(PieceSquareTable.Queen, board.PieceSquares[white ? PieceIndex.WhiteQueen : PieceIndex.BlackQueen], white);
 
-        double endSquare = endgameWeight * endgameWeight;
-        double reverseEndWeightSquare = 1 - endSquare;
+        double reverseEndWeight = 1 - endgameWeight;
 
-        // value += (int) (ReadPieceSquareTable(PieceSquareTable.Pawn, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white) * reverseEndWeightSquare);
-        // value += (int) (ReadPieceSquareTable(PieceSquareTable.PawnEnd, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white) * endSquare);
-        value += ReadPieceSquareTable(PieceSquareTable.Pawn, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white);
+        value += (int) (ReadPieceSquareTable(PieceSquareTable.Pawn, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white) * reverseEndWeight);
+        value += (int) (ReadPieceSquareTable(PieceSquareTable.PawnEnd, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white) * endgameWeight);
+        // value += ReadPieceSquareTable(PieceSquareTable.Pawn, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white);
 
-        // value += (int) (ReadPieceSquareTable(PieceSquareTable.King, board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing], white) * reverseEndWeightSquare);
-        // value += (int) (ReadPieceSquareTable(PieceSquareTable.KingEnd, board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing], white) * endSquare);
-        value += ReadPieceSquareTable(PieceSquareTable.King, board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing], white);
+        value += (int) (ReadPieceSquareTable(PieceSquareTable.King, board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing], white) * reverseEndWeight);
+        value += (int) (ReadPieceSquareTable(PieceSquareTable.KingEnd, board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing], white) * endgameWeight);
+        // value += ReadPieceSquareTable(PieceSquareTable.King, board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing], white);
 
         return value;
     }
