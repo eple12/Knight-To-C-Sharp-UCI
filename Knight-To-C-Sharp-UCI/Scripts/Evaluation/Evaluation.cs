@@ -114,6 +114,9 @@ public class Evaluation
 
         // Console.WriteLine($"{whiteEval.kingSafety} {blackEval.kingSafety}");
 
+        // Console.WriteLine(whiteEval.pieceSquareScore);
+        // Console.WriteLine(blackEval.pieceSquareScore);
+
         return (whiteEval.Sum() - blackEval.Sum()) * sign;
     }
 
@@ -188,8 +191,8 @@ public class Evaluation
 
             ulong triple = Bits.TripleFileMask[kingSquare % 8];
 
-            ulong frontMask = (Bits.Rank1 << frontRank) & triple;
-            ulong distantMask = (Bits.Rank1 << distantRank) & triple;
+            ulong frontMask = (Bits.RankMask[frontRank]) & triple;
+            ulong distantMask = (Bits.RankMask[distantRank]) & triple;
 
             ulong pawns = board.BitboardSet.Bitboards[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
             ulong pieces = board.BitboardSet.Bitboards[white ? PieceIndex.WhiteAll : PieceIndex.BlackAll] ^ pawns;
@@ -199,6 +202,9 @@ public class Evaluation
             ulong distantPawns = pawns & distantMask;
             ulong distantPieces = pieces & distantMask;
 
+            // Bitboard.Print(frontMask);
+            // Bitboard.Print(distantMask);
+
             int totalProtection = Bitboard.Count(frontMask) * DirectKingFrontPawnPenalty;
             int protection = 
             Bitboard.Count(shieldPawns) * DirectKingFrontPawnPenalty
@@ -206,10 +212,13 @@ public class Evaluation
              + Bitboard.Count(distantPawns) * DistantKingFrontPawnPenalty
              + Bitboard.Count(distantPieces) * DistantKingFrontPiecePenalty;
             
+            // Console.WriteLine($"totalProt {totalProtection}");
+            // Console.WriteLine($"prot {protection}");
 
-            r += Math.Max(totalProtection - protection, totalProtection);
+            r += Math.Max(totalProtection - protection, 0);
         }
         
+        // Console.WriteLine($"{white} pawnPenalty {r}");
 
         return r;
     }
@@ -378,32 +387,33 @@ public class Evaluation
         // Console.WriteLine(whiteMaterial.endgameWeight);
         // Console.WriteLine(blackMaterial.endgameWeight);
 
-        int kingSquare = (white ? whiteMaterial : blackMaterial).kingSquare;
-        int kingFile = kingSquare % 8;
+        // int kingSquare = (white ? whiteMaterial : blackMaterial).kingSquare;
+        // int kingFile = kingSquare % 8;
 
-        ulong triple = Bits.TripleFileMask[kingFile];
-        ulong enemyQueens = board.BitboardSet.Bitboards[white ? PieceIndex.BlackQueen : PieceIndex.WhiteQueen];
-        ulong enemyRooks = board.BitboardSet.Bitboards[white ? PieceIndex.BlackRook : PieceIndex.WhiteRook];
-        ulong enemyAll = board.BitboardSet.Bitboards[white ? PieceIndex.BlackAll : PieceIndex.WhiteAll];
-        ulong enemyKing = board.BitboardSet.Bitboards[white ? PieceIndex.BlackKing : PieceIndex.WhiteKing];
-        ulong enemyMinors = enemyAll ^ enemyQueens ^ enemyRooks ^ enemyKing;
+        // ulong triple = Bits.TripleFileMask[kingFile];
+        // ulong enemyQueens = board.BitboardSet.Bitboards[white ? PieceIndex.BlackQueen : PieceIndex.WhiteQueen];
+        // ulong enemyRooks = board.BitboardSet.Bitboards[white ? PieceIndex.BlackRook : PieceIndex.WhiteRook];
+        // ulong enemyAll = board.BitboardSet.Bitboards[white ? PieceIndex.BlackAll : PieceIndex.WhiteAll];
+        // ulong enemyKing = board.BitboardSet.Bitboards[white ? PieceIndex.BlackKing : PieceIndex.WhiteKing];
+        // ulong enemyMinors = enemyAll ^ enemyQueens ^ enemyRooks ^ enemyKing;
 
-        // Bitboard.Print(triple & enemyQueens);
-        // Bitboard.Print(~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind));
-        // Console.WriteLine(Bitboard.Count(triple & enemyQueens & ~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind)));
+        // // Bitboard.Print(triple & enemyQueens);
+        // // Bitboard.Print(~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind));
+        // // Console.WriteLine(Bitboard.Count(triple & enemyQueens & ~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind)));
 
-        int queens = Math.Min(Bitboard.Count(triple & enemyQueens & ~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind)), KingSafetyMaxQueens);
-        int rooks = Math.Min(Bitboard.Count(triple & enemyRooks & ~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind)), KingSafetyMaxRooks);
-        int minors = Math.Min(Bitboard.Count(triple & enemyMinors & ~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind)), KingSafetyMaxMinors);
+        // int queens = Math.Min(Bitboard.Count(triple & enemyQueens & ~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind)), KingSafetyMaxQueens);
+        // int rooks = Math.Min(Bitboard.Count(triple & enemyRooks & ~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind)), KingSafetyMaxRooks);
+        // int minors = Math.Min(Bitboard.Count(triple & enemyMinors & ~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind)), KingSafetyMaxMinors);
 
-        // Console.WriteLine($"{queens} {rooks} {minors}");
+        // // Console.WriteLine($"{queens} {rooks} {minors}");
 
-        double attacked = (queens * KingSafetyQueenWeight + rooks * KingSafetyRookWeight + minors * KingSafetyMinorWeight) / (double) KingSafetyTotalWeight;
+        // double attacked = (queens * KingSafetyQueenWeight + rooks * KingSafetyRookWeight + minors * KingSafetyMinorWeight) / (double) KingSafetyTotalWeight;
 
         // Console.WriteLine($"attack {attacked}");
 
-        return (middleSquared + 3 * attacked) / 4.0d;
-        // return middleSquared;
+        // return (middleSquared + 3 * attacked) / 4.0d;
+        // double 
+        return middleSquared;
     }
 
     // Piece square table

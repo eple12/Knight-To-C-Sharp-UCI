@@ -10,6 +10,8 @@ public static class Bits
     public static ulong NotFileA = ulong.MaxValue ^ FileA;
     public static ulong NotFileH = ulong.MaxValue ^ FileH;
 
+    public static ulong[] RankMask;
+
     public static ulong[] FileMask;
     public static ulong[] AdjacentFilesMask;
     public static ulong[] TripleFileMask;
@@ -22,6 +24,12 @@ public static class Bits
 
     static Bits()
     {
+        RankMask = new ulong[8];
+        for (int i = 0; i < 8; i++)
+        {
+            RankMask[i] = Rank1 << (8 * i);
+        }
+
         FileMask = new ulong[8];
         for (int i = 0; i < 8; i++)
         {
