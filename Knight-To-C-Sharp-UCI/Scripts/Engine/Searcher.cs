@@ -1,4 +1,6 @@
 
+using System.Diagnostics;
+
 public class Searcher
 {
     // Engine Classes
@@ -13,7 +15,9 @@ public class Searcher
     Move bestMove;
     Move bestMoveLastIteration;
     int bestEval;
+    int numNodeSearched;
     SearchRequestInfo searchRequestInfo;
+    Stopwatch searchTimeTimer;
 
     // Search Constants
     const int MaxExtension = 16;
@@ -47,6 +51,8 @@ public class Searcher
 
 
         Task.Factory.StartNew(SearchThread, TaskCreationOptions.LongRunning);
+
+        searchTimeTimer = new();
     }
 
     // Set the best move to the book move that has been already found
@@ -108,6 +114,9 @@ public class Searcher
 
     void IterativeDeepening(int maxDepth)
     {
+        searchTimeTimer.Restart();
+        numNodeSearched = 0;
+
         // Iterative Deepening
         for (int depth = 1; depth <= maxDepth; depth++)
         {
@@ -120,7 +129,7 @@ public class Searcher
             bool isMate = evaluation.IsMateScore(bestEval);
             int matePly = isMate ? evaluation.MateInPly(bestEval) : 0;
 
-            Console.WriteLine($"info depth {depth} score {(!isMate ? $"cp {bestEval}" : $"mate {(bestEval > 0 ? (matePly + 1) / 2 : -matePly / 2)}")} pv {Move.MoveString(bestMove)} multipv 1");
+            Console.WriteLine($"info depth {depth} score {(!isMate ? $"cp {bestEval}" : $"mate {(bestEval > 0 ? (matePly + 1) / 2 : -matePly / 2)}")} nodes {numNodeSearched} nps {numNodeSearched * 1000 / searchTimeTimer.ElapsedMilliseconds} time {searchTimeTimer.ElapsedMilliseconds} pv {Move.MoveString(bestMove)} multipv 1");
             
             if (cancellationRequested)
             {
@@ -138,11 +147,15 @@ public class Searcher
             }
         }
 
+        searchTimeTimer.Stop();
+
         EndSearch();
     }
 
     int Search(int depth, int alpha, int beta, int plyFromRoot, int numExtensions = 0)
     {
+        numNodeSearched++;
+
         // Console.WriteLine($"Search Head Depth {depth}");
         if (cancellationRequested) // Return if the search is cancelled
         {
