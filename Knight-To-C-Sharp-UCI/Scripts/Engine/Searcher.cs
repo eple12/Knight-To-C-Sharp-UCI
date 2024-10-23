@@ -116,7 +116,11 @@ public class Searcher
             // Console.WriteLine(numQs);
             
             bestMoveLastIteration = bestMove;
-            Console.WriteLine($"info depth {depth} score cp {bestEval} pv {Move.MoveString(bestMove)} multipv 1");
+
+            bool isMate = evaluation.IsMateScore(bestEval);
+            int matePly = isMate ? evaluation.MateInPly(bestEval) : 0;
+
+            Console.WriteLine($"info depth {depth} score {(!isMate ? $"cp {bestEval}" : $"mate {(bestEval > 0 ? (matePly + 1) / 2 : -matePly / 2)}")} pv {Move.MoveString(bestMove)} multipv 1");
             
             if (cancellationRequested)
             {
