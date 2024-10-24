@@ -29,7 +29,7 @@ public class Searcher
     bool isSearching;
     bool cancellationRequested;
 
-    int numQs;
+    // int numQs;
 
     public event Action OnSearchComplete;
 
@@ -138,7 +138,7 @@ public class Searcher
                 pvLine += Move.MoveString(BestPV.ArgMoves[i]) + ' ';
             }
 
-            Console.WriteLine($"info depth {depth} score {(!isMate ? $"cp {bestEval}" : $"mate {(bestEval > 0 ? (matePly + 1) / 2 : -matePly / 2)}")} nodes {numNodeSearched} nps {numNodeSearched * 1000 / (ulong) searchTimeTimer.ElapsedMilliseconds} time {searchTimeTimer.ElapsedMilliseconds} pv {pvLine}multipv 1");
+            Console.WriteLine($"info depth {depth} score {(!isMate ? $"cp {bestEval}" : $"mate {(bestEval > 0 ? (matePly + 1) / 2 : -matePly / 2)}")} nodes {numNodeSearched} nps {numNodeSearched * 1000 / (ulong) (searchTimeTimer.ElapsedMilliseconds != 0 ? searchTimeTimer.ElapsedMilliseconds : 1)} time {searchTimeTimer.ElapsedMilliseconds} pv {pvLine}multipv 1");
             
             if (cancellationRequested)
             {
