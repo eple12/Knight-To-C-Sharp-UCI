@@ -15,7 +15,7 @@ public class Searcher
     Move bestMove;
     Move bestMoveLastIteration;
     int bestEval;
-    int numNodeSearched;
+    ulong numNodeSearched;
     SearchRequestInfo searchRequestInfo;
     Stopwatch searchTimeTimer;
 
@@ -129,7 +129,8 @@ public class Searcher
             bool isMate = evaluation.IsMateScore(bestEval);
             int matePly = isMate ? evaluation.MateInPly(bestEval) : 0;
 
-            Console.WriteLine($"info depth {depth} score {(!isMate ? $"cp {bestEval}" : $"mate {(bestEval > 0 ? (matePly + 1) / 2 : -matePly / 2)}")} nodes {numNodeSearched} nps {numNodeSearched * 1000 / searchTimeTimer.ElapsedMilliseconds} time {searchTimeTimer.ElapsedMilliseconds} pv {Move.MoveString(bestMove)} multipv 1");
+            Console.WriteLine($"info depth {depth} score {(!isMate ? $"cp {bestEval}" : $"mate {(bestEval > 0 ? (matePly + 1) / 2 : -matePly / 2)}")} nodes {numNodeSearched} nps {numNodeSearched * 1000 / (ulong) searchTimeTimer.ElapsedMilliseconds} time {searchTimeTimer.ElapsedMilliseconds} pv {Move.MoveString(bestMove)} multipv 1");
+            // ISSUE: NPS GOING NEGATIVE LOL
             
             if (cancellationRequested)
             {
