@@ -453,7 +453,7 @@ public class Searcher
 
     struct PvLine
     {
-        public const int MaxPvMoves = 20;
+        public const int MaxPvMoves = 100;
 
         public int CMove;
         public Move[] ArgMoves;

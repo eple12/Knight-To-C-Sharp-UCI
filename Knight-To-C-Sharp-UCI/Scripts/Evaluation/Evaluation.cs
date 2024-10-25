@@ -14,14 +14,14 @@ public class Evaluation
     static readonly int[] IsolatedPawnPenaltyByCount = { 0, 10, 25, 50, 75, 75, 75, 75, 75 };
 
     // King Safety
-    const int DirectKingFrontPawnPenalty = 100;
-    const int DistantKingFrontPawnPenalty = 50;
-    const int DirectKingFrontPiecePenalty = 50;
-    const int DistantKingFrontPiecePenalty = 30;
+    const int DirectKingFrontPawnPenalty = 50;
+    const int DistantKingFrontPawnPenalty = 30;
+    const int DirectKingFrontPiecePenalty = 30;
+    const int DistantKingFrontPiecePenalty = 20;
     // const double SecondRankKingFrontPieceMultiplier = 0.5d;
 
-    const int KingOpenPenalty = 100;
-    const int KingAdjacentOpenPenalty = 50;
+    const int KingOpenPenalty = 75;
+    const int KingAdjacentOpenPenalty = 25;
 
     // King Safety Weight
     const int KingSafetyQueenWeight = 150;
