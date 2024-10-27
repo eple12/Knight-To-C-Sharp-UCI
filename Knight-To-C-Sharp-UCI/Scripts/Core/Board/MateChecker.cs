@@ -39,6 +39,7 @@ public static class MateChecker
             // }
         }
         else if (board.PositionHistory[board.ZobristKey] >= 3)
+        // else if (board.RepetitionVerify.Contains(board.ZobristKey))
         {
             // Threefold repetition
             return MateState.Threefold;

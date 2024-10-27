@@ -22,6 +22,11 @@ public static class Bits
     public static ulong[] WhitePassedPawnMask;
     public static ulong[] BlackPassedPawnMask;
 
+    public static ulong LightSquares;
+    public static ulong DarkSquares;
+
+    public static ulong AllEdge;
+
     static Bits()
     {
         RankMask = new ulong[8];
@@ -74,5 +79,25 @@ public static class Bits
             WhitePassedPawnMask[square] = adj & whiteForward;
             BlackPassedPawnMask[square] = adj & blackForward;
         }
+
+        LightSquares = 0;
+        DarkSquares = 0;
+
+        for (int i = 0; i < 64; i++)
+        {
+            int file = i % 8;
+            int rank = i / 8;
+
+            if (((file + rank) % 2) == 1)
+            {
+                LightSquares |= 1ul << i;
+            }
+            else
+            {
+                DarkSquares |= 1ul << i;
+            }
+        }
+    
+        AllEdge = FileMask[0] | FileMask[7] | RankMask[0] | RankMask[7];
     }
 }

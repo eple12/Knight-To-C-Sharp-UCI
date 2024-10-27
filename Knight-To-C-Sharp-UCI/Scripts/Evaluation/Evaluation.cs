@@ -117,6 +117,9 @@ public class Evaluation
         // Console.WriteLine(whiteEval.pieceSquareScore);
         // Console.WriteLine(blackEval.pieceSquareScore);
 
+        whiteEval.endgame = EvaluateEndgames(white: true);
+        blackEval.endgame = EvaluateEndgames(white: false);
+
         return (whiteEval.Sum() - blackEval.Sum()) * sign;
     }
 
@@ -464,14 +467,71 @@ public class Evaluation
             int friendlyKingSquare = (white ? whiteMaterial : blackMaterial).kingSquare;
             int enemyKingSquare = (white ? blackMaterial : whiteMaterial).kingSquare;
 
-            mopUpScore += (14 - PreComputedEvalData.DistanceFromSquare[friendlyKingSquare, enemyKingSquare]) * 4;
-
-            mopUpScore += PreComputedEvalData.DistanceFromCenter[enemyKingSquare] * 10;
+            // Friendly king closer to the enemy king
+            mopUpScore += (14 - PreComputedEvalData.DistanceFromSquare[friendlyKingSquare, enemyKingSquare]) * 8;
+            
+            // // Enemy king in the corner
+            // mopUpScore += PreComputedEvalData.DistanceFromCenter[enemyKingSquare] * 6;
+            mopUpScore += PreComputedEvalData.DistanceFromCenter[enemyKingSquare] * 6;
 
             return (int) (mopUpScore * enemyEndgameWeight);
         }
 
         return 0;
+    }
+    // Special Endgame Techniques
+    int EvaluateEndgames(bool white)
+    {
+        int eval = 0;
+
+        double enemyEndgameWeight = (white ? blackMaterial : whiteMaterial).endgameWeight;
+        int enemyKingSquare = (white ? blackMaterial : whiteMaterial).kingSquare;
+        int friendlyKingSquare = (!white ? blackMaterial : whiteMaterial).kingSquare;
+
+        // // BISHOP & KNIGHT CHECKMATE
+        // if ((white ? whiteMaterial : blackMaterial).numBishops == 1 && (white ? whiteMaterial : blackMaterial).numKnights == 1 && enemyEndgameWeight >= 0.9d)
+        // {
+        //     // Console.WriteLine("hi");
+        //     bool hasLightSquaredBishop = (Bits.LightSquares & (white ? bitboards.whiteBishops : bitboards.blackBishops)) != 0;
+        //     bool hasDarkSquaredBishop = (Bits.DarkSquares & (white ? bitboards.whiteBishops : bitboards.blackBishops)) != 0;
+
+        //     // Console.WriteLine(hasLightSquaredBishop);
+        //     // Console.WriteLine(hasDarkSquaredBishop);
+
+        //     int distanceToGoal = 7;
+
+        //     if (hasLightSquaredBishop)
+        //     {
+        //         distanceToGoal = Math.Min(PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 7], PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 56]);
+        //         int pt = PieceSquareTable.Read(PieceSquareTable.LightBNMateEnemyKing, enemyKingSquare, !white) + 500;
+        //         // Console.WriteLine(pt);
+        //         eval += pt * 20;
+        //     }
+        //     if (hasDarkSquaredBishop)
+        //     {
+        //         distanceToGoal = Math.Min(PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 0], PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 63]);
+        //     }
+
+        //     int close = 7 - distanceToGoal;
+
+        //     eval += close * 500;
+
+        //     // Console.WriteLine($"dgoal {distanceToGoal} close {close}");
+
+        //     // Enemy king in the corner
+        //     // eval += PreComputedEvalData.RangeDistanceFromCenter[enemyKingSquare] * 100;
+
+        //     // Friendly King vs Enemy King
+        //     eval += (14 - PreComputedEvalData.DistanceFromSquare[friendlyKingSquare, enemyKingSquare]) * 100;
+
+        //     // if (Bitboard.Contains(Bits.AllEdge, enemyKingSquare))
+        //     // {
+        //     //     // Console.WriteLine("edge bonus 100");
+        //     //     eval += 100;
+        //     // }
+        // }
+
+        return eval;
     }
 
 
@@ -746,15 +806,16 @@ public class Evaluation
         public int openFileScore;
         public int pawnScore;
         public int kingSafety;
+        public int endgame;
 
         public int Sum()
         {
-            return materialScore + pieceSquareScore + mopUpScore + openFileScore + pawnScore + kingSafety;
+            return materialScore + pieceSquareScore + mopUpScore + openFileScore + pawnScore + kingSafety + endgame;
         }
 
         public void Clear()
         {
-            materialScore = pieceSquareScore = mopUpScore = openFileScore = pawnScore = kingSafety = 0;
+            materialScore = pieceSquareScore = mopUpScore = openFileScore = pawnScore = kingSafety = endgame = 0;
         }
     }
 

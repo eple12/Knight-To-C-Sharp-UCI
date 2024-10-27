@@ -178,7 +178,7 @@ public class Searcher
             return 0;
         }
 
-        if (plyFromRoot > 1) // Return 0 if drawn
+        if (plyFromRoot > 0) // Return 0 if drawn
         {
             if (board.FiftyRuleHalfClock >= 100 || board.PositionHistory[board.ZobristKey] > 1)
             {
@@ -210,13 +210,13 @@ public class Searcher
 
             if (plyFromRoot == 0) // Use the move stored in TT
             {
-                if (evaluation.IsMateScore(ttVal)) // If the tt evaluation is a checkmate value, check if it is not a draw
-                {
-                    if (board.FiftyRuleHalfClock >= 100 || board.PositionHistory[board.ZobristKey] > 1)
-                    {
-                        return 0;
-                    }
-                }
+                // if (evaluation.IsMateScore(ttVal)) // If the tt evaluation is a checkmate value, check if it is not a draw
+                // {
+                //     if (board.FiftyRuleHalfClock >= 100 || board.RepetitionVerify.Contains(board.ZobristKey))
+                //     {
+                //         return 0;
+                //     }
+                // }
 
                 if (ttMove.moveValue != Move.NullMove.moveValue)
                 {

@@ -113,6 +113,8 @@ public class Board
 
     // For Threefold detection
     public Dictionary<ulong, int> PositionHistory = new Dictionary<ulong, int>();
+    // public HashSet<ulong> RepetitionData;
+    // public HashSet<ulong> RepetitionVerify;
 
     // In-Check Cache value
     bool InCheckCachedValue;
@@ -136,6 +138,9 @@ public class Board
         CastlingData = 0;
         EnpassantFile = 8;
         FiftyRuleHalfClock = 0;
+
+        // RepetitionData = new();
+        // RepetitionVerify = new();
         
         MoveGen = new MoveGenerator(this);
 
@@ -219,6 +224,8 @@ public class Board
         EnpassantFile = 8;
         FiftyRuleHalfClock = 0;
         PositionHistory.Clear();
+        // RepetitionData.Clear();
+        // RepetitionVerify.Clear();
 
         HasCachedInCheckValue = false;
     }
@@ -522,7 +529,23 @@ public class Board
 
         Turn = !Turn;
         
-        StorePosition();
+        // StorePosition();
+        // if (RepetitionData.Contains(ZobristKey))
+        // {
+        //     RepetitionVerify.Add(ZobristKey);
+        // }
+        // else
+        // {
+        //     RepetitionData.Add(ZobristKey);
+        // }
+        if (PositionHistory.ContainsKey(ZobristKey))
+        {
+            PositionHistory[ZobristKey]++;
+        }
+        else
+        {
+            PositionHistory.Add(ZobristKey, 1);
+        }
 
         HasCachedInCheckValue = false;
     }
@@ -531,7 +554,17 @@ public class Board
     {
         // try
         // {
+        // PositionHistory[ZobristKey]--;
+        // if (RepetitionVerify.Contains(ZobristKey))
+        // {
+        //     RepetitionVerify.Remove(ZobristKey);
+        // }
+        // else
+        // {
+        //     RepetitionData.Remove(ZobristKey);
+        // }
         PositionHistory[ZobristKey]--;
+        
         // }
         // catch (Exception)
         // {
@@ -730,17 +763,17 @@ public class Board
     {
         LegalMoves = MoveGen.GenerateMoves().ToArray();
     }
-    void StorePosition()
-    {
-        if (PositionHistory.ContainsKey(ZobristKey))
-        {
-            PositionHistory[ZobristKey]++;
-        }
-        else
-        {
-            PositionHistory.Add(ZobristKey, 1);
-        }
-    }
+    // void StorePosition()
+    // {
+    //     if (PositionHistory.ContainsKey(ZobristKey))
+    //     {
+    //         PositionHistory[ZobristKey]++;
+    //     }
+    //     else
+    //     {
+    //         PositionHistory.Add(ZobristKey, 1);
+    //     }
+    // }
 
     void PlaceSinglePiece(int piece, int square)
     {
@@ -872,7 +905,8 @@ public class Board
         }
 
         ZobristKey = Zobrist.GetZobristKey(this);
-        PositionHistory[ZobristKey] = 1;
+        PositionHistory.Add(ZobristKey, 1);
+        // RepetitionData.Add(ZobristKey);
 
         AfterLoadingPosition();
     }

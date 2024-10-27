@@ -21,6 +21,11 @@ public static class Square
         return file + rank * 8;
     }
 
+    public static bool IsLightSquare(int square)
+    {
+        return ((1ul << square) & Bits.LightSquares) != 0;
+    }
+
     public static int FlipIndex(int square)
     {
         return (square % 8) + (7 - square / 8) * 8;
