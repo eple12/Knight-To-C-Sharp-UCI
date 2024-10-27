@@ -106,7 +106,7 @@ public static class PieceSquareTable
 
     public static int Read(int[] table, int square, bool white)
     {
-        return table[!white ? Square.FlipIndex(square) : square];
+        return table[Square.FlipIndex(square)];
     }
 
 
