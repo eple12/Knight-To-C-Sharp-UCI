@@ -514,8 +514,9 @@ public class Evaluation
 
             int close = 7 - distanceToGoal;
 
-            int knightDist = PreComputedEvalData.DistanceFromSquare[friendlyKnightSquare, enemyKingSquare];
-            eval += (14 - knightDist) * 300;
+            int knightDist = PreComputedEvalData.RangeDistanceFromSquare[friendlyKnightSquare, enemyKingSquare];
+            int knightFDist = PreComputedEvalData.RangeDistanceFromSquare[friendlyKnightSquare, friendlyKingSquare];
+            eval += (7 - (knightDist + knightFDist) / 2) * 300;
 
             if (distanceToGoal > 4)
             {
@@ -524,8 +525,15 @@ public class Evaluation
                 {
                     // Console.WriteLine("edge bonus 100");
                     eval += 1500;
-                    eval += close * 100;
                 }
+
+                // const ulong cornerKing = 
+                // const ulong friendlyKnightGood = (1ul << 53) | (1ul << 47);
+                // if (Bitboard.Contains(enemyKingSquare) && Bitboard.Contains(friendlyKnightGood, friendlyKnightSquare))
+                // {
+                //     eval += 1000;
+                // }
+                eval += close * 100;
             }
             else
             {
