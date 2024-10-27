@@ -488,73 +488,73 @@ public class Evaluation
         int enemyKingSquare = (white ? blackMaterial : whiteMaterial).kingSquare;
         int friendlyKingSquare = (!white ? blackMaterial : whiteMaterial).kingSquare;
 
-        // BISHOP & KNIGHT CHECKMATE
-        if ((white ? whiteMaterial : blackMaterial).numBishops == 1 && (white ? whiteMaterial : blackMaterial).numKnights == 1 && enemyEndgameWeight >= 0.9d)
-        {
-            // Console.WriteLine("hi");
-            bool hasLightSquaredBishop = (Bits.LightSquares & (white ? bitboards.whiteBishops : bitboards.blackBishops)) != 0;
-            bool hasDarkSquaredBishop = (Bits.DarkSquares & (white ? bitboards.whiteBishops : bitboards.blackBishops)) != 0;
+        // // BISHOP & KNIGHT CHECKMATE
+        // if ((white ? whiteMaterial : blackMaterial).numBishops == 1 && (white ? whiteMaterial : blackMaterial).numKnights == 1 && enemyEndgameWeight >= 0.9d)
+        // {
+        //     // Console.WriteLine("hi");
+        //     bool hasLightSquaredBishop = (Bits.LightSquares & (white ? bitboards.whiteBishops : bitboards.blackBishops)) != 0;
+        //     bool hasDarkSquaredBishop = (Bits.DarkSquares & (white ? bitboards.whiteBishops : bitboards.blackBishops)) != 0;
 
-            ulong knights = bitboards.whiteKnights;
-            int friendlyKnightSquare = Bitboard.PopLSB(ref knights);
+        //     ulong knights = bitboards.whiteKnights;
+        //     int friendlyKnightSquare = Bitboard.PopLSB(ref knights);
 
-            // Console.WriteLine(hasLightSquaredBishop);
-            // Console.WriteLine(hasDarkSquaredBishop);
+        //     // Console.WriteLine(hasLightSquaredBishop);
+        //     // Console.WriteLine(hasDarkSquaredBishop);
 
-            int distanceToGoal = 7;
+        //     int distanceToGoal = 7;
 
-            if (hasLightSquaredBishop)
-            {
-                distanceToGoal = Math.Min(PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 7], PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 56]);
-            }
-            if (hasDarkSquaredBishop)
-            {
-                distanceToGoal = Math.Min(PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 0], PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 63]);
-            }
+        //     if (hasLightSquaredBishop)
+        //     {
+        //         distanceToGoal = Math.Min(PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 7], PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 56]);
+        //     }
+        //     if (hasDarkSquaredBishop)
+        //     {
+        //         distanceToGoal = Math.Min(PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 0], PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 63]);
+        //     }
 
-            int close = 7 - distanceToGoal;
+        //     int close = 7 - distanceToGoal;
 
-            int knightDist = PreComputedEvalData.RangeDistanceFromSquare[friendlyKnightSquare, enemyKingSquare];
-            int knightFDist = PreComputedEvalData.RangeDistanceFromSquare[friendlyKnightSquare, friendlyKingSquare];
-            eval += (7 - (knightDist + knightFDist) / 2) * 300;
+        //     int knightDist = PreComputedEvalData.RangeDistanceFromSquare[friendlyKnightSquare, enemyKingSquare];
+        //     int knightFDist = PreComputedEvalData.RangeDistanceFromSquare[friendlyKnightSquare, friendlyKingSquare];
+        //     eval += (7 - (knightDist + knightFDist) / 2) * 300;
 
-            if (distanceToGoal > 4)
-            {
-                const ulong friendlyKingGood = (1ul << 52) | (1ul << 53) | (1ul << 54) | (1ul << 46) | (1ul << 38);
-                if (Bitboard.Contains(Bits.AllEdge, enemyKingSquare) && Bitboard.Contains(friendlyKingGood, friendlyKingSquare))
-                {
-                    // Console.WriteLine("edge bonus 100");
-                    eval += 1500;
-                }
+        //     if (distanceToGoal > 4)
+        //     {
+        //         const ulong friendlyKingGood = (1ul << 52) | (1ul << 53) | (1ul << 54) | (1ul << 46) | (1ul << 38);
+        //         if (Bitboard.Contains(Bits.AllEdge, enemyKingSquare) && Bitboard.Contains(friendlyKingGood, friendlyKingSquare))
+        //         {
+        //             // Console.WriteLine("edge bonus 100");
+        //             eval += 1500;
+        //         }
 
-                // const ulong cornerKing = 
-                // const ulong friendlyKnightGood = (1ul << 53) | (1ul << 47);
-                // if (Bitboard.Contains(enemyKingSquare) && Bitboard.Contains(friendlyKnightGood, friendlyKnightSquare))
-                // {
-                //     eval += 1000;
-                // }
-                eval += close * 100;
-            }
-            else
-            {
-                eval += 3000;
-                eval += close * 200;
-            }
+        //         // const ulong cornerKing = 
+        //         const ulong friendlyKnightGood = (1ul << 53) | (1ul << 47);
+        //         if (Bitboard.Contains(friendlyKnightGood, friendlyKnightSquare))
+        //         {
+        //             eval += 1000;
+        //         }
+        //         eval += close * 100;
+        //     }
+        //     else
+        //     {
+        //         eval += 3000;
+        //         eval += close * 200;
+        //     }
 
-            // Console.WriteLine($"dgoal {distanceToGoal} close {close}");
+        //     // Console.WriteLine($"dgoal {distanceToGoal} close {close}");
 
-            // Enemy king in the corner
-            // eval += PreComputedEvalData.RangeDistanceFromCenter[enemyKingSquare] * 100;
+        //     // Enemy king in the corner
+        //     // eval += PreComputedEvalData.RangeDistanceFromCenter[enemyKingSquare] * 100;
 
-            // Friendly King vs Enemy King
-            eval += (14 - PreComputedEvalData.DistanceFromSquare[friendlyKingSquare, enemyKingSquare]) * 500;
+        //     // Friendly King vs Enemy King
+        //     eval += (14 - PreComputedEvalData.DistanceFromSquare[friendlyKingSquare, enemyKingSquare]) * 500;
 
-            // if (Bitboard.Contains(Bits.AllEdge, enemyKingSquare))
-            // {
-            //     // Console.WriteLine("edge bonus 100");
-            //     eval += 100;
-            // }
-        }
+        //     // if (Bitboard.Contains(Bits.AllEdge, enemyKingSquare))
+        //     // {
+        //     //     // Console.WriteLine("edge bonus 100");
+        //     //     eval += 100;
+        //     // }
+        // }
 
         return eval;
     }
