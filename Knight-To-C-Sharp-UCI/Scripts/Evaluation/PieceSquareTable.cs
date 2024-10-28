@@ -103,10 +103,11 @@ public static class PieceSquareTable
         -30, -25,   0,   0,   0,   0, -25, -30, 
         -50, -30, -30, -30, -30, -30, -30, -50 
     };
-
+	
+	// VERIFIED
     public static int Read(int[] table, int square, bool white)
     {
-        return table[!white ? Square.FlipIndex(square) : square];
+        return table[white ? Square.FlipIndex(square) : square];
     }
 
 
