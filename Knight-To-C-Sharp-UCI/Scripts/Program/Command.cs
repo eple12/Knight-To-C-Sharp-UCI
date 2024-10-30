@@ -106,15 +106,9 @@ public static class Command
             break;
             case "eval":
             {
-                Console.WriteLine("debug cmd eval: " + MainProcess.engine.GetEngine().GetEvaluation().Evaluate());
+                Console.WriteLine("debug cmd eval: " + MainProcess.engine.GetEngine().GetEvaluation().Evaluate(verbose: true));
             }
             break;
-            // case "endweight":
-            // {
-            //     Console.WriteLine("debug cmd EndgameWeight: " + 
-            //     MainProcess.engine.GetEngine().GetEvaluation().GetEndgameWeight());
-            // }
-            // break;
             case "zobrist":
             {
                 Console.WriteLine("debug cmd zobrist: " + MainProcess.board.ZobristKey);

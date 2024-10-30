@@ -30,6 +30,7 @@ public static class PieceSquareTable
 		-10,  5,  0,  0,  0,  0,  5,-10,
 		-20,-10,-10,-10,-10,-10,-10,-20,
 	};
+	// Table from Simplified-Evaluation function by CPW
     // public static readonly int[] Rook =  {
 	// 	0,  0,  0,  0,  0,  0,  0,  0,
 	// 	5, 10, 10, 10, 10, 10, 10,  5,
@@ -60,6 +61,7 @@ public static class PieceSquareTable
 		-10,  0,  5,  0,  0,  0,  0,-10,
 		-20,-10,-10, -5, -5,-10,-10,-20
 	};
+	// Table from Simplified-Evaluation function by CPW
     // public static readonly int[] King = { 
     //     -80, -70, -70, -70, -70, -70, -70, -80, 
     //     -60, -60, -60, -60, -60, -60, -60, -60, 
@@ -109,26 +111,4 @@ public static class PieceSquareTable
     {
         return table[white ? Square.FlipIndex(square) : square];
     }
-
-
-	// public static readonly int[] LightBNMateEnemyKing = {
-	// 	 500, 400, 300, 200, 150, 100,-500,-500, 
-	// 	 400, 200, 100, -50,-100,-500,-500,-500, 
-	// 	 300, 100,  50,-500,-500,-500,-500, 100, 
-	// 	 200, -50,-500,-500,-500,-500,-100, 150, 
-	// 	 150,-100,-500,-500,-500,-500, -50, 200, 
-	// 	 100,-500,-500,-500,-500,  50, 100, 300, 
-	// 	-500,-500,-500,-100, -50, 100, 200, 400, 
-	// 	-500,-500, 100, 150, 200, 300, 400, 500, 
-	// };
-	// public static readonly int[] DarkBNMateEnemyKing = {
-	// 	  0,   0,   0,   0,   0,   0,   0, 500, 
-	// 	  0,   0,   0,   0,   0,   0,   0, 400, 
-	// 	  0,   0,   0,   0,   0,   0,   0, 300, 
-	// 	  0,   0,   0,   0,   0,   0,   0, 200, 
-	// 	  0,   0,   0,   0,   0,   0,   0,   0, 
-	// 	  0,   0,   0,   0,   0,   0,   0,   0, 
-	// 	  0,   0,   0,   0,   0,   0,   0,   0, 
-	// 	  0,   0,   0,   0,   0,   0,   0,   0, 
-	// };
 }

@@ -66,7 +66,7 @@ public class Searcher
     {
         if (isSearching)
         {
-            Console.WriteLine("The current search is not complete. Search request failed.");
+            Console.WriteLine("WARNING: The current search is not complete. Search request failed.");
             return;
         }
         
@@ -107,16 +107,6 @@ public class Searcher
         numNodeSearched = 0;
 
         IterativeDeepening(maxDepth);
-        // if (settings.useIterativeDeepening)
-        // {
-        //     IterativeDeepening(maxDepth);
-        // }
-        // else
-        // {
-        //     Search(maxDepth, Infinity.NegativeInfinity, Infinity.PositiveInfinity, 0);
-
-        //     EndSearch();
-        // }
     }
 
     void IterativeDeepening(int maxDepth)
@@ -152,11 +142,6 @@ public class Searcher
                 break;
             }
 
-            // if (drawExit)
-            // {
-            //     break;
-            // }
-
             if (evaluation.IsMateScore(bestEval) && (evaluation.MateInPly(bestEval) <= depth))
             {
                 break;
@@ -171,7 +156,6 @@ public class Searcher
         numNodeSearched++;
         PvLine line = new();
 
-        // Console.WriteLine($"Search Head Depth {depth}");
         if (cancellationRequested) // Return if the search is cancelled
         {
             pLine.CMove = 0;
@@ -210,17 +194,8 @@ public class Searcher
 
             if (plyFromRoot == 0) // Use the move stored in TT
             {
-                // if (evaluation.IsMateScore(ttVal)) // If the tt evaluation is a checkmate value, check if it is not a draw
-                // {
-                //     if (board.FiftyRuleHalfClock >= 100 || board.RepetitionVerify.Contains(board.ZobristKey))
-                //     {
-                //         return 0;
-                //     }
-                // }
-
                 if (ttMove.moveValue != Move.NullMove.moveValue)
                 {
-                    // Console.WriteLine("tt move " + Move.MoveString(ttMove) + " eval " + ttVal + " depth " + depth);
                     bestMove = ttMove;
                     bestEval = ttVal;
                 }
@@ -231,8 +206,6 @@ public class Searcher
 
         if (depth == 0) // Return QSearch Evaluation
         {
-            // return evaluation.Evaluate();
-            // board.PrintSmallBoard();
             pLine.CMove = 0;
             return QuiescenceSearch(alpha, beta);
         }
@@ -263,8 +236,8 @@ public class Searcher
         {
             board.MakeMove(moves[i]);
 
+            // Search Extensions
             int extension = 0;
-
             if (numExtensions < MaxExtension)
             {
                 if (board.InCheck())
@@ -281,10 +254,9 @@ public class Searcher
                 }
             }
 
+            // Late Move Reduction
             bool needFullSearch = true;
             int eval = 0;
-
-            // Console.WriteLine($"current Depth {depth} ext {extension} totalExt {numExtensions}");
 
             if (extension == 0 && depth >= 3 && i >= 3 && board.Squares[moves[i].targetSquare] != Piece.None)
             {
@@ -295,7 +267,6 @@ public class Searcher
             {
                 eval = -Search(depth - 1 + extension, -beta, -alpha, plyFromRoot + 1, numExtensions + extension, ref line);
             }
-            // int eval = -Search(depth - 1 + extension, -beta, -alpha, plyFromRoot + 1, numExtensions + extension);
 
             board.UnmakeMove(moves[i]);
 
@@ -336,7 +307,6 @@ public class Searcher
                 
                 if (plyFromRoot == 0)
                 {
-                    // Console.WriteLine("found better move: " + Move.MoveString(legalMoves[i]) + " eval: " + eval + " bestEval: " + bestEval);
                     bestMove = moves[i];
                     bestEval = eval;
                 }
@@ -350,7 +320,7 @@ public class Searcher
 
     int QuiescenceSearch(int alpha, int beta)
     {
-        // numQs++;
+        numNodeSearched++;
         int eval = evaluation.Evaluate();
 
         if (eval >= beta)
@@ -365,7 +335,6 @@ public class Searcher
         Span<Move> moves = stackalloc Move[128];
         MoveGen.GenerateMoves(ref moves, genOnlyCaptures: true);
         moveOrder.GetOrderedList(moves, Move.NullMove, inQSearch: true, 0);
-        // Console.WriteLine(moves.Length);
 
         for (int i = 0; i < moves.Length; i++)
         {

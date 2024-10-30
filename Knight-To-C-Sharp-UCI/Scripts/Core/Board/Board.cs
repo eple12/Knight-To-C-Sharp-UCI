@@ -113,8 +113,6 @@ public class Board
 
     // For Threefold detection
     public Dictionary<ulong, int> PositionHistory = new Dictionary<ulong, int>();
-    // public HashSet<ulong> RepetitionData;
-    // public HashSet<ulong> RepetitionVerify;
 
     // In-Check Cache value
     bool InCheckCachedValue;
@@ -138,9 +136,6 @@ public class Board
         CastlingData = 0;
         EnpassantFile = 8;
         FiftyRuleHalfClock = 0;
-
-        // RepetitionData = new();
-        // RepetitionVerify = new();
         
         MoveGen = new MoveGenerator(this);
 
@@ -224,8 +219,6 @@ public class Board
         EnpassantFile = 8;
         FiftyRuleHalfClock = 0;
         PositionHistory.Clear();
-        // RepetitionData.Clear();
-        // RepetitionVerify.Clear();
 
         HasCachedInCheckValue = false;
     }
@@ -236,28 +229,6 @@ public class Board
         {
             return;
         }
-
-        // int startSquare = Square.Index(move.Substring(0, 2));
-        // int targetSquare = Square.Index(move.Substring(2, 2));
-
-        // Move m = Move.NullMove;
-        // foreach (var item in LegalMoves)
-        // {
-        //     if (item.startSquare == startSquare && item.targetSquare == targetSquare)
-        //     {
-        //         m = item;
-        //         break;
-        //     }
-        // }
-
-        // if (MoveFlag.IsPromotion(m.flag))
-        // {
-        //     if (move.Length < 5)
-        //     {
-        //         return;
-        //     }
-        //     m.flag = MoveFlag.GetPromotionFlag(move[4]);
-        // }
 
         Move m = Move.FindMove(LegalMoves, move);
 
@@ -277,7 +248,7 @@ public class Board
     {
         if (move.moveValue == 0)
         {
-            Console.WriteLine("NULL MOVE => Board.MakeMove()");
+            Console.WriteLine("WARNING: Could not make the move since it is a NULL move.");
             return;
         }
 
@@ -350,12 +321,14 @@ public class Board
 
                 Squares[capturedPawnSquare] = Piece.None;
 
+                int enemyPawnIndex = PieceIndex.MakePawn(!Turn);
+
                 // ZOBRIST UPDATE
-                ZobristKey ^= Zobrist.pieceArray[Turn ? PieceIndex.BlackPawn : PieceIndex.WhitePawn, capturedPawnSquare];
+                ZobristKey ^= Zobrist.pieceArray[enemyPawnIndex, capturedPawnSquare];
 
                 // PIECE SQUARE UPDATE
-                PieceSquares[Turn ? PieceIndex.BlackPawn : PieceIndex.WhitePawn].Remove(capturedPawnSquare);
-                BitboardSet.Remove(Turn ? PieceIndex.BlackPawn : PieceIndex.WhitePawn, capturedPawnSquare);
+                PieceSquares[enemyPawnIndex].Remove(capturedPawnSquare);
+                BitboardSet.Remove(enemyPawnIndex, capturedPawnSquare);
             }
         }
 
@@ -801,8 +774,8 @@ public class Board
             {
                 PieceSquares[i] = new PieceList();
             }
-            PieceSquares[i].squares = new int[16]; // Resets piece squares to 0;
-            PieceSquares[i].count = 0;
+            PieceSquares[i].Squares = new int[16]; // Resets piece squares to 0;
+            PieceSquares[i].Count = 0;
         }
 
         string[] splitFen = fen.Split(' ');
@@ -851,8 +824,8 @@ public class Board
             BKCastle = false;
             BQCastle = false;
 
-            int whiteKingFile = PieceSquares[PieceIndex.WhiteKing].squares[0] % 8;
-            int blackKingFile = PieceSquares[PieceIndex.BlackKing].squares[0] % 8;
+            int whiteKingFile = PieceSquares[PieceIndex.WhiteKing].Squares[0] % 8;
+            int blackKingFile = PieceSquares[PieceIndex.BlackKing].Squares[0] % 8;
 
             if (castleFen == "-")
             {
@@ -939,12 +912,12 @@ public class Board
     }
     bool CalculateInCheck()
     {
-        int friendlyKingSquare = PieceSquares[Turn ? PieceIndex.WhiteKing : PieceIndex.BlackKing].squares[0];
+        int friendlyKingSquare = PieceSquares[PieceIndex.MakeKing(Turn)].Squares[0];
         ulong blockers = BitboardSet.Bitboards[PieceIndex.WhiteAll] | BitboardSet.Bitboards[PieceIndex.BlackAll];
 
-        int enemyBishop = Turn ? PieceIndex.BlackBishop : PieceIndex.WhiteBishop;
-        int enemyRook = Turn ? PieceIndex.BlackRook : PieceIndex.WhiteRook;
-        int enemyQueen = Turn ? PieceIndex.BlackQueen : PieceIndex.WhiteQueen;
+        int enemyBishop = PieceIndex.MakeBishop(!Turn);
+        int enemyRook = PieceIndex.MakeRook(!Turn);
+        int enemyQueen = PieceIndex.MakeQueen(!Turn);
 
         ulong enemyStraightSliders = BitboardSet.Bitboards[enemyRook] | BitboardSet.Bitboards[enemyQueen];
         ulong enemyDiagonalSliders = BitboardSet.Bitboards[enemyBishop] | BitboardSet.Bitboards[enemyQueen];
@@ -966,13 +939,13 @@ public class Board
             }
         }
 
-        ulong enemyKnights = BitboardSet.Bitboards[Turn ? PieceIndex.BlackKnight : PieceIndex.WhiteKnight];
+        ulong enemyKnights = BitboardSet.Bitboards[PieceIndex.MakeKnight(!Turn)];
         if ((PreComputedMoveGenData.KnightMap[friendlyKingSquare] & enemyKnights) != 0)
         {
             return true;
         }
 
-        ulong enemyPawns = BitboardSet.Bitboards[Turn ? PieceIndex.BlackPawn : PieceIndex.WhitePawn];
+        ulong enemyPawns = BitboardSet.Bitboards[PieceIndex.MakePawn(!Turn)];
         ulong pawnAttackMask = Turn ? PreComputedMoveGenData.whitePawnAttackMap[friendlyKingSquare] : PreComputedMoveGenData.blackPawnAttackMap[friendlyKingSquare];
         if ((pawnAttackMask & enemyPawns) != 0)
         {

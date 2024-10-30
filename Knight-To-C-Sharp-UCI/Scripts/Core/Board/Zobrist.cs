@@ -5,7 +5,7 @@ public static class Zobrist
     static Random rng = new Random(seed);
 
     public static readonly ulong[,] pieceArray = new ulong[12, 64];
-    public static readonly ulong[] castlingArray = new ulong[16]; // No, K, Q, KQ (4 Possible states for each side) -> 4 * 2
+    public static readonly ulong[] castlingArray = new ulong[16]; // No, K, Q, KQ (4 Possible states for each side) -> 4 ** 2
     public static readonly ulong[] enpassantArray = new ulong[9]; // index 8 => No ENP
     public static readonly ulong sideToMove = NextUlong(rng);
 

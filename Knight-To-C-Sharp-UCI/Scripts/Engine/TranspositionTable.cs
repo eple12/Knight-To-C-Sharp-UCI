@@ -99,11 +99,6 @@ public class TranspositionTable
             return;
         }
 
-        // if (board.ZobristKey == 14266748245563660247)
-        // {
-        //     board.PrintSmallBoard();
-        // }
-
         if (entries[Index].depth > depth)
         {
             return;
@@ -118,7 +113,7 @@ public class TranspositionTable
     {
         if (evaluation.IsMateScore (score))
         {
-            int sign = System.Math.Sign (score);
+            int sign = Math.Sign (score);
             return (score * sign + numPlySearched) * sign;
         }
         return score;
@@ -129,7 +124,7 @@ public class TranspositionTable
     {
         if (evaluation.IsMateScore (score))
         {
-            int sign = System.Math.Sign (score);
+            int sign = Math.Sign (score);
             return (score * sign - numPlySearched) * sign;
         }
         return score;
@@ -138,14 +133,6 @@ public class TranspositionTable
     public void Print()
     {
         Console.WriteLine("###############");
-        // for (int i = 0; i < (int) size; i++)
-        // {
-        //     if (entries[i].key != 0)
-        //     {
-        //         Entry e = entries[i];
-        //         Console.WriteLine("key: " + e.key + " val: " + e.value + " move: " + Move.MoveString(e.move) + " index: " + i);
-        //     }
-        // }
         Entry e = entries[Index];
         Console.WriteLine("key: " + e.key + " val: " + e.value + " move: " + Move.MoveString(e.move) + " index: " + Index + " depth " + e.depth + " type " + e.nodeType);
         Console.WriteLine("###############");

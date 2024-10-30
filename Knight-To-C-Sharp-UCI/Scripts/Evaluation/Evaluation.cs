@@ -18,7 +18,6 @@ public class Evaluation
     const int DistantKingFrontPawnPenalty = 30;
     const int DirectKingFrontPiecePenalty = 30;
     const int DistantKingFrontPiecePenalty = 20;
-    // const double SecondRankKingFrontPieceMultiplier = 0.5d;
 
     const int KingOpenPenalty = 75;
     const int KingAdjacentOpenPenalty = 25;
@@ -32,9 +31,6 @@ public class Evaluation
     const int KingSafetyMaxMinors = 3;
     const int KingSafetyTotalWeight = KingSafetyMaxQueens * KingSafetyQueenWeight + KingSafetyMaxRooks * KingSafetyRookWeight + KingSafetyMaxMinors * KingSafetyMinorWeight;
 
-    // const int FrontQueenKingSafetyWeight = 50;
-    // const int FrontRookKingSafetyWeight = 35;
-    // const int TotalKingSafetyWeight = 1 * FrontQueenKingSafetyWeight + 2 * FrontRookKingSafetyWeight;
 
     // Open File
     const int OpenFileBonus = 20;
@@ -62,7 +58,7 @@ public class Evaluation
         blackEval = new EvaluationData();
     }
 
-    public int Evaluate()
+    public int Evaluate(bool verbose = false)
     {
         // int eval = 0;
         int sign = board.Turn ? 1 : -1;
@@ -75,50 +71,33 @@ public class Evaluation
 
         bitboards.Get(board);
 
-        // double endgameWeight = GetEndgameWeight();
-        // double middlegameWeight = GetMiddlegameWeight(endgameWeight);
-        // double reverseEndWeight = 1 - endgameWeight;
-        // Console.WriteLine("endWeight: " + endgameWeight + " midWeight: " + middlegameWeight);
-
-        
-        // Console.WriteLine("material: " + materialCount);
-        // eval += whiteMaterial.materialValue - blackMaterial.materialValue;
         whiteEval.materialScore = whiteMaterial.materialValue;
         blackEval.materialScore = blackMaterial.materialValue;
 
-        // int pieceSquareBonus = PieceSquareTable();
-        // Console.WriteLine("pieceSquareBonus: " + pieceSquareBonus);
-        // eval += pieceSquareBonus;
         whiteEval.pieceSquareScore = PieceSquareTableScore(white: true, blackMaterial.endgameWeight);
         blackEval.pieceSquareScore = PieceSquareTableScore(white: false, whiteMaterial.endgameWeight);
 
         whiteEval.mopUpScore = CalculateMopUpScore(white: true);
         blackEval.mopUpScore = CalculateMopUpScore(white: false);
 
-        // int openFileBonus = CalculateOpenFileBonus();
-        // // Console.WriteLine("openFileBonus: " + openFileBonus);
-        // eval += openFileBonus;
         whiteEval.openFileScore = CalculateOpenFileBonus(white: true);
         blackEval.openFileScore = CalculateOpenFileBonus(white: false);
 
-        // int pawnBonus = PawnBonus();
-        // eval += pawnBonus;
         whiteEval.pawnScore = EvaluatePawns(white: true);
         blackEval.pawnScore = EvaluatePawns(white: false);
 
-        // int kingSafety = (int) (KingSafety() * reverseEndWeight);
-        // // // Console.WriteLine("eval kingSafety: " + kingSafety);
-        // eval += kingSafety;
         whiteEval.kingSafety = KingSafety(white: true);
         blackEval.kingSafety = KingSafety(white: false);
 
-        // Console.WriteLine($"{whiteEval.kingSafety} {blackEval.kingSafety}");
-
-        // Console.WriteLine(whiteEval.pieceSquareScore);
-        // Console.WriteLine(blackEval.pieceSquareScore);
-
-        whiteEval.endgame = EvaluateEndgames(white: true);
-        blackEval.endgame = EvaluateEndgames(white: false);
+        if (verbose)
+        {
+            Console.WriteLine("-----White Evaluation-----");
+            whiteEval.Print();
+            Console.WriteLine("");
+            Console.WriteLine("-----Black Evaluation-----");
+            blackEval.Print();
+            Console.WriteLine("");
+        }
 
         return (whiteEval.Sum() - blackEval.Sum()) * sign;
     }
@@ -133,9 +112,9 @@ public class Evaluation
         int numIsolated = 0;
 
         PieceList pawns = board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
-        for (int i = 0; i < pawns.count; i++)
+        for (int i = 0; i < pawns.Count; i++)
         {
-            int square = pawns.squares[i];
+            int square = pawns.Squares[i];
 
             ulong passedPawnMask = (white ? Bits.WhitePassedPawnMask : Bits.BlackPassedPawnMask)[square];
             if ((passedPawnMask & enemyPawns) == 0)
@@ -156,23 +135,11 @@ public class Evaluation
     }
 
     // King Safety
-    // TODO: FIX Over-reacting
     int KingSafety(bool white)
     {
         int r = 0;
         double kingSafetyWeight = GetKingSafetyWeight(white: white);
-
-        // Console.WriteLine($"kingSafetyWeight {kingSafetyWeight} white {white}");
-        // double blackKingSafetyWeight = GetKingSafetyWeight(white: false);
-
-        // Console.WriteLine("white: " + whiteKingSafetyWeight + " black: " + blackKingSafetyWeight);
-
         r -= (int) ((FrontPawnsPenalty(white: white) + KingOpenFilePenalty(white: white)) * kingSafetyWeight);
-        // r += CalculateKingOpenFilePenalty(whiteKingSafetyWeight, blackKingSafetyWeight);
-        
-        // Console.WriteLine("total kingSafety: " + r);
-
-        // Console.WriteLine(r);
 
         return r;
     }
@@ -205,23 +172,15 @@ public class Evaluation
             ulong distantPawns = pawns & distantMask;
             ulong distantPieces = pieces & distantMask;
 
-            // Bitboard.Print(frontMask);
-            // Bitboard.Print(distantMask);
-
             int totalProtection = Bitboard.Count(frontMask) * DirectKingFrontPawnPenalty;
             int protection = 
             Bitboard.Count(shieldPawns) * DirectKingFrontPawnPenalty
              + Bitboard.Count(shieldPieces) * DirectKingFrontPiecePenalty
              + Bitboard.Count(distantPawns) * DistantKingFrontPawnPenalty
              + Bitboard.Count(distantPieces) * DistantKingFrontPiecePenalty;
-            
-            // Console.WriteLine($"totalProt {totalProtection}");
-            // Console.WriteLine($"prot {protection}");
 
             r += Math.Max(totalProtection - protection, 0);
         }
-        
-        // Console.WriteLine($"{white} pawnPenalty {r}");
 
         return r;
     }
@@ -232,14 +191,12 @@ public class Evaluation
         int kingFile = (white ? whiteMaterial : blackMaterial).kingSquare % 8;
         
         if (IsOpenFile(kingFile) || IsSemiOpenFile(kingFile))
-        // if (IsSemiFromOrOpenFile(kingFile, white))
         {
             r += KingOpenPenalty;
         }
         if (kingFile < 7)
         {
             if (IsOpenFile(kingFile + 1) || IsSemiOpenFile(kingFile + 1))
-            // if (IsSemiFromOrOpenFile(kingFile + 1, white))
             {
                 r += KingAdjacentOpenPenalty;
             }
@@ -247,7 +204,6 @@ public class Evaluation
         if (kingFile > 0)
         {
             if (IsOpenFile(kingFile - 1) || IsSemiOpenFile(kingFile - 1))
-            // if (IsSemiFromOrOpenFile(kingFile - 1, white))
             {
                 r += KingAdjacentOpenPenalty;
             }
@@ -255,167 +211,9 @@ public class Evaluation
 
         return r;
     }
-    // int CalculateKingOpenFilePenalty(double whiteWeight = 1, double blackWeight = 1)
-    // {
-    //     int r = 0;
-
-    //     int white = 0;
-
-    //     // White King: Open File Or Semi-Open File for Black
-    //     if (IsSemiOpenFile(whiteKingSquare))
-    //     {
-    //         white -= KingOpenFilePenalty;
-    //     }
-    //     if (whiteKingSquare % 8 > 0)
-    //     {
-    //         if (IsSemiOpenFile(whiteKingSquare - 1))
-    //         {
-    //             white -= KingSideOpenFilePenalty;
-    //         }
-    //     }
-    //     if (whiteKingSquare % 8 < 7)
-    //     {
-    //         if (IsSemiOpenFile(whiteKingSquare + 1))
-    //         {
-    //             white -= KingSideOpenFilePenalty;
-    //         }
-    //     }
-        
-    //     int black = 0;
-
-    //     // Black King: Open File Or Semi-Open File for White
-    //     if (IsSemiOpenFile(blackKingSquare))
-    //     {
-    //         black += KingOpenFilePenalty;
-    //     }
-    //     if (blackKingSquare % 8 > 0)
-    //     {
-    //         if (IsSemiOpenFile(blackKingSquare - 1))
-    //         {
-    //             black += KingSideOpenFilePenalty;
-    //         }
-    //     }
-    //     if (blackKingSquare % 8 < 7)
-    //     {
-    //         if (IsSemiOpenFile(blackKingSquare + 1))
-    //         {
-    //             black += KingSideOpenFilePenalty;
-    //         }
-    //     }
-
-    //     r += (int) (white * whiteWeight);
-    //     r += (int) (black * blackWeight);
-
-    //     return r;
-    // }
-    // int FrontPawnsPenalty(double whiteWeight = 1, double blackWeight = 1)
-    // {
-    //     int r = 0;
-
-    //     r += (int) (CalculateKingFrontPiecePenalty(white: true) * whiteWeight);
-    //     r -= (int) (CalculateKingFrontPiecePenalty(white: false) * blackWeight);
-
-    //     return r;
-    // }
-    // int CalculateKingFrontPiecePenalty(bool white)
-    // {
-    //     int kingRank = white ? whiteKingSquare / 8 : blackKingSquare / 8;
-
-    //     if ((white && kingRank > 1) || (!white && kingRank < 6))
-    //     {
-    //         return -3 * DirectKingFrontPawnPenalty;
-    //     }
-
-    //     int r = 0;
-
-    //     ulong directMask = GetFrontMask(white: white, isDirect: true);
-    //     ulong distantMask = GetFrontMask(white: white, isDirect: false);
-
-    //     r += -Bitboard.Count(directMask) * DirectKingFrontPawnPenalty;
-
-    //     int pawnIndex = white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn;
-    //     int allIndex = white ? PieceIndex.WhiteAll : PieceIndex.BlackAll;
-
-    //     ulong pawnBitboard = board.BitboardSet.Bitboards[pawnIndex];
-    //     ulong allBitboardNoPawns = board.BitboardSet.Bitboards[allIndex] ^ pawnBitboard;
-
-    //     r += Bitboard.Count(directMask & pawnBitboard) * DirectKingFrontPawnPenalty;
-    //     r += Bitboard.Count(distantMask & pawnBitboard) * DistantKingFrontPawnPenalty;
-
-    //     r += Bitboard.Count(directMask & allBitboardNoPawns) * DirectKingFrontPiecePenalty;
-    //     r += Bitboard.Count(distantMask & allBitboardNoPawns) * DistantKingFrontPiecePenalty;
-
-    //     // Second Rank Penalty
-    //     if ((white && kingRank == 1) || (!white && kingRank == 7))
-    //     {
-    //         r = (int) (r * SecondRankKingFrontPieceMultiplier);
-    //     }
-
-    //     return r;
-    // }
-    // ulong GetFrontMask(bool white, bool isDirect)
-    // {
-    //     ulong mask = 0;
-
-    //     int kingSquare = white ? whiteKingSquare : blackKingSquare;
-    //     int rank = kingSquare / 8;
-    //     int file = kingSquare % 8;
-        
-    //     int rankOffset = isDirect ? 1 : 2;
-    //     int offset = 8 * rankOffset;
-
-    //     if (white ? rank + rankOffset <= 7 : rank - rankOffset >= 0)
-    //     {
-    //         int upOffset = white ? offset : - offset;
-            
-    //         mask |= (ulong) 1 << (kingSquare + upOffset);
-
-    //         if (file > 0)
-    //         {
-    //             mask |= (ulong) 1 << (kingSquare + upOffset - 1);
-    //         }
-    //         if (file < 7)
-    //         {
-    //             mask |= (ulong) 1 << (kingSquare + upOffset + 1);
-    //         }
-    //     }
-
-    //     return mask;
-    // }
-
     double GetKingSafetyWeight(bool white)
     {
         double middleSquared = Math.Pow(1 - (!white ? whiteMaterial : blackMaterial).endgameWeight, 2);
-        // Console.WriteLine($"middleSq {middleSquared}");
-        // Console.WriteLine(whiteMaterial.endgameWeight);
-        // Console.WriteLine(blackMaterial.endgameWeight);
-
-        // int kingSquare = (white ? whiteMaterial : blackMaterial).kingSquare;
-        // int kingFile = kingSquare % 8;
-
-        // ulong triple = Bits.TripleFileMask[kingFile];
-        // ulong enemyQueens = board.BitboardSet.Bitboards[white ? PieceIndex.BlackQueen : PieceIndex.WhiteQueen];
-        // ulong enemyRooks = board.BitboardSet.Bitboards[white ? PieceIndex.BlackRook : PieceIndex.WhiteRook];
-        // ulong enemyAll = board.BitboardSet.Bitboards[white ? PieceIndex.BlackAll : PieceIndex.WhiteAll];
-        // ulong enemyKing = board.BitboardSet.Bitboards[white ? PieceIndex.BlackKing : PieceIndex.WhiteKing];
-        // ulong enemyMinors = enemyAll ^ enemyQueens ^ enemyRooks ^ enemyKing;
-
-        // // Bitboard.Print(triple & enemyQueens);
-        // // Bitboard.Print(~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind));
-        // // Console.WriteLine(Bitboard.Count(triple & enemyQueens & ~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind)));
-
-        // int queens = Math.Min(Bitboard.Count(triple & enemyQueens & ~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind)), KingSafetyMaxQueens);
-        // int rooks = Math.Min(Bitboard.Count(triple & enemyRooks & ~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind)), KingSafetyMaxRooks);
-        // int minors = Math.Min(Bitboard.Count(triple & enemyMinors & ~(white ? bitboards.blackPawnBehind : bitboards.whitePawnBehind)), KingSafetyMaxMinors);
-
-        // // Console.WriteLine($"{queens} {rooks} {minors}");
-
-        // double attacked = (queens * KingSafetyQueenWeight + rooks * KingSafetyRookWeight + minors * KingSafetyMinorWeight) / (double) KingSafetyTotalWeight;
-
-        // Console.WriteLine($"attack {attacked}");
-
-        // return (middleSquared + 3 * attacked) / 4.0d;
-        // double 
         return middleSquared;
     }
 
@@ -424,20 +222,17 @@ public class Evaluation
     {
         int value = 0;
         
-        value += ReadPieceSquareTable(PieceSquareTable.Knight, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white);
-        value += ReadPieceSquareTable(PieceSquareTable.Bishop, board.PieceSquares[white ? PieceIndex.WhiteBishop : PieceIndex.BlackBishop], white);
-        value += ReadPieceSquareTable(PieceSquareTable.Rook, board.PieceSquares[white ? PieceIndex.WhiteRook : PieceIndex.BlackRook], white);
-        value += ReadPieceSquareTable(PieceSquareTable.Queen, board.PieceSquares[white ? PieceIndex.WhiteQueen : PieceIndex.BlackQueen], white);
+        value += ReadPieceSquareTable(PieceSquareTable.Knight, board.PieceSquares[PieceIndex.MakeKnight(white)], white);
+        value += ReadPieceSquareTable(PieceSquareTable.Bishop, board.PieceSquares[PieceIndex.MakeBishop(white)], white);
+        value += ReadPieceSquareTable(PieceSquareTable.Rook, board.PieceSquares[PieceIndex.MakeRook(white)], white);
+        value += ReadPieceSquareTable(PieceSquareTable.Queen, board.PieceSquares[PieceIndex.MakeQueen(white)], white);
 
         double reverseEndWeight = 1 - endgameWeight;
 
-        value += (int) (ReadPieceSquareTable(PieceSquareTable.Pawn, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white) * reverseEndWeight);
-        value += (int) (ReadPieceSquareTable(PieceSquareTable.PawnEnd, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white) * endgameWeight);
-        // value += ReadPieceSquareTable(PieceSquareTable.Pawn, board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn], white);
-
-        value += (int) (ReadPieceSquareTable(PieceSquareTable.King, board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing], white) * reverseEndWeight);
-        value += (int) (ReadPieceSquareTable(PieceSquareTable.KingEnd, board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing], white) * endgameWeight);
-        // value += ReadPieceSquareTable(PieceSquareTable.King, board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing], white);
+        value += (int) (ReadPieceSquareTable(PieceSquareTable.Pawn, board.PieceSquares[PieceIndex.MakePawn(white)], white) * reverseEndWeight);
+        value += (int) (ReadPieceSquareTable(PieceSquareTable.PawnEnd, board.PieceSquares[PieceIndex.MakePawn(white)], white) * endgameWeight);
+        value += (int) (ReadPieceSquareTable(PieceSquareTable.King, board.PieceSquares[PieceIndex.MakeKing(white)], white) * reverseEndWeight);
+        value += (int) (ReadPieceSquareTable(PieceSquareTable.KingEnd, board.PieceSquares[PieceIndex.MakeKing(white)], white) * endgameWeight);
 
         return value;
     }
@@ -445,9 +240,9 @@ public class Evaluation
     {
         int value = 0;
 
-        for (int i = 0; i < pieceList.count; i++)
+        for (int i = 0; i < pieceList.Count; i++)
         {
-            value += PieceSquareTable.Read(table, pieceList.squares[i], white);
+            value += PieceSquareTable.Read(table, pieceList.Squares[i], white);
         }
 
         return value;
@@ -470,8 +265,7 @@ public class Evaluation
             // Friendly king closer to the enemy king
             mopUpScore += (14 - PreComputedEvalData.DistanceFromSquare[friendlyKingSquare, enemyKingSquare]) * 8;
             
-            // // Enemy king in the corner
-            // mopUpScore += PreComputedEvalData.DistanceFromCenter[enemyKingSquare] * 6;
+            // Enemy king in the corner
             mopUpScore += PreComputedEvalData.DistanceFromCenter[enemyKingSquare] * 6;
 
             return (int) (mopUpScore * enemyEndgameWeight);
@@ -479,86 +273,6 @@ public class Evaluation
 
         return 0;
     }
-    // Special Endgame Techniques
-    int EvaluateEndgames(bool white)
-    {
-        int eval = 0;
-
-        double enemyEndgameWeight = (white ? blackMaterial : whiteMaterial).endgameWeight;
-        int enemyKingSquare = (white ? blackMaterial : whiteMaterial).kingSquare;
-        int friendlyKingSquare = (!white ? blackMaterial : whiteMaterial).kingSquare;
-
-        // // BISHOP & KNIGHT CHECKMATE
-        // if ((white ? whiteMaterial : blackMaterial).numBishops == 1 && (white ? whiteMaterial : blackMaterial).numKnights == 1 && enemyEndgameWeight >= 0.9d)
-        // {
-        //     // Console.WriteLine("hi");
-        //     bool hasLightSquaredBishop = (Bits.LightSquares & (white ? bitboards.whiteBishops : bitboards.blackBishops)) != 0;
-        //     bool hasDarkSquaredBishop = (Bits.DarkSquares & (white ? bitboards.whiteBishops : bitboards.blackBishops)) != 0;
-
-        //     ulong knights = bitboards.whiteKnights;
-        //     int friendlyKnightSquare = Bitboard.PopLSB(ref knights);
-
-        //     // Console.WriteLine(hasLightSquaredBishop);
-        //     // Console.WriteLine(hasDarkSquaredBishop);
-
-        //     int distanceToGoal = 7;
-
-        //     if (hasLightSquaredBishop)
-        //     {
-        //         distanceToGoal = Math.Min(PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 7], PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 56]);
-        //     }
-        //     if (hasDarkSquaredBishop)
-        //     {
-        //         distanceToGoal = Math.Min(PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 0], PreComputedEvalData.DistanceFromSquare[enemyKingSquare, 63]);
-        //     }
-
-        //     int close = 7 - distanceToGoal;
-
-        //     int knightDist = PreComputedEvalData.RangeDistanceFromSquare[friendlyKnightSquare, enemyKingSquare];
-        //     int knightFDist = PreComputedEvalData.RangeDistanceFromSquare[friendlyKnightSquare, friendlyKingSquare];
-        //     eval += (7 - (knightDist + knightFDist) / 2) * 300;
-
-        //     if (distanceToGoal > 4)
-        //     {
-        //         const ulong friendlyKingGood = (1ul << 52) | (1ul << 53) | (1ul << 54) | (1ul << 46) | (1ul << 38);
-        //         if (Bitboard.Contains(Bits.AllEdge, enemyKingSquare) && Bitboard.Contains(friendlyKingGood, friendlyKingSquare))
-        //         {
-        //             // Console.WriteLine("edge bonus 100");
-        //             eval += 1500;
-        //         }
-
-        //         // const ulong cornerKing = 
-        //         const ulong friendlyKnightGood = (1ul << 53) | (1ul << 47);
-        //         if (Bitboard.Contains(friendlyKnightGood, friendlyKnightSquare))
-        //         {
-        //             eval += 1000;
-        //         }
-        //         eval += close * 100;
-        //     }
-        //     else
-        //     {
-        //         eval += 3000;
-        //         eval += close * 200;
-        //     }
-
-        //     // Console.WriteLine($"dgoal {distanceToGoal} close {close}");
-
-        //     // Enemy king in the corner
-        //     // eval += PreComputedEvalData.RangeDistanceFromCenter[enemyKingSquare] * 100;
-
-        //     // Friendly King vs Enemy King
-        //     eval += (14 - PreComputedEvalData.DistanceFromSquare[friendlyKingSquare, enemyKingSquare]) * 500;
-
-        //     // if (Bitboard.Contains(Bits.AllEdge, enemyKingSquare))
-        //     // {
-        //     //     // Console.WriteLine("edge bonus 100");
-        //     //     eval += 100;
-        //     // }
-        // }
-
-        return eval;
-    }
-
 
     // Open Files
     int CalculateOpenFileBonus(bool white)
@@ -567,9 +281,9 @@ public class Evaluation
 
         PieceList rooks = board.PieceSquares[white ? PieceIndex.WhiteRook : PieceIndex.BlackRook];
 
-        for (int i = 0; i < rooks.count; i++)
+        for (int i = 0; i < rooks.Count; i++)
         {
-            int square = rooks.squares[i];
+            int square = rooks.Squares[i];
             if (IsOpenFile(square))
             {
                 r += OpenFileBonus;
@@ -589,14 +303,6 @@ public class Evaluation
         ulong pawnsMask = board.BitboardSet.Bitboards[PieceIndex.WhitePawn] | board.BitboardSet.Bitboards[PieceIndex.BlackPawn];
         return ((FileMask << file) & pawnsMask) == 0;
     }
-    // bool IsSemiOpenFile(int square)
-    // {
-    //     int file = square % 8;
-
-    //     ulong pawnsMask = board.BitboardSet.Bitboards[PieceIndex.WhitePawn] | board.BitboardSet.Bitboards[PieceIndex.BlackPawn];
-    //     ulong resultMask = (FileMask << file) & pawnsMask;
-    //     return Bitboard.Count(resultMask) == 1;
-    // }
     bool IsOpenFileFromSide(int square, bool white)
     {
         int file = square % 8;
@@ -604,11 +310,6 @@ public class Evaluation
         ulong pawnsMask = board.BitboardSet.Bitboards[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
         ulong resultMask = (FileMask << file) & pawnsMask;
         return resultMask == 0;
-    }
-    
-    bool IsSemiFromOrOpenFile(int square, bool white)
-    {
-        return IsOpenFileFromSide(square, white) || IsOpenFile(square);
     }
     bool IsSemiOpenFile(int square)
     {
@@ -645,35 +346,6 @@ public class Evaluation
         return 0;
     }
 
-    // // Endgame Weight
-    // public double GetEndgameWeight()
-    // {
-    //     int numQueens = board.PieceSquares[PieceIndex.WhiteQueen].count + 
-    //                     board.PieceSquares[PieceIndex.BlackQueen].count;
-    //     int numRooks = board.PieceSquares[PieceIndex.WhiteRook].count + 
-    //                     board.PieceSquares[PieceIndex.BlackRook].count;
-    //     int numBishops = board.PieceSquares[PieceIndex.WhiteBishop].count + 
-    //                     board.PieceSquares[PieceIndex.BlackBishop].count;
-    //     int numKnights = board.PieceSquares[PieceIndex.WhiteKnight].count + 
-    //                     board.PieceSquares[PieceIndex.BlackKnight].count;
-    //     int numPawns = board.PieceSquares[PieceIndex.WhitePawn].count + 
-    //                     board.PieceSquares[PieceIndex.BlackPawn].count;
-
-    //     int numPiecesNoPawns = numQueens + numRooks + numBishops + numKnights;
-
-    //     int totalWeight = numQueens * QueenEndgameWeight + numRooks * RookEndgameWeight + numBishops * BishopEndgameWeight + numKnights * KnightEndgameWeight + numPawns * PawnEndgameWeight + NumPieceEndgameWeight * numPiecesNoPawns;
-
-    //     // Console.WriteLine("debug endweight max: " + TotalEndgameWeight);
-    //     // Console.WriteLine("debug endweight nums: " + numQueens + ' ' + numRooks + ' ' + numBishops + ' ' + numKnights + ' ' + numPawns);
-    //     // Console.WriteLine("debug endweight total: " + totalWeight);
-
-    //     return Math.Min(Math.Max(TotalEndgameWeight - totalWeight, 0), TotalEndgameWeight) / (double) TotalEndgameWeight;
-    // }
-    // public double GetMiddlegameWeight(double endgameWeight)
-    // {
-    //     return -2 * (endgameWeight - 0.3d) * (endgameWeight - 0.3) + 1;
-    // }
-
     // Checkmate Detection
     public bool IsMateScore(int score)
     {
@@ -705,7 +377,6 @@ public class Evaluation
         const int RookEndgameWeight = 75;
         const int BishopEndgameWeight = 50;
         const int KnightEndgameWeight = 45;
-        // const int PawnEndgameWeight = 25;
         const int TotalEndgameWeight = QueenEndgameWeight + 2 * RookEndgameWeight + 2 * BishopEndgameWeight + 
         2 * KnightEndgameWeight;
 
@@ -733,13 +404,13 @@ public class Evaluation
 
         public static MaterialInfo GetMaterialInfo(Board board, bool white)
         {
-            int numQueens = board.PieceSquares[white ? PieceIndex.WhiteQueen : PieceIndex.BlackQueen].count;
-            int numRooks = board.PieceSquares[white ? PieceIndex.WhiteRook : PieceIndex.BlackRook].count;
-            int numBishops = board.PieceSquares[white ? PieceIndex.WhiteBishop : PieceIndex.BlackBishop].count;
-            int numKnights = board.PieceSquares[white ? PieceIndex.WhiteKnight : PieceIndex.BlackKnight].count;
-            int numPawns = board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn].count;
+            int numQueens = board.PieceSquares[PieceIndex.MakeQueen(white)].Count;
+            int numRooks = board.PieceSquares[PieceIndex.MakeRook(white)].Count;
+            int numBishops = board.PieceSquares[PieceIndex.MakeBishop(white)].Count;
+            int numKnights = board.PieceSquares[PieceIndex.MakeKnight(white)].Count;
+            int numPawns = board.PieceSquares[PieceIndex.MakePawn(white)].Count;
 
-            int kingSquare = board.PieceSquares[white ? PieceIndex.WhiteKing : PieceIndex.BlackKing].squares[0];
+            int kingSquare = board.PieceSquares[PieceIndex.MakeKing(white)].Squares[0];
 
             return new MaterialInfo(numQueens, numRooks, numBishops, numKnights, numPawns, kingSquare);
         }
@@ -814,11 +485,6 @@ public class Evaluation
                 blackPawnBehind |= fileMask & Bits.WhiteForwardMask[rank];
             }
             blackPawnBehind |= Bits.Rank1 << 7 * 8;
-            // Bitboard.Print(friendlyKing);
-            // Bitboard.Print(enemyKing);
-
-            // Bitboard.Print(friendlyPawnBehind);
-            // Bitboard.Print(enemyPawnBehind);
         }
     
     
@@ -831,16 +497,20 @@ public class Evaluation
         public int openFileScore;
         public int pawnScore;
         public int kingSafety;
-        public int endgame;
 
         public int Sum()
         {
-            return materialScore + pieceSquareScore + mopUpScore + openFileScore + pawnScore + kingSafety + endgame;
+            return materialScore + pieceSquareScore + mopUpScore + openFileScore + pawnScore + kingSafety;
         }
 
         public void Clear()
         {
-            materialScore = pieceSquareScore = mopUpScore = openFileScore = pawnScore = kingSafety = endgame = 0;
+            materialScore = pieceSquareScore = mopUpScore = openFileScore = pawnScore = kingSafety = 0;
+        }
+
+        public void Print()
+        {
+            Console.WriteLine($"Material: {materialScore}\nPSQT: {pieceSquareScore}\nMopUp: {mopUpScore}\nPawns: {pawnScore}\nKingSafety: {kingSafety}");
         }
     }
 

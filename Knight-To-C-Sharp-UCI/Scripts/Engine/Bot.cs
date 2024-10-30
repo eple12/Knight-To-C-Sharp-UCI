@@ -26,12 +26,6 @@ public class Bot
     }
     public void StartTimedSearch(int depth, int timeMS, Action? onSearchComplete = null)
     {
-        // Console.WriteLine("starttimed");
-        // if (TryToGetBookMove(onSearchComplete))
-        // {
-        //     return;
-        // }
-
         if (timeMS > 0)
         {
             CancellationTokenSource cts = new CancellationTokenSource();
@@ -77,8 +71,6 @@ public class Bot
     // Returns if it found a book move or not
     bool TryToGetBookMove(Action? onSearchComplete)
     {
-        // Console.WriteLine("book try");
-
         // Try to find this position in the Opening Book
         Move bookMove = Book.GetRandomMove(board);
 
@@ -104,8 +96,6 @@ public class Bot
     }
     public void CancelAndWait()
     {
-        // Console.WriteLine("Cancel and Wait");
-
         if (!IsSearching())
         {
             return;

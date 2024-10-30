@@ -28,11 +28,9 @@ public static class MainProcess
     static void PreCalculate()
     {
         Zobrist.GenerateZobristTable();
-        // PreComputedData.Initialize();
         
         board.LoadPositionFromFen(Board.InitialFen);
 
         Book.GenerateTable();
-        
     }
 }

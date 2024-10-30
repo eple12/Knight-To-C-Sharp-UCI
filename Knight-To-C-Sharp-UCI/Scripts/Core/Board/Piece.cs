@@ -92,22 +92,21 @@ public struct PieceIndex{
 
     public const int Invalid = 14;
 
+    public const int White = 0;
+    public const int Black = 6;
+    public const int Pawn = 0;
+    public const int Knight = 1;
+    public const int Bishop = 2;
+    public const int Rook = 3;
+    public const int Queen = 4;
+    public const int King = 5;
+
     static readonly string[] names = {"WhitePawn", "WhiteKnight", "WhiteBishop", "WhiteRook", "WhiteQueen", "WhiteKing",
     "BlackPawn", "BlackKnight", "BlackBishop", "BlackRook", "BlackQueen", "BlackKing", "WhiteAll", "BlackAll"};
 
     public static bool IsWhite(int index)
     {
-        if (index >= WhitePawn && index <= WhiteKing)
-        {
-            return true;
-        }
-
-        if (index == WhiteAll)
-        {
-            return true;
-        }
-
-        return false;
+        return index < Black;
     }
 
     public static string ToString(int index)
@@ -120,5 +119,44 @@ public struct PieceIndex{
         {
             return "Invalid";
         }
+    }
+
+    public static int Index(int piece)
+    {
+        return (Piece.IsWhitePiece(piece) ? White : Black) + Piece.GetType(piece) - 1;
+    }
+    
+    public static int Index(int color, int type)
+    {
+        return color + type;
+    }
+
+    public static int MakePawn(bool white)
+    {
+        return white ? WhitePawn : BlackPawn;
+    }
+    public static int MakeKnight(bool white)
+    {
+        return white ? WhiteKnight : BlackKnight;
+    }
+    public static int MakeBishop(bool white)
+    {
+        return white ? WhiteBishop : BlackBishop;
+    }
+    public static int MakeRook(bool white)
+    {
+        return white ? WhiteRook : BlackRook;
+    }
+    public static int MakeQueen(bool white)
+    {
+        return white ? WhiteQueen : BlackQueen;
+    }
+    public static int MakeKing(bool white)
+    {
+        return white ? WhiteKing : BlackKing;
+    }
+    public static int MakeAll(bool white)
+    {
+        return white ? WhiteAll : BlackAll;
     }
 }
