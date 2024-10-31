@@ -144,7 +144,7 @@ public class Searcher
                         break;
                     }
 
-                    Search(depth - failHighReduction, Infinity.NegativeInfinity, Infinity.PositiveInfinity, 0, 0, ref BestPV);
+                    Search(depth - failHighReduction, alpha, beta, 0, 0, ref BestPV);
 
                     window += window >> 1; // Adds window / 2
 
