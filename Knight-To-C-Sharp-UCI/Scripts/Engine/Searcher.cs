@@ -21,6 +21,8 @@ public class Searcher
     PvLine BestPV;
 
     // Search Constants
+    const int AspirationWindowMinDepth = 8;
+    const int AspirationWindowBase = 20;
     const int MaxExtension = 16;
     const int Reduction = 1;
 
@@ -29,7 +31,6 @@ public class Searcher
     bool isSearching;
     bool cancellationRequested;
 
-    // int numQs;
 
     public event Action OnSearchComplete;
 
@@ -111,11 +112,66 @@ public class Searcher
 
     void IterativeDeepening(int maxDepth)
     {
+        int alpha = Infinity.NegativeInfinity;
+        int beta = Infinity.PositiveInfinity;
+
+        int lastSearchEval = Infinity.NegativeInfinity;
+
         // Iterative Deepening
         for (int depth = 1; depth <= maxDepth; depth++)
         {
-            Search(depth, Infinity.NegativeInfinity, Infinity.PositiveInfinity, 0, 0, ref BestPV);
-            
+            if (depth < AspirationWindowMinDepth || lastSearchEval == Infinity.NegativeInfinity)
+            {
+                Search(depth, alpha, beta, 0, 0, ref BestPV);
+            }
+            else // Aspiration Windows Search, Inspired by Lynx-Bot (https://github.com/lynx-chess/Lynx)
+            {
+                // Aspiration Window
+                int window = AspirationWindowBase;
+                // Temporary reduction for fail-highs
+                int failHighReduction = 0;
+                
+                int numFailHighs = 0;
+                int numFailLows = 0;
+
+                alpha = Math.Max(Infinity.NegativeInfinity, lastSearchEval - window);
+                beta = Math.Min(Infinity.PositiveInfinity, lastSearchEval + window);
+
+                while (true) // Gradient Widening
+                {
+                    if (cancellationRequested)
+                    {
+                        break;
+                    }
+
+                    Search(depth - failHighReduction, Infinity.NegativeInfinity, Infinity.PositiveInfinity, 0, 0, ref BestPV);
+
+                    window += window >> 1; // Adds window / 2
+
+                    if (alpha >= bestEval) // Fail Low
+                    {
+                        alpha = Math.Max(Infinity.NegativeInfinity, bestEval - window);
+                        beta = (alpha + beta) >> 1; // (alpha + beta) / 2
+                        failHighReduction = 0;
+                        numFailLows++;
+                    }
+                    else if (beta <= bestEval)
+                    {
+                        beta = Math.Min(Infinity.PositiveInfinity, bestEval + window);
+                        ++failHighReduction;
+                        numFailHighs++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                
+                // Console.WriteLine($"info string Aspiration Windows at depth {depth} fail-low {numFailLows} fail-high {numFailHighs}");
+            }
+
+            lastSearchEval = bestEval;
+
             bestMoveLastIteration = bestMove;
 
             bool isMate = evaluation.IsMateScore(bestEval);
