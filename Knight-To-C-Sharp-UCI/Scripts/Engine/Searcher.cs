@@ -21,7 +21,6 @@ public class Searcher
     PvLine BestPV;
 
     // Search Constants
-    const int IIRMinDepth = 4;
     const int AspirationWindowMinDepth = 8;
     const int AspirationWindowBase = 20;
     const int MaxExtension = 16;
@@ -260,13 +259,6 @@ public class Searcher
             }
 
             return ttVal;
-        }
-        else // There isn't any TT data stored in this position, so this node might not be that important. Therefore taking reductions.
-        {
-            if (depth >= IIRMinDepth) // Internal Iterative Reductions (IIR)
-            {
-                --depth;
-            }
         }
 
         if (depth == 0) // Return QSearch Evaluation
