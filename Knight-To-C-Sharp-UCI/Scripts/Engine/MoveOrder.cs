@@ -1,16 +1,19 @@
+using System.Runtime.CompilerServices;
+
 public class MoveOrder
 {
     Board board;
 
     int[] moveScores;
 
-    const int BiasMultiplier = 1000000;
-    const int HashMoveScore = 100 * BiasMultiplier;
-    const int WinningCapture = 8 * BiasMultiplier;
-    const int LosingCapture = 2 * BiasMultiplier;
-    const int Promotion = 6 * BiasMultiplier;
-    const int KillerBias = 4 * BiasMultiplier;
-    const int RegularBias = 0;
+    public const int HashMoveScore = 2_097_152;
+    public const int QueenPromotionCaptureBaseScore = GoodCaptureBaseScore + PromotionMoveScore;
+    public const int GoodCaptureBaseScore = 1_048_576;
+    public const int KillerMoveValue = 524_288;
+    public const int PromotionMoveScore = 32_768;
+    public const int BadCaptureBaseScore = 16_384;
+    // Negative value to make sure history moves doesn't reach other important moves
+    public const int BaseMoveScore = int.MinValue / 2;
 
     public int[,,] History;
     public Killers[] KillerMoves;
@@ -53,71 +56,55 @@ public class MoveOrder
         {
             Move move = moves[i];
 
-            if (Move.IsSame(move, lastIteration))
-            {
-                moveScores[i] = HashMoveScore;
-                continue;
-            }
-            int score = 0;
-            int startSquare = move.startSquare;
-            int targetSquare = move.targetSquare;
+            moveScores[i] = ScoreMove(move, lastIteration, inQSearch, ply);
+        }
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    int ScoreMove(Move move, Move hash, bool inQSearch, int ply)
+    {
+        if (Move.IsSame(move, hash))
+        {
+            return HashMoveScore;
+        }
+        int startSquare = move.startSquare;
+        int targetSquare = move.targetSquare;
 
-            int movePiece = board.Squares[startSquare];
-            int movePieceType = Piece.GetType(movePiece);
-            int capturePieceType = Piece.GetType(board.Squares[targetSquare]);
-            bool isCapture = capturePieceType != Piece.None;
-            int flag = moves[i].flag;
-            int pieceValue = Evaluation.GetAbsPieceValue(movePieceType);
+        int movePiece = board.Squares[startSquare];
+        int capturePiece = board.Squares[targetSquare];
+        int capturePieceType = Piece.GetType(capturePiece);
+        int capturePieceValue = Evaluation.GetAbsPieceValue(capturePieceType);
+        bool isCapture = capturePieceType != Piece.None;
+        int flag = move.flag;
 
+        if (flag == MoveFlag.PromoteToQueen)
+        {
             if (isCapture)
             {
-                // Order moves to try capturing the most valuable opponent piece with least valuable of own pieces first
-                int captureMaterialDelta = Evaluation.GetAbsPieceValue(capturePieceType) - pieceValue;
-                bool opponentCanRecapture = Bitboard.Contains(board.MoveGen.OpponentAttackMap(), targetSquare);
-                if (opponentCanRecapture)
-                {
-                    score += (captureMaterialDelta >= 0 ? WinningCapture : LosingCapture) + captureMaterialDelta;
-                }
-                else
-                {
-                    score += WinningCapture + captureMaterialDelta;
-                }
+                return QueenPromotionCaptureBaseScore + capturePieceValue;
             }
 
-            if (movePieceType == Piece.Pawn)
-            {
-                if (flag == MoveFlag.PromoteToQueen && !isCapture)
-                {
-                    score += Promotion;
-                }
-            }
-            else if (movePieceType == Piece.King)
-            {
-
-            }
-            else
-            {
-                if (Bitboard.Contains(board.MoveGen.PawnAttackMap(), targetSquare))
-                {
-                    score -= 50;
-                }
-                else if (Bitboard.Contains(board.MoveGen.AttackMapNoPawn(), targetSquare))
-                {
-                    score -= 25;
-                }
-
-            }
-
-            if (!isCapture)
-            {
-                //score += regularBias;
-                bool isKiller = !inQSearch && ply < MaxKillerPly && KillerMoves[ply].Match(move);
-                score += isKiller ? KillerBias : RegularBias;
-                score += History[board.Turn ? 0 : 1, startSquare, targetSquare];
-            }
-
-            moveScores[i] = score;
+            return PromotionMoveScore + (SEE.HasPositiveScore(board, move) ? GoodCaptureBaseScore : BadCaptureBaseScore);
         }
+
+        if (isCapture)
+        {
+            int baseCapture = (flag == MoveFlag.EnpassantCapture || MoveFlag.IsPromotion(flag) || SEE.HasPositiveScore(board, move)) ? GoodCaptureBaseScore : BadCaptureBaseScore;
+
+            return baseCapture + MostValueableVictimLeastValuableAttacker[Piece.GetPieceIndex(movePiece)][Piece.GetPieceIndex(capturePieceType)];
+        }
+
+        if (MoveFlag.IsPromotion(flag))
+        {
+            return PromotionMoveScore;
+        }
+
+        if (!inQSearch)
+        {
+            bool isKiller = ply < MaxKillerPly && KillerMoves[ply].Match(move);
+            return BaseMoveScore + (isKiller ? KillerMoveValue : 0) + History[board.Turn ? 0 : 1, startSquare, targetSquare];
+        }
+
+        return BaseMoveScore;
     }
 
     public static void Quicksort(Span<Move> values, int[] scores, int low, int high)
@@ -167,4 +154,35 @@ public class MoveOrder
 		public bool Match(Move move) => Move.IsSame(move, moveA) || Move.IsSame(move, moveB);
 
 	}
+
+
+    /// <summary>
+    /// MVV LVA [attacker,victim] 12x11
+    /// Original based on
+    /// https://github.com/maksimKorzh/chess_programming/blob/master/src/bbc/move_ordering_intro/bbc.c#L2406
+    ///             (Victims)   Pawn Knight Bishop  Rook   Queen  King
+    /// (Attackers)
+    ///       Pawn              105    205    305    405    505    0
+    ///     Knight              104    204    304    404    504    0
+    ///     Bishop              103    203    303    403    503    0
+    ///       Rook              102    202    302    402    502    0
+    ///      Queen              101    201    301    401    501    0
+    ///       King              100    200    300    400    500    0
+    /// </summary>
+    public static readonly int[][] MostValueableVictimLeastValuableAttacker =
+    [         //    P     N     B     R      Q  K    p    n      b    r      q          k
+        /* P */ [   0,    0,    0,    0,     0, 0,  1500, 4000, 4500, 5500, 11500 ], // 0],
+        /* N */ [   0,    0,    0,    0,     0, 0,  1400, 3900, 4400, 5400, 11400 ], // 0],
+        /* B */ [   0,    0,    0,    0,     0, 0,  1300, 3800, 4300, 5300, 11300 ], // 0],
+        /* R */ [   0,    0,    0,    0,     0, 0,  1200, 3700, 4200, 5200, 11200 ], // 0],
+        /* Q */ [   0,    0,    0,    0,     0, 0,  1100, 3600, 4100, 5100, 11100 ], // 0],
+        /* K */ [   0,    0,    0,    0,     0, 0,  1000, 3500, 4001, 5000, 11000 ], // 0],
+        /* p */ [1500, 4000, 4500, 5500, 11500, 0,     0,    0,    0,    0,     0 ], // 0],
+        /* n */ [1400, 3900, 4400, 5400, 11400, 0,     0,    0,    0,    0,     0 ], // 0],
+        /* b */ [1300, 3800, 4300, 5300, 11300, 0,     0,    0,    0,    0,     0 ], // 0],
+        /* r */ [1200, 3700, 4200, 5200, 11200, 0,     0,    0,    0,    0,     0 ], // 0],
+        /* q */ [1100, 3600, 4100, 5100, 11100, 0,     0,    0,    0,    0,     0 ], // 0],
+        /* k */ [1000, 3500, 4001, 5000, 11000, 0,     0,    0,    0,    0,     0 ], // 0]
+    ];
+
 }

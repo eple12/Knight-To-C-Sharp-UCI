@@ -226,7 +226,11 @@ public static class Command
                             GeneralTimeTest(Perft, testName: "Perft", cases: 3, suiteIteration: 1);
                         }
                         break;
-
+                        case "see":
+                        {
+                            GeneralTimeTest(() => {Test.SEEPositive();}, testName: "SEE Positive", cases: 3, suiteIteration: 5);
+                        }
+                        break;
                         default:
                             break;
                     }
