@@ -114,6 +114,16 @@ public class Bitboard
             return bitboard >> -shift;
         }
     }
+    public static ulong Make(params int[] values)
+    {
+        ulong board = 0;
 
+        for (int i = 0; i < values.Length; i++)
+        {
+            board |= 1ul << values[i];
+        }
+
+        return board;
+    }
 
 }

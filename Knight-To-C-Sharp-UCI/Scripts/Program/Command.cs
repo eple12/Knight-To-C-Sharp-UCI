@@ -238,7 +238,11 @@ public static class Command
                 Perft();
             }
             break;
-
+            case "test":
+            {
+                Test.CurrentTest();
+            }
+            break;
 
 
             default:

@@ -84,6 +84,7 @@ public class Searcher
 
         bestMoveLastIteration = Move.NullMove;
         moveOrder.ClearHistory();
+        moveOrder.ClearKillers();
 
         bestEval = 0;
 

@@ -1,12 +1,12 @@
 public static class Square
-{
+{   
     // Files
     static readonly Dictionary<char, int> FileNumber = new Dictionary<char, int>()
     {
         {'a', 0}, {'b', 1}, {'c', 2}, {'d', 3}, {'e', 4}, {'f', 5}, {'g', 6}, {'h', 7}
     };
     static readonly string Files = "abcdefgh";
-    public const int Invalid = -1; 
+    public const int Invalid = -1;
 
     public static int Index(string name)
     {
