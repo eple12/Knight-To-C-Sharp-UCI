@@ -14,6 +14,7 @@ public static class Test
         // Add Tests Here
         // SEEPopLeastAttackerTest();
         SEEPositive();
+        // MoveOrderGetScoresTest();
     }
 
     public static void SEEPopLeastAttackerTest()
@@ -53,7 +54,20 @@ public static class Test
         }
     }
 
+    public static void MoveOrderGetScoresTest()
+    {
+        MoveOrder moveOrder = new(MainProcess.engine.GetEngine());
 
+        Span<Move> moves = stackalloc Move[128];
+        MainProcess.board.MoveGen.GenerateMoves(ref moves, genOnlyCaptures: true);
+        moveOrder.GetOrderedList(moves, Move.NullMove, inQSearch: true, 0);
+
+        int[] scores = moveOrder.GetLastMoveScores();
+        foreach (var item in scores)
+        {
+            Console.WriteLine(item);
+        }
+    }
 
 
 

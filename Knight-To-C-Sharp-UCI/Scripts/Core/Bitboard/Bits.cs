@@ -26,6 +26,8 @@ public static class Bits
     public static ulong DarkSquares;
 
     public static ulong AllEdge;
+    public static ulong[,] LineBitboards;
+    public static ulong[,] BetweenBitboards;
 
     static Bits()
     {
@@ -99,5 +101,41 @@ public static class Bits
         }
     
         AllEdge = FileMask[0] | FileMask[7] | RankMask[0] | RankMask[7];
+    
+        LineBitboards = new ulong[64, 64];
+
+        for (int s1 = 0; s1 < 64; s1++)
+        {
+            for (int s2 = 0; s2 < 64; s2++)
+            {
+                if ((Magic.GetRookAttacks(s1, 0) & Bitboard.Make(s2)) != 0)
+                {
+                    LineBitboards[s1, s2] = Magic.GetRookAttacks(s1, 0) & Magic.GetRookAttacks(s2, 0);
+                }
+                else if ((Magic.GetBishopAttacks(s1, 0) & Bitboard.Make(s2)) != 0)
+                {
+                    LineBitboards[s1, s2] = Magic.GetBishopAttacks(s1, 0) & Magic.GetBishopAttacks(s2, 0);
+                }
+                else
+                {
+                    continue;
+                }
+
+                LineBitboards[s1, s2] |= Bitboard.Make(s1, s2);
+            }
+        }
+
+        BetweenBitboards = new ulong[64, 64];
+        for (int s1 = 0; s1 < 64; s1++)
+        {
+            for (int s2 = 0; s2 < 64; s2++)
+            {
+                ulong b = LineBitboards[s1, s2] & (Full << s1 ^ Full << s2);
+                // Exclude LSB (Least Significant Bit)
+                BetweenBitboards[s1, s2] = b & (b - 1);
+            }
+        }
     }
+
+    
 }

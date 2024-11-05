@@ -396,6 +396,14 @@ public class Searcher
 
         for (int i = 0; i < moves.Length; i++)
         {
+            int moveScore = moveOrder.GetLastMoveScores()[i];
+
+            // QSearch SEE Pruning
+            if (moveScore < MoveOrder.PromotionMoveScore && moveScore >= MoveOrder.BadCaptureBaseScore)
+            {
+                continue;
+            }
+
             board.MakeMove(moves[i]);
 
             eval = -QuiescenceSearch(-beta, -alpha);

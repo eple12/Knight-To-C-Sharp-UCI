@@ -73,7 +73,7 @@ public class Bitboard
     {
         return bitboard & ~((ulong) 1 << square);
     }
-    public static void Print(ulong bitboard)
+    public static string GetString(ulong bitboard)
     {
         string s = "";
         for (int rank = 7; rank >= 0; rank--)
@@ -91,7 +91,11 @@ public class Bitboard
             }
             s += '\n';
         }
-        Console.WriteLine(s);
+        return s;
+    }
+    public static void Print(ulong bitboard)
+    {
+        Console.WriteLine(GetString(bitboard));
     }
     public static int Count(ulong bitboard)
     {
@@ -124,6 +128,10 @@ public class Bitboard
         }
 
         return board;
+    }
+    public static bool MoreThanOne(ulong bitboard)
+    {
+        return (bitboard & (bitboard - 1)) != 0;
     }
 
 }

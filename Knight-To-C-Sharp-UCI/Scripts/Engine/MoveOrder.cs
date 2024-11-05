@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 public class MoveOrder
 {
     Board board;
-
     int[] moveScores;
 
     public const int HashMoveScore = 2_097_152;
@@ -40,7 +39,7 @@ public class MoveOrder
 
     public Span<Move> GetOrderedList(Span<Move> moves, Move lastIteration, bool inQSearch, int ply)
     {
-        moveScores = new int[moves.Length];
+        // moveScores = new int[moves.Length];
         
         GetScores(moves, lastIteration, inQSearch, ply);
 
@@ -88,7 +87,7 @@ public class MoveOrder
 
         if (isCapture)
         {
-            int baseCapture = (flag == MoveFlag.EnpassantCapture || MoveFlag.IsPromotion(flag) || SEE.HasPositiveScore(board, move)) ? GoodCaptureBaseScore : BadCaptureBaseScore;
+            int baseCapture = (flag == MoveFlag.EnpassantCapture || MoveFlag.IsPromotion(flag) || SEE.IsGoodCapture(board, move)) ? GoodCaptureBaseScore : BadCaptureBaseScore;
 
             return baseCapture + MostValueableVictimLeastValuableAttacker[Piece.GetPieceIndex(movePiece)][Piece.GetPieceIndex(capturePieceType)];
         }
@@ -134,6 +133,11 @@ public class MoveOrder
         (scores[i + 1], scores[high]) = (scores[high], scores[i + 1]);
 
         return i + 1;
+    }
+
+    public int[] GetLastMoveScores()
+    {
+        return moveScores;
     }
 
 
