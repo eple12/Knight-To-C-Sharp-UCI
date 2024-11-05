@@ -28,9 +28,9 @@ public static class SEE
             return true;
         }
         
-        var occupancy = board.BitboardSet.Bitboards[PieceIndex.WhiteAll] | board.BitboardSet.Bitboards[PieceIndex.BlackAll]
-            ^ (1ul << move.startSquare)
-            ^ (1ul << move.targetSquare);
+        ulong occupancy = board.BitboardSet.Bitboards[PieceIndex.WhiteAll] | board.BitboardSet.Bitboards[PieceIndex.BlackAll];
+        occupancy ^= 1ul << move.startSquare;
+        occupancy ^= 1ul << move.targetSquare;
 
         // All sliders
         ulong queens = board.BitboardSet.Bitboards[PieceIndex.WhiteQueen] | board.BitboardSet.Bitboards[PieceIndex.BlackQueen];
@@ -41,10 +41,20 @@ public static class SEE
 
         bool us = !turn;
 
+        ulong whitePinners = 0;
+        ulong blackPinners = 0;
+        ulong whiteBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.BlackAll], board.PieceSquares[PieceIndex.WhiteKing].Squares[0], ref blackPinners);
+        ulong blackBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.WhiteAll], board.PieceSquares[PieceIndex.BlackKing].Squares[0], ref whitePinners);
+
         while (true)
         {
             ulong ourOccupancy = board.BitboardSet.Bitboards[PieceIndex.MakeAll(us)];
             ulong ourAttackers = attackers & ourOccupancy;
+
+            if (((us ? blackPinners : whitePinners) & occupancy) != 0)
+            {
+                ourAttackers &= ~(us ? whiteBlockers : blackBlockers);
+            }
 
             if (ourAttackers == 0)
             {
