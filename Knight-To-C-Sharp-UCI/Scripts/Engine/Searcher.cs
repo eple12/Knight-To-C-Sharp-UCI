@@ -295,6 +295,8 @@ public class Searcher
         Move bestMoveInThisPosition = moves[0];
         for (int i = 0; i < moves.Length; i++)
         {
+            bool isCapture = board.Squares[moves[i].targetSquare] != Piece.None;
+
             board.MakeMove(moves[i]);
 
             // Search Extensions
@@ -319,9 +321,20 @@ public class Searcher
             bool needFullSearch = true;
             int eval = 0;
 
-            if (extension == 0 && depth >= 3 && i >= 3 && board.Squares[moves[i].targetSquare] != Piece.None)
+            if (extension == 0 && depth >= 3 && i >= 3)
             {
-                eval = -Search(depth - 1 - Reduction, -alpha - 1, -alpha, plyFromRoot + 1, numExtensions, ref line);
+                int reduction = 0;
+                int moveScore = moveOrder.GetLastMoveScores()[i];
+                if (!isCapture)
+                {
+                    reduction = 1;
+                }
+                else if (moveScore >= MoveOrder.BadCaptureBaseScore && moveScore < MoveOrder.PromotionMoveScore)
+                {
+                    reduction = 1;
+                }
+
+                eval = -Search(depth - 1 - reduction, -alpha - 1, -alpha, plyFromRoot + 1, numExtensions, ref line);
                 needFullSearch = eval > alpha;
             }
             if (needFullSearch)
@@ -343,7 +356,7 @@ public class Searcher
                 // Killer Moves, History
                 // If this move is not a capture
                 // Does not store captures since they are ranked highly in Move Ordering anyway
-                if (board.Squares[moves[i].targetSquare] == Piece.None)
+                if (!isCapture)
                 {
                     if (plyFromRoot < MoveOrder.MaxKillerPly)
                     {
@@ -405,10 +418,10 @@ public class Searcher
             int moveScore = moveOrder.GetLastMoveScores()[i];
 
             // QSearch SEE Pruning
-            if (moveScore < MoveOrder.PromotionMoveScore && moveScore >= MoveOrder.BadCaptureBaseScore)
-            {
-                continue;
-            }
+            // if (moveScore < MoveOrder.PromotionMoveScore && moveScore >= MoveOrder.BadCaptureBaseScore)
+            // {
+            //     continue;
+            // }
 
             board.MakeMove(moves[i]);
 
