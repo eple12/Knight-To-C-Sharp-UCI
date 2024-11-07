@@ -37,11 +37,11 @@ public class MoveOrder
         KillerMoves = new Killers[MaxKillerPly];
     }
 
-    public Span<Move> GetOrderedList(Span<Move> moves, Move lastIteration, bool inQSearch, int ply)
+    public Span<Move> GetOrderedList(Span<Move> moves, Move lastIteration, bool inQSearch, int ply, SEE.SEEPinData pinData)
     {
         // moveScores = new int[moves.Length];
         
-        GetScores(moves, lastIteration, inQSearch, ply);
+        GetScores(moves, lastIteration, inQSearch, ply, pinData);
 
         // SortMoves(moves);
         Quicksort(moves, moveScores, 0, moves.Length - 1);
@@ -49,17 +49,17 @@ public class MoveOrder
         return moves;
     }
 
-    void GetScores(Span<Move> moves, Move lastIteration, bool inQSearch, int ply)
+    void GetScores(Span<Move> moves, Move lastIteration, bool inQSearch, int ply, SEE.SEEPinData pinData)
     {
         for (int i = 0; i < moves.Length; i++)
         {
             Move move = moves[i];
 
-            moveScores[i] = ScoreMove(move, lastIteration, inQSearch, ply);
+            moveScores[i] = ScoreMove(move, lastIteration, inQSearch, ply, pinData);
         }
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    int ScoreMove(Move move, Move hash, bool inQSearch, int ply)
+    int ScoreMove(Move move, Move hash, bool inQSearch, int ply, SEE.SEEPinData pinData)
     {
         if (Move.IsSame(move, hash))
         {
@@ -82,12 +82,12 @@ public class MoveOrder
                 return QueenPromotionCaptureBaseScore + capturePieceValue;
             }
 
-            return PromotionMoveScore + (SEE.HasPositiveScore(board, move) ? GoodCaptureBaseScore : BadCaptureBaseScore);
+            return PromotionMoveScore + (SEE.HasPositiveScore(board, move, pinData) ? GoodCaptureBaseScore : BadCaptureBaseScore);
         }
 
         if (isCapture)
         {
-            int baseCapture = (flag == MoveFlag.EnpassantCapture || MoveFlag.IsPromotion(flag) || SEE.IsGoodCapture(board, move)) ? GoodCaptureBaseScore : BadCaptureBaseScore;
+            int baseCapture = (flag == MoveFlag.EnpassantCapture || MoveFlag.IsPromotion(flag) || SEE.IsGoodCapture(board, move, pinData)) ? GoodCaptureBaseScore : BadCaptureBaseScore;
 
             return baseCapture + MostValueableVictimLeastValuableAttacker[Piece.GetPieceIndex(movePiece)][Piece.GetPieceIndex(capturePieceType)];
         }

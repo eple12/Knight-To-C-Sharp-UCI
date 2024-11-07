@@ -5,7 +5,7 @@ public static class SEE
     public static int[] MaterialValues = { 0, 100, 300, 300, 500, 900, 0 };
 
     // Same function as HasPositiveScore, but only handles capture moves
-    public static bool IsGoodCapture(Board board, Move move)
+    public static bool IsGoodCapture(Board board, Move move, SEEPinData pinData)
     {
         bool turn = board.Turn;
 
@@ -41,19 +41,19 @@ public static class SEE
 
         bool us = !turn;
 
-        ulong whitePinners = 0;
-        ulong blackPinners = 0;
-        ulong whiteBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.BlackAll], board.PieceSquares[PieceIndex.WhiteKing].Squares[0], ref blackPinners);
-        ulong blackBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.WhiteAll], board.PieceSquares[PieceIndex.BlackKing].Squares[0], ref whitePinners);
+        // ulong whitePinners = 0;
+        // ulong blackPinners = 0;
+        // ulong whiteBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.BlackAll], board.PieceSquares[PieceIndex.WhiteKing].Squares[0], ref blackPinners);
+        // ulong blackBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.WhiteAll], board.PieceSquares[PieceIndex.BlackKing].Squares[0], ref whitePinners);
 
         while (true)
         {
             ulong ourOccupancy = board.BitboardSet.Bitboards[PieceIndex.MakeAll(us)];
             ulong ourAttackers = attackers & ourOccupancy;
 
-            if (((us ? blackPinners : whitePinners) & occupancy) != 0)
+            if (((us ? pinData.BlackPinners : pinData.WhitePinners) & occupancy) != 0)
             {
-                ourAttackers &= ~(us ? whiteBlockers : blackBlockers);
+                ourAttackers &= ~(us ? pinData.WhiteBlockers : pinData.BlackBlockers);
             }
 
             if (ourAttackers == 0)
@@ -96,7 +96,7 @@ public static class SEE
         return turn != us;
     }
 
-    public static bool HasPositiveScore(Board board, Move move)
+    public static bool HasPositiveScore(Board board, Move move, SEEPinData pinData)
     {
         bool turn = board.Turn;
 
@@ -132,19 +132,19 @@ public static class SEE
 
         bool us = !turn;
 
-        ulong whitePinners = 0;
-        ulong blackPinners = 0;
-        ulong whiteBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.BlackAll], board.PieceSquares[PieceIndex.WhiteKing].Squares[0], ref blackPinners);
-        ulong blackBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.WhiteAll], board.PieceSquares[PieceIndex.BlackKing].Squares[0], ref whitePinners);
+        // ulong whitePinners = 0;
+        // ulong blackPinners = 0;
+        // ulong whiteBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.BlackAll], board.PieceSquares[PieceIndex.WhiteKing].Squares[0], ref blackPinners);
+        // ulong blackBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.WhiteAll], board.PieceSquares[PieceIndex.BlackKing].Squares[0], ref whitePinners);
 
         while (true)
         {
             ulong ourOccupancy = board.BitboardSet.Bitboards[PieceIndex.MakeAll(us)];
             ulong ourAttackers = attackers & ourOccupancy;
 
-            if (((us ? blackPinners : whitePinners) & occupancy) != 0)
+            if (((us ? pinData.BlackPinners : pinData.WhitePinners) & occupancy) != 0)
             {
-                ourAttackers &= ~(us ? whiteBlockers : blackBlockers);
+                ourAttackers &= ~(us ? pinData.WhiteBlockers : pinData.BlackBlockers);
             }
 
             if (ourAttackers == 0)
@@ -271,9 +271,6 @@ public static class SEE
             // b is the blocker bitboard
             ulong b = Bits.BetweenBitboards[square, sniperSq] & occupancy;
 
-            // Console.WriteLine(snipers);
-            // Bitboard.Print(b);
-
             // b has only one significant bit
             if (b != 0 && !Bitboard.MoreThanOne(b))
             {
@@ -288,5 +285,33 @@ public static class SEE
         }
 
         return blockers;
+    }
+
+    // Structure for holding the pin data
+    public struct SEEPinData
+    {
+        public ulong WhitePinners;
+        public ulong BlackPinners;
+        public ulong WhiteBlockers;
+        public ulong BlackBlockers;
+
+        public SEEPinData()
+        {
+            WhitePinners = 0;
+            BlackPinners = 0;
+            WhiteBlockers = 0;
+            BlackBlockers = 0;
+        }
+
+        public void Calculate(Board board)
+        {
+            WhitePinners = 0;
+            BlackPinners = 0;
+            WhiteBlockers = 0;
+            BlackBlockers = 0;
+
+            WhiteBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.BlackAll], board.PieceSquares[PieceIndex.WhiteKing].Squares[0], ref BlackPinners);
+            BlackBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.WhiteAll], board.PieceSquares[PieceIndex.BlackKing].Squares[0], ref WhitePinners);
+        }
     }
 }

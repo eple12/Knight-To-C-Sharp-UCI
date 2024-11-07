@@ -285,7 +285,10 @@ public class Searcher
 
         // Order Moves
         Move prevBestMove = plyFromRoot == 0 ? bestMoveLastIteration : tt.GetStoredMove();
-        moveOrder.GetOrderedList(moves, bestMoveLastIteration, inQSearch: false, plyFromRoot);
+
+        SEE.SEEPinData pinData = new();
+        pinData.Calculate(board);
+        moveOrder.GetOrderedList(moves, bestMoveLastIteration, inQSearch: false, plyFromRoot, pinData);
 
         int evalType = TranspositionTable.UpperBound;
 
@@ -392,7 +395,10 @@ public class Searcher
 
         Span<Move> moves = stackalloc Move[128];
         MoveGen.GenerateMoves(ref moves, genOnlyCaptures: true);
-        moveOrder.GetOrderedList(moves, Move.NullMove, inQSearch: true, 0);
+
+        SEE.SEEPinData pinData = new();
+        pinData.Calculate(board);
+        moveOrder.GetOrderedList(moves, Move.NullMove, inQSearch: true, 0, pinData);
 
         for (int i = 0; i < moves.Length; i++)
         {

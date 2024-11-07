@@ -42,6 +42,9 @@ public static class Test
     }
     public static void SEEPositive()
     {
+        SEE.SEEPinData pinData = new();
+        pinData.Calculate(board);
+
         for (int i = 0; i < board.LegalMoves.Length; i++)
         {
             if (board.Squares[board.LegalMoves[i].targetSquare] == Piece.None)
@@ -50,7 +53,7 @@ public static class Test
             }
 
             Move.PrintMove(board.LegalMoves[i]);
-            Console.WriteLine(SEE.HasPositiveScore(board, board.LegalMoves[i]));
+            Console.WriteLine(SEE.HasPositiveScore(board, board.LegalMoves[i], pinData));
         }
     }
 
@@ -60,7 +63,7 @@ public static class Test
 
         Span<Move> moves = stackalloc Move[128];
         MainProcess.board.MoveGen.GenerateMoves(ref moves, genOnlyCaptures: true);
-        moveOrder.GetOrderedList(moves, Move.NullMove, inQSearch: true, 0);
+        moveOrder.GetOrderedList(moves, Move.NullMove, inQSearch: true, 0, default);
 
         int[] scores = moveOrder.GetLastMoveScores();
         foreach (var item in scores)
