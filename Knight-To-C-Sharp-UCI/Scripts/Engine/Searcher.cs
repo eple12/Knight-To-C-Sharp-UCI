@@ -318,6 +318,7 @@ public class Searcher
             }
 
             // Late Move Reduction
+            // Reverted changes due to bugs
             bool needFullSearch = true;
             int eval = 0;
 
