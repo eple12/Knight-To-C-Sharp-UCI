@@ -63,7 +63,7 @@ public static class Test
 
         Span<Move> moves = stackalloc Move[128];
         MainProcess.board.MoveGen.GenerateMoves(ref moves, genOnlyCaptures: true);
-        moveOrder.GetOrderedList(moves, Move.NullMove, inQSearch: true, 0, default);
+        moveOrder.GetOrderedList(ref moves, Move.NullMove, inQSearch: true, 0, default);
 
         int[] scores = moveOrder.GetLastMoveScores();
         foreach (var item in scores)

@@ -37,14 +37,14 @@ public class MoveOrder
         KillerMoves = new Killers[MaxKillerPly];
     }
 
-    public Span<Move> GetOrderedList(Span<Move> moves, Move lastIteration, bool inQSearch, int ply, SEE.SEEPinData pinData)
+    public Span<Move> GetOrderedList(ref Span<Move> moves, Move lastIteration, bool inQSearch, int ply, SEE.SEEPinData pinData)
     {
         // moveScores = new int[moves.Length];
         
         GetScores(moves, lastIteration, inQSearch, ply, pinData);
 
         // SortMoves(moves);
-        Quicksort(moves, moveScores, 0, moves.Length - 1);
+        Quicksort(ref moves, moveScores, 0, moves.Length - 1);
 
         return moves;
     }
@@ -106,13 +106,13 @@ public class MoveOrder
         return BaseMoveScore;
     }
 
-    public static void Quicksort(Span<Move> values, int[] scores, int low, int high)
+    public static void Quicksort(ref Span<Move> values, int[] scores, int low, int high)
     {
         if (low < high)
         {
             int pivotIndex = Partition(values, scores, low, high);
-            Quicksort(values, scores, low, pivotIndex - 1);
-            Quicksort(values, scores, pivotIndex + 1, high);
+            Quicksort(ref values, scores, low, pivotIndex - 1);
+            Quicksort(ref values, scores, pivotIndex + 1, high);
         }
     }
     static int Partition(Span<Move> values, int[] scores, int low, int high)

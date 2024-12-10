@@ -30,6 +30,7 @@ public class Searcher
     bool searchRequested;
     bool isSearching;
     bool cancellationRequested;
+    // bool searchedFirstLine;
 
 
     public event Action OnSearchComplete;
@@ -171,6 +172,13 @@ public class Searcher
                 // Console.WriteLine($"info string Aspiration Windows at depth {depth} fail-low {numFailLows} fail-high {numFailHighs}");
             }
 
+            // if (cancellationRequested)
+            // {
+            //     bestEval = lastSearchEval;
+            //     bestMove = bestMoveLastIteration;
+            //     break;
+            // }
+
             lastSearchEval = bestEval;
 
             bestMoveLastIteration = bestMove;
@@ -239,7 +247,6 @@ public class Searcher
                 return alpha;
             }
         }
-        
 
         // Try looking up the current position in the transposition table.
         // If the same position has already been searched to at least an equal depth
@@ -284,15 +291,17 @@ public class Searcher
         }
 
         // Order Moves
-        Move prevBestMove = plyFromRoot == 0 ? bestMoveLastIteration : tt.GetStoredMove();
+        Move prevBestMove = plyFromRoot == 0 ? (Move.IsNull(bestMoveLastIteration) ? tt.GetStoredMove() : bestMoveLastIteration) : tt.GetStoredMove();
 
         SEE.SEEPinData pinData = new();
         pinData.Calculate(board);
-        moveOrder.GetOrderedList(moves, bestMoveLastIteration, inQSearch: false, plyFromRoot, pinData);
+        moves = moveOrder.GetOrderedList(ref moves, prevBestMove, inQSearch: false, plyFromRoot, pinData);
 
         int evalType = TranspositionTable.UpperBound;
 
         Move bestMoveInThisPosition = moves[0];
+
+        // Moves Loop
         for (int i = 0; i < moves.Length; i++)
         {
             bool isCapture = board.Squares[moves[i].targetSquare] != Piece.None;
@@ -412,7 +421,7 @@ public class Searcher
 
         SEE.SEEPinData pinData = new();
         pinData.Calculate(board);
-        moveOrder.GetOrderedList(moves, Move.NullMove, inQSearch: true, 0, pinData);
+        moves = moveOrder.GetOrderedList(ref moves, Move.NullMove, inQSearch: true, 0, pinData);
 
         for (int i = 0; i < moves.Length; i++)
         {
