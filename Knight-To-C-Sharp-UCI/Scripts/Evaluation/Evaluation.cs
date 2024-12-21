@@ -515,5 +515,7 @@ public class Evaluation
     }
 
 
-
+    public static double GetEndgameWeight(Board board, bool color) {
+        return MaterialInfo.GetMaterialInfo(board, color).endgameWeight;
+    }
 }

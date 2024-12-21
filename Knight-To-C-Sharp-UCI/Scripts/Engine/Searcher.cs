@@ -124,7 +124,7 @@ public class Searcher
         {
             if (depth < AspirationWindowMinDepth || lastSearchEval == Infinity.NegativeInfinity)
             {
-                Search(depth, alpha, beta, 0, 0, ref BestPV);
+                Search(depth, alpha, beta, 0, ref BestPV);
             }
             else // Aspiration Windows Search, Inspired by Lynx-Bot (https://github.com/lynx-chess/Lynx)
             {
@@ -146,7 +146,7 @@ public class Searcher
                         break;
                     }
 
-                    Search(depth - failHighReduction, alpha, beta, 0, 0, ref BestPV);
+                    Search(depth - failHighReduction, alpha, beta, 0, ref BestPV);
 
                     window += window >> 1; // Adds window / 2
 
@@ -217,7 +217,7 @@ public class Searcher
     }
 
     // Main NegaMax Search Function
-    int Search(int depth, int alpha, int beta, int plyFromRoot, int numExtensions, ref PvLine pLine)
+    int Search(int depth, int alpha, int beta, int plyFromRoot, ref PvLine pLine)
     {
         numNodeSearched++;
         PvLine line = new();
@@ -275,6 +275,8 @@ public class Searcher
             return QuiescenceSearch(alpha, beta);
         }
 
+        // bool isPv = beta - alpha > 1;
+
         Span<Move> moves = stackalloc Move[256];
         MoveGen.GenerateMoves(ref moves, genOnlyCaptures: false);
 
@@ -310,19 +312,18 @@ public class Searcher
 
             // Search Extensions
             int extension = 0;
-            if (numExtensions < MaxExtension)
+            // if (numExtensions < MaxExtension)
+
+            if (board.InCheck())
             {
-                if (board.InCheck())
+                extension = 1;
+            }
+            else
+            {
+                int targetSquare = moves[i].targetSquare;
+                if (Piece.GetType(board.Squares[targetSquare]) == Piece.Pawn && (targetSquare / 8 == 1 || targetSquare / 8 == 6))
                 {
                     extension = 1;
-                }
-                else
-                {
-                    int targetSquare = moves[i].targetSquare;
-                    if (Piece.GetType(board.Squares[targetSquare]) == Piece.Pawn && (targetSquare / 8 == 1 || targetSquare / 8 == 6))
-                    {
-                        extension = 1;
-                    }
                 }
             }
 
@@ -334,6 +335,7 @@ public class Searcher
             if (extension == 0 && depth >= 3 && i >= 3)
             {
                 int reduction = 0;
+
                 int moveScore = moveOrder.GetLastMoveScores()[i];
                 if (!isCapture)
                 {
@@ -343,13 +345,13 @@ public class Searcher
                 {
                     reduction = 1;
                 }
-
-                eval = -Search(depth - 1 - reduction, -alpha - 1, -alpha, plyFromRoot + 1, numExtensions, ref line);
+                
+                eval = -Search(depth - 1 - reduction, -alpha - 1, -alpha, plyFromRoot + 1, ref line);
                 needFullSearch = eval > alpha;
             }
             if (needFullSearch)
             {
-                eval = -Search(depth - 1 + extension, -beta, -alpha, plyFromRoot + 1, numExtensions + extension, ref line);
+                eval = -Search(depth - 1 + extension, -beta, -alpha, plyFromRoot + 1, ref line);
             }
 
             board.UnmakeMove(moves[i]);

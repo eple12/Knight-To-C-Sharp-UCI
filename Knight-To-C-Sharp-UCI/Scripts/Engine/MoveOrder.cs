@@ -75,35 +75,37 @@ public class MoveOrder
         bool isCapture = capturePieceType != Piece.None;
         int flag = move.flag;
 
+        int psqt = PieceSquareTable.ReadTableFromPiece(movePiece, targetSquare, Piece.IsWhitePiece(movePiece), board);
+
         if (flag == MoveFlag.PromoteToQueen)
         {
             if (isCapture)
             {
-                return QueenPromotionCaptureBaseScore + capturePieceValue;
+                return QueenPromotionCaptureBaseScore + capturePieceValue + psqt;
             }
 
-            return PromotionMoveScore + (SEE.HasPositiveScore(board, move, pinData) ? GoodCaptureBaseScore : BadCaptureBaseScore);
+            return PromotionMoveScore + (SEE.HasPositiveScore(board, move, pinData) ? GoodCaptureBaseScore : BadCaptureBaseScore) + psqt;
         }
 
         if (isCapture)
         {
             int baseCapture = (flag == MoveFlag.EnpassantCapture || MoveFlag.IsPromotion(flag) || SEE.IsGoodCapture(board, move, pinData)) ? GoodCaptureBaseScore : BadCaptureBaseScore;
 
-            return baseCapture + MostValueableVictimLeastValuableAttacker[Piece.GetPieceIndex(movePiece)][Piece.GetPieceIndex(capturePieceType)];
+            return baseCapture + MostValueableVictimLeastValuableAttacker[Piece.GetPieceIndex(movePiece)][Piece.GetPieceIndex(capturePieceType)] + psqt;
         }
 
         if (MoveFlag.IsPromotion(flag))
         {
-            return PromotionMoveScore;
+            return PromotionMoveScore + psqt;
         }
 
         if (!inQSearch)
         {
             bool isKiller = ply < MaxKillerPly && KillerMoves[ply].Match(move);
-            return BaseMoveScore + (isKiller ? KillerMoveValue : 0) + History[board.Turn ? 0 : 1, startSquare, targetSquare];
+            return BaseMoveScore + (isKiller ? KillerMoveValue : 0) + History[board.Turn ? 0 : 1, startSquare, targetSquare] + psqt;
         }
 
-        return BaseMoveScore;
+        return BaseMoveScore + psqt;
     }
 
     public static void Quicksort(ref Span<Move> values, int[] scores, int low, int high)

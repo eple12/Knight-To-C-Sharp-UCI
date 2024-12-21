@@ -111,4 +111,35 @@ public static class PieceSquareTable
     {
         return table[white ? Square.FlipIndex(square) : square];
     }
+
+	public static int ReadTableFromPiece(int piece, int square, bool color, Board board) {
+		int type = Piece.GetType(piece);
+		
+		if (type == Piece.Knight) {
+			return Read(Knight, square, color);
+		}
+		
+		if (type == Piece.Bishop) {
+			return Read(Bishop, square, color);
+		}
+
+		if (type == Piece.Rook) {
+			return Read(Rook, square, color);
+		}
+
+		if (type == Piece.Queen) {
+			return Read(Queen, square, color);
+		}
+
+		if (type == Piece.Pawn) {
+			double endgameWeight = Evaluation.GetEndgameWeight(board, color);
+			return (int) (Read(Pawn, square, color) * (1 - endgameWeight) + Read(PawnEnd, square, color) * endgameWeight);
+		}
+		if (type == Piece.King) {
+			double endgameWeight = Evaluation.GetEndgameWeight(board, color);
+			return (int) (Read(King, square, color) * (1 - endgameWeight) + Read(KingEnd, square, color) * endgameWeight);
+		}
+
+		return 0;
+	}
 }
