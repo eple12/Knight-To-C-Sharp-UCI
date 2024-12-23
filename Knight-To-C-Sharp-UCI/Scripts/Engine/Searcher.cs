@@ -329,12 +329,14 @@ public class Searcher
 
             // Late Move Reduction
             // Reverted changes due to bugs
-            bool needFullSearch = true;
+            // bool needFullSearch = true;
             int eval = 0;
+
+            int reduction = 0;
 
             if (extension == 0 && depth >= 3 && i >= 3)
             {
-                int reduction = 0;
+                // int reduction = 0;
 
                 int moveScore = moveOrder.GetLastMoveScores()[i];
                 if (!isCapture)
@@ -346,12 +348,22 @@ public class Searcher
                     reduction = 1;
                 }
                 
-                eval = -Search(depth - 1 - reduction, -alpha - 1, -alpha, plyFromRoot + 1, ref line);
-                needFullSearch = eval > alpha;
+                // eval = -Search(depth - 1 - reduction, -alpha - 1, -alpha, plyFromRoot + 1, ref line);
+                // needFullSearch = eval > alpha;
             }
-            if (needFullSearch)
-            {
-                eval = -Search(depth - 1 + extension, -beta, -alpha, plyFromRoot + 1, ref line);
+            // if (needFullSearch)
+            // {
+            //     eval = -Search(depth - 1 + extension, -beta, -alpha, plyFromRoot + 1, ref line);
+            // }
+
+            eval = -Search(depth - 1 - reduction, -alpha - 1, -alpha, plyFromRoot + 1, ref line);
+
+            if (eval > alpha && reduction > 0) {
+                eval = -Search(depth - 1, -alpha - 1, -alpha, plyFromRoot + 1, ref line);
+            }
+
+            if (eval > alpha && eval < beta) {
+                eval = -Search(depth - 1, -beta, -alpha, plyFromRoot + 1, ref line);
             }
 
             board.UnmakeMove(moves[i]);

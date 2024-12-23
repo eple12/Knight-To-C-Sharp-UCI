@@ -4,6 +4,7 @@
 rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 
 // A random french position to just test searching
+r3k2r/pp2bppp/1qn1b3/3pPp2/3P4/P1N2N2/1P3PPP/R1BQ1RK1 w kq - 4 13
 
 // Symmetrical
 r2qk2r/ppp2ppp/2np1n2/2b1p1B1/2B1P1b1/2NP1N2/PPP2PPP/R2QK2R w KQkq - 0 1
