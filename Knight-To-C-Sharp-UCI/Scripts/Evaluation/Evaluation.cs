@@ -1,5 +1,7 @@
 
 
+using System.Runtime.CompilerServices;
+
 public class Evaluation
 {
     Searcher engine;
@@ -514,7 +516,7 @@ public class Evaluation
         }
     }
 
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static double GetEndgameWeight(Board board, bool color) {
         return MaterialInfo.GetMaterialInfo(board, color).endgameWeight;
     }

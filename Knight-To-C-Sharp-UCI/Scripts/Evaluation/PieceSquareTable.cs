@@ -112,6 +112,7 @@ public static class PieceSquareTable
         return table[white ? Square.FlipIndex(square) : square];
     }
 
+	
 	public static int ReadTableFromPiece(int piece, int square, bool color, Board board) {
 		int type = Piece.GetType(piece);
 		
