@@ -220,11 +220,16 @@ public class Searcher
     int Search(int depth, int alpha, int beta, int plyFromRoot, ref PvLine pLine)
     {
         numNodeSearched++;
+
+        // Reached the max depth
+        if (depth >= settings.unlimitedMaxDepth - 1) {
+            return evaluation.Evaluate();
+        }
+
         PvLine line = new();
 
         if (cancellationRequested) // Return if the search is cancelled
         {
-            pLine.CMove = 0;
             return 0;
         }
 
@@ -232,7 +237,6 @@ public class Searcher
         {
             if (board.FiftyRuleHalfClock >= 100 || board.PositionHistory[board.ZobristKey] > 1)
             {
-                pLine.CMove = 0;
                 return 0;
             }
 
@@ -255,8 +259,6 @@ public class Searcher
         if (ttVal != TranspositionTable.lookupFailed)
         {
             Move ttMove = tt.GetStoredMove();
-            pLine.CMove = 0;
-
             if (plyFromRoot == 0) // Use the move stored in TT
             {
                 if (ttMove.moveValue != Move.NullMove.moveValue)
@@ -271,7 +273,6 @@ public class Searcher
 
         if (depth == 0) // Return QSearch Evaluation
         {
-            pLine.CMove = 0;
             return QuiescenceSearch(alpha, beta);
         }
 
@@ -284,7 +285,7 @@ public class Searcher
         MateChecker.MateState mateState = MateChecker.GetPositionState(board, moves, ExcludeRepetition: true, ExcludeFifty: true);
         if (mateState != MateChecker.MateState.None)
         {
-            pLine.CMove = 0;
+            // pLine.CMove = 0;
             if (mateState == MateChecker.MateState.Checkmate)
             {
                 return -Evaluation.CheckmateEval + plyFromRoot;
@@ -312,8 +313,6 @@ public class Searcher
 
             // Search Extensions
             int extension = 0;
-            // if (numExtensions < MaxExtension)
-
             if (board.InCheck())
             {
                 extension = 1;
@@ -328,16 +327,12 @@ public class Searcher
             }
 
             // Late Move Reduction
-            // Reverted changes due to bugs
-            // bool needFullSearch = true;
             int eval = 0;
 
             int reduction = 0;
 
             if (extension == 0 && depth >= 3 && i >= 3)
             {
-                // int reduction = 0;
-
                 int moveScore = moveOrder.GetLastMoveScores()[i];
                 if (!isCapture)
                 {
@@ -347,14 +342,7 @@ public class Searcher
                 {
                     reduction = 1;
                 }
-                
-                // eval = -Search(depth - 1 - reduction, -alpha - 1, -alpha, plyFromRoot + 1, ref line);
-                // needFullSearch = eval > alpha;
             }
-            // if (needFullSearch)
-            // {
-            //     eval = -Search(depth - 1 + extension, -beta, -alpha, plyFromRoot + 1, ref line);
-            // }
 
             eval = -Search(depth - 1 - reduction, -alpha - 1, -alpha, plyFromRoot + 1, ref line);
 
@@ -440,12 +428,6 @@ public class Searcher
         for (int i = 0; i < moves.Length; i++)
         {
             int moveScore = moveOrder.GetLastMoveScores()[i];
-
-            // QSearch SEE Pruning
-            // if (moveScore < MoveOrder.PromotionMoveScore && moveScore >= MoveOrder.BadCaptureBaseScore)
-            // {
-            //     continue;
-            // }
 
             board.MakeMove(moves[i]);
 
