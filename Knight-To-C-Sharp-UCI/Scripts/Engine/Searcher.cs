@@ -217,12 +217,12 @@ public class Searcher
     }
 
     // Main NegaMax Search Function
-    int Search(int depth, int alpha, int beta, int plyFromRoot, ref PvLine pLine)
+    int Search(int depth, int alpha, int beta, int ply, ref PvLine pLine)
     {
         numNodeSearched++;
 
         // Reached the max depth
-        if (depth >= settings.unlimitedMaxDepth - 1) {
+        if (ply >= settings.unlimitedMaxDepth - 1) {
             return evaluation.Evaluate();
         }
 
@@ -233,7 +233,10 @@ public class Searcher
             return 0;
         }
 
-        if (plyFromRoot > 0) // Return 0 if drawn
+        bool isRoot = ply == 0;
+        bool isPv = beta - alpha > 1;
+
+        if (ply > 0) // Return 0 if drawn
         {
             if (board.FiftyRuleHalfClock >= 100 || board.PositionHistory[board.ZobristKey] > 1)
             {
@@ -243,8 +246,8 @@ public class Searcher
             // Skip this position if a mating sequence has already been found earlier in the search, which would be shorter
             // than any mate we could find from here. This is done by observing that alpha can't possibly be worse
             // (and likewise beta can't  possibly be better) than being mated in the current position.
-            alpha = Math.Max(alpha, -Evaluation.CheckmateEval + plyFromRoot);
-            beta = Math.Min(beta, Evaluation.CheckmateEval - plyFromRoot);
+            alpha = Math.Max(alpha, -Evaluation.CheckmateEval + ply);
+            beta = Math.Min(beta, Evaluation.CheckmateEval - ply);
             if (alpha >= beta)
             {
                 pLine.CMove = 0;
@@ -255,20 +258,24 @@ public class Searcher
         // Try looking up the current position in the transposition table.
         // If the same position has already been searched to at least an equal depth
         // to the search we're doing now,we can just use the recorded evaluation.
-        int ttVal = tt.LookupEvaluation (depth, plyFromRoot, alpha, beta);
-        if (ttVal != TranspositionTable.lookupFailed)
+        Move ttMove = Move.NullMove;
+        if (!isRoot)
         {
-            Move ttMove = tt.GetStoredMove();
-            if (plyFromRoot == 0) // Use the move stored in TT
+            int ttVal = tt.LookupEvaluation (depth, ply, alpha, beta);
+            if (ttVal != TranspositionTable.lookupFailed)
             {
-                if (ttMove.moveValue != Move.NullMove.moveValue)
+                ttMove = tt.GetStoredMove();
+                if (ply == 0) // Use the move stored in TT
                 {
-                    bestMove = ttMove;
-                    bestEval = ttVal;
+                    if (ttMove.moveValue != Move.NullMove.moveValue)
+                    {
+                        bestMove = ttMove;
+                        bestEval = ttVal;
+                    }
                 }
-            }
 
-            return ttVal;
+                return ttVal;
+            }
         }
 
         if (depth == 0) // Return QSearch Evaluation
@@ -288,19 +295,24 @@ public class Searcher
             // pLine.CMove = 0;
             if (mateState == MateChecker.MateState.Checkmate)
             {
-                return -Evaluation.CheckmateEval + plyFromRoot;
+                return -Evaluation.CheckmateEval + ply;
             }
             return 0;
         }
 
         // Order Moves
-        Move prevBestMove = plyFromRoot == 0 ? (Move.IsNull(bestMoveLastIteration) ? tt.GetStoredMove() : bestMoveLastIteration) : tt.GetStoredMove();
+        Move prevBestMove = isRoot ? bestMoveLastIteration : ttMove;
 
         SEE.SEEPinData pinData = new();
         pinData.Calculate(board);
-        moves = moveOrder.GetOrderedList(ref moves, prevBestMove, inQSearch: false, plyFromRoot, pinData);
+        moves = moveOrder.GetOrderedList(ref moves, prevBestMove, inQSearch: false, ply, pinData);
 
         int evalType = TranspositionTable.UpperBound;
+
+        bool isInCheck = board.InCheck();
+        if (isInCheck) {
+            ++depth;
+        }
 
         Move bestMoveInThisPosition = moves[0];
 
@@ -311,27 +323,12 @@ public class Searcher
 
             board.MakeMove(moves[i]);
 
-            // Search Extensions
-            int extension = 0;
-            if (board.InCheck())
-            {
-                extension = 1;
-            }
-            else
-            {
-                int targetSquare = moves[i].targetSquare;
-                if (Piece.GetType(board.Squares[targetSquare]) == Piece.Pawn && (targetSquare / 8 == 1 || targetSquare / 8 == 6))
-                {
-                    extension = 1;
-                }
-            }
-
             // Late Move Reduction
             int eval = 0;
 
             int reduction = 0;
 
-            if (extension == 0 && depth >= 3 && i >= 3)
+            if (depth >= 3 && i >= 3)
             {
                 int moveScore = moveOrder.GetLastMoveScores()[i];
                 if (!isCapture)
@@ -342,16 +339,26 @@ public class Searcher
                 {
                     reduction = 1;
                 }
+                
+                if (isPv) {
+                    --reduction;
+                }
+
+                if (board.InCheck()) {
+                    --reduction;
+                }
+
+                reduction = Math.Clamp(reduction, 0, depth - 2);
             }
 
-            eval = -Search(depth - 1 - reduction, -alpha - 1, -alpha, plyFromRoot + 1, ref line);
+            eval = -Search(depth - 1 - reduction, -alpha - 1, -alpha, ply + 1, ref line);
 
             if (eval > alpha && reduction > 0) {
-                eval = -Search(depth - 1, -alpha - 1, -alpha, plyFromRoot + 1, ref line);
+                eval = -Search(depth - 1, -alpha - 1, -alpha, ply + 1, ref line);
             }
 
             if (eval > alpha && eval < beta) {
-                eval = -Search(depth - 1, -beta, -alpha, plyFromRoot + 1, ref line);
+                eval = -Search(depth - 1, -beta, -alpha, ply + 1, ref line);
             }
 
             board.UnmakeMove(moves[i]);
@@ -363,16 +370,16 @@ public class Searcher
 
             if (eval >= beta)
             {
-                tt.StoreEvaluation (depth, plyFromRoot, beta, TranspositionTable.LowerBound, moves[i]);
+                tt.StoreEvaluation (depth, ply, beta, TranspositionTable.LowerBound, moves[i]);
 
                 // Killer Moves, History
                 // If this move is not a capture
                 // Does not store captures since they are ranked highly in Move Ordering anyway
                 if (!isCapture)
                 {
-                    if (plyFromRoot < MoveOrder.MaxKillerPly)
+                    if (ply < MoveOrder.MaxKillerPly)
                     {
-                        moveOrder.KillerMoves[plyFromRoot].Add(moves[i]);
+                        moveOrder.KillerMoves[ply].Add(moves[i]);
                     }
                     int historyScore = depth * depth;
                     moveOrder.History[board.Turn ? 0 : 1, moves[i].startSquare, moves[i].targetSquare] += historyScore;
@@ -391,7 +398,7 @@ public class Searcher
                 Array.Copy(line.ArgMoves, 0, pLine.ArgMoves, 1, line.CMove);
                 pLine.CMove = line.CMove + 1;
                 
-                if (plyFromRoot == 0)
+                if (ply == 0)
                 {
                     bestMove = moves[i];
                     bestEval = eval;
@@ -399,7 +406,7 @@ public class Searcher
             }
         }
         
-        tt.StoreEvaluation (depth, plyFromRoot, alpha, evalType, bestMoveInThisPosition);
+        tt.StoreEvaluation (depth, ply, alpha, evalType, bestMoveInThisPosition);
 
         return alpha;
     }
