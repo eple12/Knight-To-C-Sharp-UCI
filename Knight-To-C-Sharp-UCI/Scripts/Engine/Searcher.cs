@@ -1,5 +1,6 @@
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 public class Searcher
 {
@@ -10,6 +11,7 @@ public class Searcher
     MoveOrder moveOrder;
     // EngineSettings settings;
     Evaluation evaluation;
+    Repetition repetition;
 
     // Search Info
     Move bestMove;
@@ -37,6 +39,9 @@ public class Searcher
 
         evaluation = new Evaluation(this);
         tt = new TranspositionTable(this);
+
+        // RepetitionData = new();
+        repetition = new(board);
 
         moveOrder = new MoveOrder(this);
         
@@ -80,6 +85,8 @@ public class Searcher
         bestMoveLastIteration = Move.NullMove;
         moveOrder.ClearHistory();
         moveOrder.ClearKillers();
+
+        repetition.Clear();
 
         bestEval = 0;
 
@@ -232,7 +239,7 @@ public class Searcher
 
         if (ply > 0) // Return 0 if drawn
         {
-            if (board.FiftyRuleHalfClock >= 100 || board.PositionHistory[board.ZobristKey] > 1)
+            if (board.FiftyRuleHalfClock >= 100 || repetition.IsThreeFold())
             {
                 return 0;
             }
@@ -315,7 +322,9 @@ public class Searcher
         {
             bool isCapture = board.Squares[moves[i].targetSquare] != Piece.None;
 
-            board.MakeMove(moves[i]);
+            board.MakeMove(moves[i], inSearch: true);
+
+            repetition.Push();
 
             // Late Move Reduction
             int eval = 0;
@@ -354,6 +363,8 @@ public class Searcher
             if (eval > alpha && eval < beta) {
                 eval = -Search(depth - 1, -beta, -alpha, ply + 1, ref line);
             }
+
+            repetition.Pop();
 
             board.UnmakeMove(moves[i]);
 
@@ -430,7 +441,7 @@ public class Searcher
         {
             int moveScore = moveOrder.GetLastMoveScores()[i];
 
-            board.MakeMove(moves[i]);
+            board.MakeMove(moves[i], inSearch: true);
 
             eval = -QuiescenceSearch(-beta, -alpha);
 
@@ -495,8 +506,7 @@ public class Searcher
         }
         cancellationRequested = true;
     }
-
-
+    
 
 
 

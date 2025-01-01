@@ -112,7 +112,8 @@ public class Board
     public int FiftyRuleHalfClock;
 
     // For Threefold detection
-    public Dictionary<ulong, int> PositionHistory = new Dictionary<ulong, int>();
+    public Dictionary<ulong, int> PositionHistory = new Dictionary<ulong, int>(); // legacy
+    public HashSet<ulong> PlayedPositions = new();
 
     // In-Check Cache value
     bool InCheckCachedValue;
@@ -219,6 +220,7 @@ public class Board
         EnpassantFile = 8;
         FiftyRuleHalfClock = 0;
         PositionHistory.Clear();
+        PlayedPositions.Clear();
 
         HasCachedInCheckValue = false;
     }
@@ -244,7 +246,7 @@ public class Board
         // PrintBoardAndMoves();
     }
 
-    public void MakeMove(Move move)
+    public void MakeMove(Move move, bool inSearch = false)
     {
         if (move.moveValue == 0)
         {
@@ -502,22 +504,17 @@ public class Board
 
         Turn = !Turn;
         
-        // StorePosition();
-        // if (RepetitionData.Contains(ZobristKey))
+        // if (PositionHistory.ContainsKey(ZobristKey))
         // {
-        //     RepetitionVerify.Add(ZobristKey);
+        //     PositionHistory[ZobristKey]++;
         // }
         // else
         // {
-        //     RepetitionData.Add(ZobristKey);
+        //     PositionHistory.Add(ZobristKey, 1);
         // }
-        if (PositionHistory.ContainsKey(ZobristKey))
-        {
-            PositionHistory[ZobristKey]++;
-        }
-        else
-        {
-            PositionHistory.Add(ZobristKey, 1);
+
+        if (!inSearch) {
+            PlayedPositions.Add(ZobristKey);
         }
 
         HasCachedInCheckValue = false;
@@ -536,7 +533,7 @@ public class Board
         // {
         //     RepetitionData.Remove(ZobristKey);
         // }
-        PositionHistory[ZobristKey]--;
+        // PositionHistory[ZobristKey]--;
         
         // }
         // catch (Exception)
