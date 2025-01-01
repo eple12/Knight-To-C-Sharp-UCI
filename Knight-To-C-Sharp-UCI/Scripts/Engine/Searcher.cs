@@ -20,12 +20,6 @@ public class Searcher
     Stopwatch searchTimeTimer;
     PvLine BestPV;
 
-    // Search Constants
-    const int AspirationWindowMinDepth = 8;
-    const int AspirationWindowBase = 20;
-    const int MaxExtension = 16;
-    const int Reduction = 1;
-
     // Search Flags
     bool searchRequested;
     bool isSearching;
@@ -122,14 +116,14 @@ public class Searcher
         // Iterative Deepening
         for (int depth = 1; depth <= maxDepth; depth++)
         {
-            if (depth < AspirationWindowMinDepth || lastSearchEval == Infinity.NegativeInfinity)
+            if (depth < Configuration.AspirationWindowMinDepth || lastSearchEval == Infinity.NegativeInfinity)
             {
                 Search(depth, alpha, beta, 0, ref BestPV);
             }
             else // Aspiration Windows Search, Inspired by Lynx-Bot (https://github.com/lynx-chess/Lynx)
             {
                 // Aspiration Window
-                int window = AspirationWindowBase;
+                int window = Configuration.AspirationWindowBase;
                 // Temporary reduction for fail-highs
                 int failHighReduction = 0;
                 
