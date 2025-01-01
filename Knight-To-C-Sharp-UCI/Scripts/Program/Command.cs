@@ -376,7 +376,7 @@ public static class Command
         int tokenIndex = 0;
 
         // Search Launch Info
-        int depth = MainProcess.engine.GetEngine().GetSettings().unlimitedMaxDepth;
+        int depth = Configuration.MaxDepth;
         int wtime = Infinity.PositiveInfinity;
         int btime = Infinity.PositiveInfinity;
         int winc = 0;
@@ -406,7 +406,7 @@ public static class Command
             }
             else if (subCommand == "infinite")
             {
-                depth = MainProcess.engine.GetEngine().GetSettings().unlimitedMaxDepth;
+                depth = Configuration.MaxDepth;
                 gotThinkTime = true;
                 infinite = true;
             }
@@ -414,7 +414,7 @@ public static class Command
             {
                 thinkTime = GetIntegerAfterLabel(subCommand, tokens);
                 
-                depth = MainProcess.engine.GetEngine().GetSettings().unlimitedMaxDepth;
+                depth = Configuration.MaxDepth;
                 tokenIndex++;
                 gotThinkTime = true;
             }

@@ -1,13 +1,13 @@
 public class Bot
 {
-    EngineSettings settings;
+    // EngineSettings settings;
     Searcher engine;
     Board board;
 
     public Bot(Board _board)
     {
-        settings = new EngineSettings();
-        engine = new Searcher(_board, settings);
+        // settings = new EngineSettings();
+        engine = new Searcher(_board);
         board = _board;
     }
 
@@ -42,7 +42,7 @@ public class Bot
 
         if (depth <= 0)
         {
-            depth = settings.unlimitedMaxDepth;
+            depth = Configuration.MaxDepth;
         }
 
         StartSearch(depth, onSearchComplete);

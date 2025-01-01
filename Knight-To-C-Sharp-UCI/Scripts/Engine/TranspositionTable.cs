@@ -31,7 +31,7 @@ public class TranspositionTable
     {
         engine = _engine;
         board = engine.GetBoard();
-        size = (ulong) (engine.GetSettings().TTSizeInMB * 1024 * 1024 / Entry.GetSize());
+        size = (ulong) (Configuration.MaxDepth * 1024 * 1024 / Entry.GetSize());
         evaluation = engine.GetEvaluation();
 
         entries = new Entry[size];

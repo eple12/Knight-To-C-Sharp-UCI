@@ -1,6 +1,6 @@
-public class EngineSettings
+public static class Configuration
 {
-    public int TTSizeInMB = 64;
+    public const int TTSizeInMB = 64;
 
-    public int unlimitedMaxDepth = 100;
+    public const int MaxDepth = 100;
 }

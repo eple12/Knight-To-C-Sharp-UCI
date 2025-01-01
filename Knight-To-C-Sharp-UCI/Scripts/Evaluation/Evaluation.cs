@@ -54,7 +54,7 @@ public class Evaluation
         engine = _engine;
         board = engine.GetBoard();
 
-        maxDepth = engine.GetSettings().unlimitedMaxDepth;
+        maxDepth = Configuration.MaxDepth;
 
         whiteEval = new EvaluationData();
         blackEval = new EvaluationData();

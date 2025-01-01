@@ -8,7 +8,7 @@ public class Searcher
     MoveGenerator MoveGen;
     TranspositionTable tt;
     MoveOrder moveOrder;
-    EngineSettings settings;
+    // EngineSettings settings;
     Evaluation evaluation;
 
     // Search Info
@@ -35,11 +35,11 @@ public class Searcher
 
     public event Action OnSearchComplete;
 
-    public Searcher(Board _board, EngineSettings _settings)
+    public Searcher(Board _board)
     {
         board = _board;
         MoveGen = board.MoveGen;
-        settings = _settings;
+        // settings = _settings;
 
         evaluation = new Evaluation(this);
         tt = new TranspositionTable(this);
@@ -222,7 +222,7 @@ public class Searcher
         numNodeSearched++;
 
         // Reached the max depth
-        if (ply >= settings.unlimitedMaxDepth - 1) {
+        if (ply >= Configuration.MaxDepth - 1) {
             return evaluation.Evaluate();
         }
 
@@ -484,10 +484,10 @@ public class Searcher
     {
         return board;
     }
-    public EngineSettings GetSettings()
-    {
-        return settings;
-    }
+    // public EngineSettings GetSettings()
+    // {
+    //     return settings;
+    // }
     public Evaluation GetEvaluation()
     {
         return evaluation;
