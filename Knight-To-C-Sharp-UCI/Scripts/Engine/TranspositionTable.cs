@@ -7,17 +7,9 @@ public class TranspositionTable
     // The value for this position is the exact evaluation
     public const int Exact = 0;
 
-    // A move was found during the search that was too good, meaning the opponent will play a different move earlier on,
-    // not allowing the position where this move was available to be reached. Because the search cuts off at
-    // this point (beta cut-off), an even better move may exist. This means that the evaluation for the
-    // position could be even higher, making the stored value the lower bound of the actual value.
-    public const int LowerBound = 1; // Beta
+    public const int Alpha = 1; // Alpha
 
-    // No move during the search resulted in a position that was better than the current player could get from playing a
-    // different move in an earlier position (i.e eval was <= alpha for all moves in the position).
-    // Due to the way alpha-beta search works, the value we get here won't be the exact evaluation of the position,
-    // but rather the upper bound of the evaluation. This means that the evaluation is, at most, equal to this value.
-    public const int UpperBound = 2; // Alpha
+    public const int Beta = 2; // Beta
 
     public Entry[] entries;
 
@@ -78,12 +70,12 @@ public class TranspositionTable
                 }
                 // We have stored the upper bound of the eval for this position. If it's less than alpha then we don't need to
                 // search the moves in this position as they won't interest us; otherwise we will have to search to find the exact value
-                if (entry.nodeType == UpperBound && correctedScore <= alpha)
+                if (entry.nodeType == Beta && correctedScore >= beta)
                 {
                     return correctedScore;
                 }
                 // We have stored the lower bound of the eval for this position. Only return if it causes a beta cut-off.
-                if (entry.nodeType == LowerBound && correctedScore >= beta)
+                if (entry.nodeType == Alpha && correctedScore <= alpha)
                 {
                     return correctedScore;
                 }
@@ -99,7 +91,14 @@ public class TranspositionTable
             return;
         }
 
-        if (entries[Index].depth > depth)
+        ref var e = ref entries[Index];
+
+        bool shouldReplace = 
+            e.key == 0 ||
+            depth >= e.depth ||
+            evalType == Exact;
+
+        if (!shouldReplace)
         {
             return;
         }

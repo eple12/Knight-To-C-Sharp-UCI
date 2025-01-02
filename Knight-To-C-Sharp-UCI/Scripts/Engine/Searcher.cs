@@ -220,6 +220,7 @@ public class Searcher
     // Main NegaMax Search Function
     int Search(int depth, int alpha, int beta, int ply, ref PvLine pLine)
     {
+        // bool debug = board.ZobristKey == 10809052421590594767;
         // if (board.ZobristKey == 3698178750396369094) {
 
         // }
@@ -317,7 +318,7 @@ public class Searcher
         int[] moveScores = new int[moves.Length];
         moves = moveOrder.GetOrderedList(ref moves, prevBestMove, inQSearch: false, ply, pinData, moveScores);
 
-        int evalType = TranspositionTable.UpperBound;
+        int evalType = TranspositionTable.Alpha;
 
         bool isInCheck = board.InCheck();
         if (isInCheck) {
@@ -332,6 +333,29 @@ public class Searcher
             // if (isRoot) {
                 
             // }
+            // if (ply == 0 && Move.MoveString(moves[i]) == "h2h1") {
+
+            // }
+
+            // if (ply == 1 && Move.MoveString(moves[i]) == "g2h1") {
+
+            // }
+
+            // if (ply == 2 && Move.MoveString(moves[i]) == "h7h1") {
+
+            // }
+
+            // if (ply == 3 && Move.MoveString(moves[i]) == "f1g2") {
+
+            // }
+
+            // if (ply == 4 && Move.MoveString(moves[i]) == "e8h8") {
+
+            // }
+
+            // if (ply == 6 && Move.MoveString(moves[i]) == "h8h2") {
+
+            // }
 
             bool isCapture = board.Squares[moves[i].targetSquare] != Piece.None;
 
@@ -343,6 +367,7 @@ public class Searcher
             int eval = 0;
 
             int reduction = 0;
+            bool givesCheck = board.InCheck();
 
             // Late Move Reduction (LMR)
             if (
@@ -357,7 +382,7 @@ public class Searcher
                     --reduction;
                 }
 
-                if (board.InCheck()) {
+                if (givesCheck) {
                     --reduction;
                 }
 
@@ -388,6 +413,10 @@ public class Searcher
             repetition.Pop();
 
             board.UnmakeMove(moves[i]);
+            
+            // if (debug) {
+            //     Console.WriteLine($"Debug position at depth {depth}: Move {Move.MoveString(moves[i])} => a {alpha} b {beta} eval {eval}");
+            // }
 
             if (cancellationRequested)
             {
@@ -396,7 +425,7 @@ public class Searcher
 
             if (eval >= beta)
             {
-                tt.StoreEvaluation (depth, ply, beta, TranspositionTable.LowerBound, moves[i]);
+                tt.StoreEvaluation (depth, ply, beta, TranspositionTable.Beta, moves[i]);
 
                 // Killer Moves, History
                 // If this move is not a capture
