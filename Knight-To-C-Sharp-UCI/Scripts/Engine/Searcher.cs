@@ -220,6 +220,10 @@ public class Searcher
     // Main NegaMax Search Function
     int Search(int depth, int alpha, int beta, int ply, ref PvLine pLine)
     {
+        // if (board.ZobristKey == 3698178750396369094) {
+
+        // }
+
         numNodeSearched++;
 
         // Reached the max depth
@@ -231,6 +235,7 @@ public class Searcher
 
         if (cancellationRequested) // Return if the search is cancelled
         {
+            // Console.WriteLine($"info string cancellation at ply {ply}");
             return 0;
         }
 
@@ -241,19 +246,20 @@ public class Searcher
         {
             if (board.FiftyRuleHalfClock >= 100 || repetition.IsThreeFold())
             {
+                // Console.WriteLine($"info string draw at ply {ply}");
                 return 0;
             }
 
             // Skip this position if a mating sequence has already been found earlier in the search, which would be shorter
             // than any mate we could find from here. This is done by observing that alpha can't possibly be worse
             // (and likewise beta can't  possibly be better) than being mated in the current position.
-            alpha = Math.Max(alpha, -Evaluation.CheckmateEval + ply);
-            beta = Math.Min(beta, Evaluation.CheckmateEval - ply);
-            if (alpha >= beta)
-            {
-                pLine.CMove = 0;
-                return alpha;
-            }
+            // alpha = Math.Max(alpha, -Evaluation.CheckmateEval + ply);
+            // beta = Math.Min(beta, Evaluation.CheckmateEval - ply);
+            // if (alpha >= beta)
+            // {
+            //     pLine.CMove = 0;
+            //     return alpha;
+            // }
         }
 
         // Try looking up the current position in the transposition table.
@@ -275,12 +281,14 @@ public class Searcher
                     }
                 }
 
+                // Console.WriteLine($"info string ttVal at ply {ply}");
                 return ttVal;
             }
         }
 
         if (depth == 0) // Return QSearch Evaluation
         {
+            // Console.WriteLine($"info string qSearch at ply {ply}");
             return QuiescenceSearch(alpha, beta);
         }
 
@@ -306,7 +314,8 @@ public class Searcher
 
         SEE.SEEPinData pinData = new();
         pinData.Calculate(board);
-        moves = moveOrder.GetOrderedList(ref moves, prevBestMove, inQSearch: false, ply, pinData);
+        int[] moveScores = new int[moves.Length];
+        moves = moveOrder.GetOrderedList(ref moves, prevBestMove, inQSearch: false, ply, pinData, moveScores);
 
         int evalType = TranspositionTable.UpperBound;
 
@@ -320,6 +329,10 @@ public class Searcher
         // Moves Loop
         for (int i = 0; i < moves.Length; i++)
         {
+            // if (isRoot) {
+                
+            // }
+
             bool isCapture = board.Squares[moves[i].targetSquare] != Piece.None;
 
             board.MakeMove(moves[i], inSearch: true);
@@ -331,17 +344,14 @@ public class Searcher
 
             int reduction = 0;
 
-            if (depth >= 3 && i >= 3)
+            // Late Move Reduction (LMR)
+            if (
+                depth >= Configuration.LMR_MinDepth && 
+                i >= (isPv ? Configuration.LMR_MinFullSearchedMoves : Configuration.LMR_MinFullSearchedMoves - 1) &&
+                !isCapture
+            )
             {
-                int moveScore = moveOrder.GetLastMoveScores()[i];
-                if (!isCapture)
-                {
-                    reduction = 1;
-                }
-                else if (moveScore >= MoveOrder.BadCaptureBaseScore && moveScore < MoveOrder.PromotionMoveScore)
-                {
-                    reduction = 1;
-                }
+                reduction = Configuration.LMR_Reductions[depth][i];
                 
                 if (isPv) {
                     --reduction;
@@ -351,7 +361,18 @@ public class Searcher
                     --reduction;
                 }
 
-                reduction = Math.Clamp(reduction, 0, depth - 2);
+                reduction = Math.Clamp(reduction, 0, depth - 1);
+            }
+
+            // SEE Reduction
+            if (
+                !isInCheck &&
+                moveScores[i] < MoveOrder.PromotionMoveScore &&
+                moveScores[i] >= MoveOrder.BadCaptureBaseScore
+            )
+            {
+                reduction += Configuration.SEE_BadCaptureReduction;
+                reduction = Math.Clamp(reduction, 0, depth - 1);
             }
 
             eval = -Search(depth - 1 - reduction, -alpha - 1, -alpha, ply + 1, ref line);
@@ -435,11 +456,12 @@ public class Searcher
 
         SEE.SEEPinData pinData = new();
         pinData.Calculate(board);
-        moves = moveOrder.GetOrderedList(ref moves, Move.NullMove, inQSearch: true, 0, pinData);
+        int[] moveScores = new int[moves.Length];
+        moves = moveOrder.GetOrderedList(ref moves, Move.NullMove, inQSearch: true, 0, pinData, moveScores);
 
         for (int i = 0; i < moves.Length; i++)
         {
-            int moveScore = moveOrder.GetLastMoveScores()[i];
+            // int moveScore = moveOrder.GetLastMoveScores()[i];
 
             board.MakeMove(moves[i], inSearch: true);
 

@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 public class MoveOrder
 {
     Board board;
-    int[] moveScores;
+    public int[] moveScores;
 
     public const int HashMoveScore = 2_097_152;
     public const int QueenPromotionCaptureBaseScore = GoodCaptureBaseScore + PromotionMoveScore;
@@ -37,9 +37,10 @@ public class MoveOrder
         KillerMoves = new Killers[MaxKillerPly];
     }
 
-    public Span<Move> GetOrderedList(ref Span<Move> moves, Move lastIteration, bool inQSearch, int ply, SEE.SEEPinData pinData)
+    public Span<Move> GetOrderedList(ref Span<Move> moves, Move lastIteration, bool inQSearch, int ply, SEE.SEEPinData pinData, int[] referenceScore)
     {
         // moveScores = new int[moves.Length];
+        moveScores = referenceScore;
         
         GetScores(moves, lastIteration, inQSearch, ply, pinData);
 

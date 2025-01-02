@@ -96,6 +96,8 @@ public class Bot
     }
     public void CancelAndWait()
     {
+        // Console.WriteLine($"info string {nameof(CancelAndWait)} called");
+
         if (!IsSearching())
         {
             return;
