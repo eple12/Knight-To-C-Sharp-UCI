@@ -1,4 +1,6 @@
 
+using System.Diagnostics.CodeAnalysis;
+
 public struct Move
 {
     // moveValue => Stores data (startSquare, targetSquare, moveFlag)
@@ -42,50 +44,58 @@ public struct Move
         }
     }
     
-    public static bool IsSame(Move m1, Move m2)
+    public Move(int startSquare, int targetSquare)
     {
+        moveValue = (ushort) startSquare;
+        moveValue |= (ushort) (targetSquare << 6);
+    }
+
+    public Move(int startSquare, int targetSquare, int moveFlag)
+    {
+        moveValue = (ushort) startSquare;
+        moveValue |= (ushort) (targetSquare << 6);
+        moveValue |= (ushort) (moveFlag << 12);
+    }
+
+    public Move(ushort _moveValue)
+    {
+        moveValue = _moveValue;
+    }
+
+    public static readonly string NullMoveString = "(none)";
+
+    public readonly string San => this.GetString();
+    
+    public static bool operator ==(Move m1, Move m2) {
         return m1.moveValue == m2.moveValue;
     }
-    public static bool IsNull(Move m)
-    {
-        return IsSame(m, NullMove);
-    }
-    public static void PrintMoveList(List<Move> moves)
-    {
-        Console.WriteLine($"Total {moves.Count}");
-        string s = "";
 
-        foreach (var item in moves)
+    public static bool operator !=(Move m1, Move m2) {
+        return m1.moveValue != m2.moveValue;
+    }
+
+    // To resolve compiler warnings. Not needed in the project.
+    public override bool Equals([NotNullWhen(true)] object? obj) {
+        return base.Equals(obj);
+    }
+    public override int GetHashCode() {
+        return base.GetHashCode();
+    }
+
+
+}
+
+public static class MoveHelper {
+    static Move NullMove => Move.NullMove;
+
+    public static bool IsNull(this Move m) {
+        return m == NullMove;
+    }
+
+    public static string GetString(this Move move) {
+        if (move.IsNull())
         {
-            // PrintMove(item);
-            s += MoveString(item) + ' ';
-        }
-        
-        Console.WriteLine(s);
-    }
-    public static void PrintMoveList(Move[] moves)
-    {
-        string s = "";
-
-        foreach (var item in moves)
-        {
-            // PrintMove(item);
-            s += MoveString(item) + ' ';
-        }
-        
-        Console.WriteLine(s);
-    }
-
-    public static void PrintMove(Move move)
-    {
-        Console.WriteLine(MoveString(move));
-    }
-
-    public static string MoveString(Move move)
-    {
-        if (IsSame(move, NullMove))
-        {
-            return NullMoveString;
+            return Move.NullMoveString;
         }
 
         string promotion = "";
@@ -109,47 +119,28 @@ public struct Move
                     break;
             }
         }
-        return $"{Square.Name(move.startSquare)}{Square.Name(move.targetSquare)}" + promotion;
-    }
-    public static Move FindMove(Move[] moves, string moveString)
-    {
-        if (moves.Length < 1)
-        {
-            return NullMove;
-        }
-
-        Move move = moves[0];
-
-        foreach (var m in moves)
-        {
-            if (MoveString(m) == moveString)
-            {
-                return m;
-            }
-        }
-
-        return move;
+        return $"{Square.Name(move.startSquare)}{Square.Name(move.targetSquare)}{promotion}";
     }
 
-    public Move(int startSquare, int targetSquare)
-    {
-        moveValue = (ushort) startSquare;
-        moveValue |= (ushort) (targetSquare << 6);
+    public static void Print(this Move m) {
+        Console.WriteLine($"Move {m.GetString()}");
     }
 
-    public Move(int startSquare, int targetSquare, int moveFlag)
-    {
-        moveValue = (ushort) startSquare;
-        moveValue |= (ushort) (targetSquare << 6);
-        moveValue |= (ushort) (moveFlag << 12);
+    public static void Print(this Move[] m) {
+        Console.WriteLine(string.Join(", ", m.Select(a => a.GetString())));
     }
 
-    public Move(ushort _moveValue)
-    {
-        moveValue = _moveValue;
+    public static void Print(this List<Move> m) {
+        m.ToArray().Print();
     }
 
-    public static readonly string NullMoveString = "(none)";
+    public static Move FindMove(this Move[] moves, Move m) {
+        return moves.FirstOrDefault(a => a == m, NullMove);
+    }
+
+    public static Move FindMove(this Move[] moves, string m) {
+        return moves.FirstOrDefault(a => a.San == m, NullMove);
+    }
 }
 
 // Move flags

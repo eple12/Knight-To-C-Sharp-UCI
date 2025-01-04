@@ -46,7 +46,7 @@ public class BookParser
                         if (idx % 2 == 0)
                         {
                             // Move string
-                            Move m = Move.FindMove(MainProcess.board.LegalMoves, token);
+                            Move m = MainProcess.board.LegalMoves.FindMove(token);
                             File.AppendAllText(TargetPath, $" {m.moveValue} ");
                         }
                         else

@@ -52,7 +52,7 @@ public static class Test
                 continue;
             }
 
-            Move.PrintMove(board.LegalMoves[i]);
+            board.LegalMoves[i].Print();
             Console.WriteLine(SEE.HasPositiveScore(board, board.LegalMoves[i], pinData));
         }
     }

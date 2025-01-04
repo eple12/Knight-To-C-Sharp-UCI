@@ -133,7 +133,7 @@ public class TranspositionTable
     {
         Console.WriteLine("###############");
         Entry e = entries[Index];
-        Console.WriteLine("key: " + e.key + " val: " + e.value + " move: " + Move.MoveString(e.move) + " index: " + Index + " depth " + e.depth + " type " + e.nodeType);
+        Console.WriteLine("key: " + e.key + " val: " + e.value + " move: " + e.move.San + " index: " + Index + " depth " + e.depth + " type " + e.nodeType);
         Console.WriteLine("###############");
     }
 

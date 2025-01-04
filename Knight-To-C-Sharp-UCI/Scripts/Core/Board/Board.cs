@@ -232,7 +232,7 @@ public class Board
             return;
         }
 
-        Move m = Move.FindMove(LegalMoves, move);
+        Move m = LegalMoves.FindMove(move);
 
         MakeMove(m);
         UpdateLegalMoves();
@@ -886,7 +886,7 @@ public class Board
         PrintLargeBoard();
         PrintCastlingData();
         Console.WriteLine($"Total {LegalMoves.Length}");
-        Move.PrintMoveList(LegalMoves);
+        LegalMoves.Print();
     }
 
     public void PrintCastlingData()

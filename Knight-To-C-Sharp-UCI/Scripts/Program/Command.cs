@@ -136,7 +136,7 @@ public static class Command
             break;
             case "booktest":
             {
-                Console.WriteLine(Move.MoveString(Book.GetRandomMove(MainProcess.board)));
+                Book.GetRandomMove(MainProcess.board).Print();
             }
             break;
             case "book":
@@ -176,7 +176,7 @@ public static class Command
             break;
             case "tt":
             {
-                Console.WriteLine("key: " + MainProcess.board.ZobristKey + " tt: " + MainProcess.engine.GetEngine().GetTT().LookupEvaluation(0, 0, 0, 0) + " move: " + Move.MoveString(MainProcess.engine.GetEngine().GetTT().GetStoredMove()) + " Index: " + MainProcess.engine.GetEngine().GetTT().Index);
+                Console.WriteLine("key: " + MainProcess.board.ZobristKey + " tt: " + MainProcess.engine.GetEngine().GetTT().LookupEvaluation(0, 0, 0, 0) + " move: " + MainProcess.engine.GetEngine().GetTT().GetStoredMove().San + " Index: " + MainProcess.engine.GetEngine().GetTT().Index);
             }
             break;
             case "ttprint":
@@ -491,7 +491,7 @@ public static class Command
         }
         for (int i = 0; i < bp.Moves.Count; i++)
         {
-            Console.WriteLine(Move.MoveString(bp.Moves[i]) + ' ' + bp.Num[i]);
+            Console.WriteLine(bp.Moves[i].San + ' ' + bp.Num[i]);
         }
     }
 }

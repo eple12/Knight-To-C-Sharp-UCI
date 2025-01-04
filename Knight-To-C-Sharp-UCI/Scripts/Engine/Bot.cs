@@ -74,7 +74,7 @@ public class Bot
         // Try to find this position in the Opening Book
         Move bookMove = Book.GetRandomMove(board);
 
-        if (!Move.IsNull(bookMove))
+        if (!bookMove.IsNull())
         {
             engine.SetBookMove(bookMove);
             ReportBestMove(bookMove);
@@ -125,7 +125,7 @@ public class Bot
 
     public void ReportBestMove(Move move)
     {
-        Console.WriteLine("bestmove " + Move.MoveString(move));
+        Console.WriteLine("bestmove " + move.San);
     }
 
 }

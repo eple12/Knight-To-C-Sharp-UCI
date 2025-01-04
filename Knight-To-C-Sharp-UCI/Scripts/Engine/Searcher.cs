@@ -191,13 +191,13 @@ public class Searcher
             string pvLine = string.Empty;
             if (BestPV.CMove <= 0)
             {
-                pvLine += Move.MoveString(bestMove) + ' ';
+                pvLine += bestMove.San + ' ';
             }
             else
             {
                 for (int i = 0; i < BestPV.CMove; i++)
                 {
-                    pvLine += Move.MoveString(BestPV.ArgMoves[i]) + ' ';
+                    pvLine += BestPV.ArgMoves[i].San + ' ';
                 }
             }
 
@@ -273,15 +273,6 @@ public class Searcher
             if (ttVal != TranspositionTable.lookupFailed)
             {
                 ttMove = tt.GetStoredMove();
-                if (ply == 0) // Use the move stored in TT
-                {
-                    if (ttMove.moveValue != Move.NullMove.moveValue)
-                    {
-                        bestMove = ttMove;
-                        bestEval = ttVal;
-                    }
-                }
-
                 // Console.WriteLine($"info string ttVal at ply {ply}");
                 return ttVal;
             }

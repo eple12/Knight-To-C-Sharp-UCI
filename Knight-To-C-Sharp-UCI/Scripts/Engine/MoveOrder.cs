@@ -62,7 +62,7 @@ public class MoveOrder
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     int ScoreMove(Move move, Move hash, bool inQSearch, int ply, SEE.SEEPinData pinData)
     {
-        if (Move.IsSame(move, hash))
+        if (move == hash)
         {
             return HashMoveScore;
         }
@@ -149,14 +149,14 @@ public class MoveOrder
 
 		public void Add(Move move)
 		{
-			if (!Move.IsSame(move, moveA))
+			if (move != moveA)
 			{
 				moveB = moveA;
 				moveA = move;
 			}
 		}
 
-		public bool Match(Move move) => Move.IsSame(move, moveA) || Move.IsSame(move, moveB);
+		public bool Match(Move move) => move == moveA || move == moveB;
 
 	}
 

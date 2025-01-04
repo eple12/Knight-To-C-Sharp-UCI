@@ -86,7 +86,7 @@ public static class PerftHelper
 
             if (plyFromRoot == 0 && print)
             {
-                Move.PrintMove(move);
+                move.Print();
                 Console.WriteLine($"Nodes: {n}");
             }
         }
@@ -126,7 +126,7 @@ public static class PerftHelper
 
             if (plyFromRoot == 0 && print)
             {
-                Move.PrintMove(move);
+                move.Print();
                 Console.WriteLine($"Nodes: {n}");
             }
         }
