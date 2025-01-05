@@ -1,6 +1,8 @@
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 
 public class PvTable {
+    // Indexes[ply] => Starting Index
     public static readonly ImmutableArray<int> Indexes = Initialize();
 
     private static ImmutableArray<int> Initialize()
@@ -23,7 +25,39 @@ public class PvTable {
 
     public Move[] Pv = new Move[PvTableSize];
 
-    
+    public Move this[int index] {
+        get {
+            return Pv[index];
+        }
+        set {
+            Pv[index] = value;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ClearFrom(int index) {
+        Array.Clear(Pv, index, PvTableSize - index);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void CopyFrom(int target, int source, int length) {
+        if (Pv[source].IsNull()) {
+            ClearFrom(target);
+            return;
+        }
+
+        Array.Copy(Pv, source, Pv, target, length);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ClearAll() {
+        Array.Clear(Pv);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public string GetRootString() {
+        return string.Join(' ', Pv[..Indexes[1]].Where(a => a != Move.NullMove).Select(a => a.San));
+    }
 }
 
 // Pv Line length at ply

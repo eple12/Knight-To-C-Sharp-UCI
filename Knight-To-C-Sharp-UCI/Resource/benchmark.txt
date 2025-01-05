@@ -48,3 +48,6 @@ My BOT: Qsearch 512629 times
 distant opposition, deep thinking
 
 // 10809052421590594767 mated.
+
+// 4q2r/4k3/1p1pbp2/p3p3/P1PpPpP1/RN1P1Pb1/1PQ1R1Br/5K2 b - - 68 76
+// current mating problem.
