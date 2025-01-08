@@ -58,6 +58,11 @@ public class PvTable {
     public string GetRootString() {
         return string.Join(' ', Pv[..Indexes[1]].Where(a => a != Move.NullMove).Select(a => a.San));
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ClearExceptRoot() {
+        ClearFrom(Indexes[1]);
+    }
 }
 
 // Pv Line length at ply

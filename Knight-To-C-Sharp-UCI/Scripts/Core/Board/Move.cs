@@ -1,5 +1,6 @@
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 public struct Move
 {
@@ -15,6 +16,12 @@ public struct Move
         get
         {
             return new Move(0);
+        }
+    }
+
+    public int SquareRepresentation {
+        get {
+            return moveValue & (startSquareMask | targetSquareMask);
         }
     }
 
@@ -140,6 +147,14 @@ public static class MoveHelper {
 
     public static Move FindMove(this Move[] moves, string m) {
         return moves.FirstOrDefault(a => a.San == m, NullMove);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Move OnlySquares(string s) {
+        int startSquare = Square.Index(s[0..2]);
+        int targetSquare = Square.Index(s[2..4]);
+
+        return new Move(startSquare, targetSquare);
     }
 }
 

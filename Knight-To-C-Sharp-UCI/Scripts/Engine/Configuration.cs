@@ -4,6 +4,7 @@ public static class Configuration
     public const int MaxDepth = 100;
 
     // Aspiration Windows
+    public const bool UseAspirationWindows = true;
     public const int AspirationWindowMinDepth = 8;
     public const int AspirationWindowBase = 20;
 

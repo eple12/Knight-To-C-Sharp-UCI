@@ -12,6 +12,7 @@ public class Searcher
     // EngineSettings settings;
     Evaluation evaluation;
     Repetition repetition;
+    StackDebugger stackDebugger;
 
     // Search Info
     Move bestMove;
@@ -57,6 +58,10 @@ public class Searcher
         Task.Factory.StartNew(SearchThread, TaskCreationOptions.LongRunning);
 
         searchTimeTimer = new();
+        stackDebugger = new();
+
+        // stackDebugger.TurnPushingOn();
+        // stackDebugger.Add("h2h1 g2h1 h8h1 f1g2 e8h8 b3a5");
     }
 
     // Set the best move to the book move that has been already found
@@ -127,7 +132,7 @@ public class Searcher
         // Iterative Deepening
         for (int depth = 1; depth <= maxDepth; depth++)
         {
-            if (depth < Configuration.AspirationWindowMinDepth || lastSearchEval == Infinity.NegativeInfinity)
+            if (!Configuration.UseAspirationWindows || depth < Configuration.AspirationWindowMinDepth || lastSearchEval == Infinity.NegativeInfinity)
             {
                 Search(depth, alpha, beta, 0);
             }
@@ -144,15 +149,19 @@ public class Searcher
                 alpha = Math.Max(Infinity.NegativeInfinity, lastSearchEval - window);
                 beta = Math.Min(Infinity.PositiveInfinity, lastSearchEval + window);
 
+                int numAspirations = 0;
+
                 while (true) // Gradient Widening
                 {
                     if (cancellationRequested)
                     {
                         break;
                     }
+                    ++numAspirations;
 
                     int eval = Search(depth - failHighReduction, alpha, beta, 0);
 
+                    // Console.WriteLine($"info string AspirationWindows {numAspirations}: Alpha {alpha} Beta {beta} Eval {eval}");
                     window += window >> 1; // Adds window / 2
 
                     if (alpha >= eval) // Fail Low
@@ -209,7 +218,7 @@ public class Searcher
 
             Console.WriteLine($"info depth {depth} score {(!isMate ? $"cp {bestEval}" : $"mate {(bestEval > 0 ? (matePly + 1) / 2 : -matePly / 2)}")} nodes {numNodeSearched} nps {numNodeSearched * 1000 / (ulong) (searchTimeTimer.ElapsedMilliseconds != 0 ? searchTimeTimer.ElapsedMilliseconds : 1)} time {searchTimeTimer.ElapsedMilliseconds} pv {pvLine} multipv 1");
 
-            pvTable.ClearAll();
+            pvTable.ClearExceptRoot();
             
             if (cancellationRequested)
             {
@@ -229,7 +238,10 @@ public class Searcher
     int Search(int depth, int alpha, int beta, int ply)
     {
         // bool debug = board.ZobristKey == 10809052421590594767;
-        // if (board.ZobristKey == 3698178750396369094 && depth >= 4) {
+        // if (board.ZobristKey == 16347277687336207627) { // Right before Qh8
+
+        // }
+        // if (board.ZobristKey == 3698178750396369094) {
 
         // }
         // if (board.ZobristKey == 10529439860043044384 && depth >= 2) {
@@ -242,12 +254,9 @@ public class Searcher
         if (ply >= Configuration.MaxDepth - 1) {
             return evaluation.Evaluate();
         }
-
-        // PvLine line = new();
-
+        
         if (cancellationRequested) // Return if the search is cancelled
         {
-            // Console.WriteLine($"info string cancellation at ply {ply}");
             return 0;
         }
 
@@ -263,7 +272,6 @@ public class Searcher
         {
             if (board.FiftyRuleHalfClock >= 100 || repetition.IsThreeFold())
             {
-                // Console.WriteLine($"info string draw at ply {ply}");
                 pvTable.ClearFrom(nextPvIndex);
                 return 0;
             }
@@ -275,7 +283,7 @@ public class Searcher
             // beta = Math.Min(beta, Evaluation.CheckmateEval - ply);
             // if (alpha >= beta)
             // {
-            //     pLine.CMove = 0;
+            //     pvTable.ClearFrom(nextPvIndex);
             //     return alpha;
             // }
         }
@@ -290,7 +298,6 @@ public class Searcher
             if (ttVal != TranspositionTable.lookupFailed)
             {
                 ttMove = tt.GetStoredMove();
-                // Console.WriteLine($"info string ttVal at ply {ply}");
 
                 if (!isPv) {
                     return ttVal;
@@ -300,11 +307,8 @@ public class Searcher
 
         if (depth == 0) // Return QSearch Evaluation
         {
-            // Console.WriteLine($"info string qSearch at ply {ply}");
             return QuiescenceSearch(alpha, beta);
         }
-
-        // bool isPv = beta - alpha > 1;
 
         Span<Move> moves = stackalloc Move[256];
         MoveGen.GenerateMoves(ref moves, genOnlyCaptures: false);
@@ -314,13 +318,9 @@ public class Searcher
         if (mateState != MateChecker.MateState.None)
         {
             pvTable.ClearFrom(nextPvIndex);
-            // pLine.CMove = 0;
 
             if (mateState == MateChecker.MateState.Checkmate)
             {
-                if (isPv) {
-                    
-                }
                 return -Evaluation.CheckmateEval + ply;
             }
             
@@ -349,11 +349,14 @@ public class Searcher
         {
             bool isCapture = board.Squares[moves[i].targetSquare] != Piece.None;
 
+            // if (stackDebugger.Push(moves[i])) {
+
+            // }
+            
             board.MakeMove(moves[i], inSearch: true);
 
             repetition.Push();
 
-            // Late Move Reduction
             int eval = 0;
 
             int reduction = 0;
@@ -403,9 +406,8 @@ public class Searcher
             repetition.Pop();
 
             board.UnmakeMove(moves[i]);
-            
-            // if (debug) {
-            //     Console.WriteLine($"Debug position at depth {depth}: Move {Move.MoveString(moves[i])} => a {alpha} b {beta} eval {eval}");
+            // if (stackDebugger.Pop()) {
+
             // }
 
             if (cancellationRequested)
@@ -439,9 +441,6 @@ public class Searcher
                 bestMoveInThisPosition = moves[i];
                 evalType = TranspositionTable.Exact;
 
-                // pLine.ArgMoves[0] = moves[i];
-                // Array.Copy(line.ArgMoves, 0, pLine.ArgMoves, 1, line.CMove);
-                // pLine.CMove = line.CMove + 1;
                 if (isPv) {
                     pvTable[pvIndex] = moves[i];
                     pvTable.CopyFrom(pvIndex + 1, nextPvIndex, Configuration.MaxDepth - ply - 1);
@@ -449,7 +448,6 @@ public class Searcher
                 
                 if (isRoot)
                 {
-                    // Console.WriteLine($"Root Alpha Update: {moves[i].San}");
                     bestMove = moves[i];
                     bestEval = eval;
                 }
@@ -485,8 +483,6 @@ public class Searcher
 
         for (int i = 0; i < moves.Length; i++)
         {
-            // int moveScore = moveOrder.GetLastMoveScores()[i];
-
             board.MakeMove(moves[i], inSearch: true);
 
             eval = -QuiescenceSearch(-beta, -alpha);
