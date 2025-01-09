@@ -10,11 +10,6 @@ public static class Book
 
     public static void GenerateTable()
     {
-        // System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-        // sw.Start();
-
-        
-
         foreach (string line in File.ReadLines(DIR + PATH))
         {
             List<Move> moves = new List<Move>();
@@ -36,9 +31,6 @@ public static class Book
 
             OpeningBook[key] = new BookPosition(moves, nums);
         }
-
-        // sw.Stop();
-        // Console.WriteLine(sw.ElapsedMilliseconds);
     }
 
     public static BookPosition TryToGetBookPosition(ulong key)

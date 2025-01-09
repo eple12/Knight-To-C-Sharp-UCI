@@ -1,7 +1,5 @@
 public class TranspositionTable
 {
-    // Credit: Sebastian Lague
-
     public const int lookupFailed = int.MinValue;
 
     // The value for this position is the exact evaluation
@@ -42,7 +40,6 @@ public class TranspositionTable
         }
     }
 
-    // There might be a collision (Zobrist key), I have to check if the move is legal
     public Move GetStoredMove ()
     {
         return entries[Index].key == board.ZobristKey ? entries[Index].move : Move.NullMove;
@@ -68,13 +65,11 @@ public class TranspositionTable
                 {
                     return correctedScore;
                 }
-                // We have stored the upper bound of the eval for this position. If it's less than alpha then we don't need to
-                // search the moves in this position as they won't interest us; otherwise we will have to search to find the exact value
+
                 if (entry.nodeType == Beta && correctedScore >= beta)
                 {
                     return correctedScore;
                 }
-                // We have stored the lower bound of the eval for this position. Only return if it causes a beta cut-off.
                 if (entry.nodeType == Alpha && correctedScore <= alpha)
                 {
                     return correctedScore;

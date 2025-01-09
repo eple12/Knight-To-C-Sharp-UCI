@@ -39,12 +39,10 @@ public class MoveOrder
 
     public Span<Move> GetOrderedList(ref Span<Move> moves, Move lastIteration, bool inQSearch, int ply, SEE.SEEPinData pinData, int[] referenceScore)
     {
-        // moveScores = new int[moves.Length];
         moveScores = referenceScore;
         
         GetScores(moves, lastIteration, inQSearch, ply, pinData);
 
-        // SortMoves(moves);
         Quicksort(ref moves, moveScores, 0, moves.Length - 1);
 
         return moves;

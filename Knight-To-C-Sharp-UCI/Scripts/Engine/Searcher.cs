@@ -1,4 +1,3 @@
-
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -199,6 +198,9 @@ public class Searcher
 
             bool isMate = evaluation.IsMateScore(bestEval);
             int matePly = isMate ? evaluation.MateInPly(bestEval) : 0;
+            
+            pvTable.ClearExceptRoot();
+            pvTable[0] = bestMove;
 
             // PV Line
             string pvLine = pvTable.GetRootString();
@@ -218,8 +220,6 @@ public class Searcher
 
             Console.WriteLine($"info depth {depth} score {(!isMate ? $"cp {bestEval}" : $"mate {(bestEval > 0 ? (matePly + 1) / 2 : -matePly / 2)}")} nodes {numNodeSearched} nps {numNodeSearched * 1000 / (ulong) (searchTimeTimer.ElapsedMilliseconds != 0 ? searchTimeTimer.ElapsedMilliseconds : 1)} time {searchTimeTimer.ElapsedMilliseconds} pv {pvLine} multipv 1");
 
-            pvTable.ClearExceptRoot();
-            pvTable[0] = bestMove;
             
             if (cancellationRequested)
             {
@@ -238,17 +238,6 @@ public class Searcher
     // Main NegaMax Search Function
     int Search(int depth, int alpha, int beta, int ply)
     {
-        // bool debug = board.ZobristKey == 10809052421590594767;
-        // if (board.ZobristKey == 16347277687336207627) { // Right before Qh8
-
-        // }
-        // if (board.ZobristKey == 3698178750396369094) {
-
-        // }
-        // if (board.ZobristKey == 10529439860043044384 && depth >= 2) {
-            
-        // }
-
         numNodeSearched++;
 
         // Reached the max depth
@@ -276,17 +265,6 @@ public class Searcher
                 pvTable.ClearFrom(nextPvIndex);
                 return 0;
             }
-
-            // Skip this position if a mating sequence has already been found earlier in the search, which would be shorter
-            // than any mate we could find from here. This is done by observing that alpha can't possibly be worse
-            // (and likewise beta can't  possibly be better) than being mated in the current position.
-            // alpha = Math.Max(alpha, -Evaluation.CheckmateEval + ply);
-            // beta = Math.Min(beta, Evaluation.CheckmateEval - ply);
-            // if (alpha >= beta)
-            // {
-            //     pvTable.ClearFrom(nextPvIndex);
-            //     return alpha;
-            // }
         }
 
         // Try looking up the current position in the transposition table.
@@ -350,10 +328,6 @@ public class Searcher
         {
             bool isCapture = board.Squares[moves[i].targetSquare] != Piece.None;
 
-            // if (stackDebugger.Push(moves[i])) {
-
-            // }
-            
             board.MakeMove(moves[i], inSearch: true);
 
             repetition.Push();
@@ -407,9 +381,6 @@ public class Searcher
             repetition.Pop();
 
             board.UnmakeMove(moves[i]);
-            // if (stackDebugger.Pop()) {
-
-            // }
 
             if (cancellationRequested)
             {
@@ -532,10 +503,7 @@ public class Searcher
     {
         return board;
     }
-    // public EngineSettings GetSettings()
-    // {
-    //     return settings;
-    // }
+    
     public Evaluation GetEvaluation()
     {
         return evaluation;
@@ -562,20 +530,6 @@ public class Searcher
             {
                 StartSearch(searchRequestInfo.MaxDepth, searchRequestInfo.OnSearchComplete);
             }
-        }
-    }
-
-    struct PvLine
-    {
-        public const int MaxPvMoves = 100;
-
-        public int CMove;
-        public Move[] ArgMoves;
-
-        public PvLine()
-        {
-            CMove = 0;
-            ArgMoves = new Move[MaxPvMoves];
         }
     }
 

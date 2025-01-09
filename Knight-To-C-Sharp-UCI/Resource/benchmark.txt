@@ -51,3 +51,18 @@ distant opposition, deep thinking
 
 // 4q2r/4k3/1p1pbp2/p3p3/P1PpPpP1/RN1P1Pb1/1PQ1R1Br/5K2 b - - 68 76
 // current mating problem.
+
+From: Sebastian Lague's CodingAdventureBot
+
+// Skip this position if a mating sequence has already been found earlier in the search, which would be shorter
+// than any mate we could find from here. This is done by observing that alpha can't possibly be worse
+// (and likewise beta can't  possibly be better) than being mated in the current position.
+// alpha = Math.Max(alpha, -Evaluation.CheckmateEval + ply);
+// beta = Math.Min(beta, Evaluation.CheckmateEval - ply);
+// if (alpha >= beta)
+// {
+//     pvTable.ClearFrom(nextPvIndex);
+//     return alpha;
+// }
+
+// ^^^ if !isRoot, at the head of the NegaMax
