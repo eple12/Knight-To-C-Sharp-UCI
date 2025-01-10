@@ -1,31 +1,31 @@
-using System.IO;
+using PS = ProgramSettings;
 
 public static class Book
 {
-    public static readonly string DIR = "C:\\Users\\user\\Desktop\\WorkSpace\\Knight-To-C-Sharp-UCI\\Knight-To-C-Sharp-UCI";
-    public static readonly string PATH = "\\Resource\\Book\\book.txt";
-    public static Dictionary<ulong, BookPosition> OpeningBook = new Dictionary<ulong, BookPosition>();
+    static readonly string BookPath = Path.Combine(PS.Directory, PS.BookPath);
 
-    static Random RatioRandom = new Random();
+    public static Dictionary<ulong, BookPosition> OpeningBook = new();
+
+    static Random RatioRandom = new();
 
     public static void GenerateTable()
     {
-        foreach (string line in File.ReadLines(DIR + PATH))
+        foreach (string line in File.ReadLines(BookPath))
         {
             List<Move> moves = new List<Move>();
             List<int> nums = new List<int>();
             string[] split = line.Split(' ');
             ulong key = ulong.Parse(split[0]);
-            
-            for (int i = 0; i < split.Length - 1; i++)
+
+            for (int i = 1; i < split.Length; i++)
             {
-                if (i % 2 == 0)
+                if (i % 2 == 1)
                 {
-                    moves.Add(new Move(ushort.Parse(split[i + 1])));
+                    moves.Add(new Move(ushort.Parse(split[i])));
                 }
                 else
                 {
-                    nums.Add(int.Parse(split[i + 1]));
+                    nums.Add(int.Parse(split[i]));
                 }
             }
 
@@ -55,9 +55,7 @@ public static class Book
         if (OpeningBook.ContainsKey(board.ZobristKey))
         {
             BookPosition bookPosition = OpeningBook[board.ZobristKey];
-            Move m = GetRandomRatio(bookPosition.Moves, bookPosition.Num);
-            
-            return m;
+            return GetRandomRatio(bookPosition.Moves, bookPosition.Num);
         }
         else
         {
@@ -72,12 +70,8 @@ public static class Book
             return Move.NullMove;
         }
 
-        int total = 0;
-        foreach (int ratio in ratios)
-        {
-            total += ratio;
-        }
-        
+        int total = ratios.Sum();
+
         // Random value between 0 and total value
         int randomNumber = RatioRandom.Next(0, total);
 
@@ -92,7 +86,7 @@ public static class Book
         }
 
         // Failsafe
-        return options[options.Count - 1];
+        return options[^1];
     }
 }
 

@@ -116,8 +116,7 @@ public static class Command
             break;
             case "parsebook":
             {
-                BookParser parser = new BookParser();
-                parser.Parse();
+                BookParser.Parse();
             }
             break;
             case "dir":

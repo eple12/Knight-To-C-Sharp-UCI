@@ -1,16 +1,16 @@
-using System.IO;
+using PS = ProgramSettings;
 
-public class BookParser
+public static class BookParser
 {
-    readonly string SourcePath = "C:\\Users\\user\\Desktop\\WorkSpace\\Knight-To-C-Sharp-UCI\\Knight-To-C-Sharp-UCI\\Resource\\Book\\games.txt";
-    readonly string TargetPath = "C:\\Users\\user\\Desktop\\WorkSpace\\Knight-To-C-Sharp-UCI\\Knight-To-C-Sharp-UCI\\Resource\\Book\\book.txt";
+    static string SourcePath => Path.Combine(PS.Directory, PS.BookSource);
+    static string TargetPath => Path.Combine(PS.Directory, PS.BookPath);
 
-    public BookParser()
+    static BookParser()
     {
-
+        
     }
 
-    public void Parse()
+    public static void Parse()
     {
         if (File.Exists(SourcePath) && File.Exists(TargetPath))
         {
@@ -18,18 +18,7 @@ public class BookParser
             foreach (string line in File.ReadLines(SourcePath))
             {
                 i++;
-                // if (line.Contains("pos"))
-                // {
-                //     string fen = line.Substring(4);
-                //     MainProcess.board.LoadPositionFromFen(fen);
-                //     ulong key = Zobrist.GetZobristKey(MainProcess.board);
 
-                //     File.AppendAllText(TargetPath, $"key {key}\n");
-                // }
-                // else if (!string.IsNullOrEmpty(line))
-                // {
-                //     File.AppendAllText(TargetPath, $"{line}\n");
-                // }
                 if (!string.IsNullOrEmpty(line))
                 {
                     int movesIndex = line.IndexOf("moves");
@@ -43,15 +32,14 @@ public class BookParser
                     for (int idx = 0; idx < tokens.Length - tokenMoveIndex - 1; idx++)
                     {
                         string token = tokens[idx + tokenMoveIndex + 1];
-                        if (idx % 2 == 0)
+
+                        if (idx % 2 == 0) // Move string
                         {
-                            // Move string
                             Move m = MainProcess.board.LegalMoves.FindMove(token);
                             File.AppendAllText(TargetPath, $" {m.moveValue} ");
                         }
-                        else
+                        else // Weight of this move
                         {
-                            // num
                             File.AppendAllText(TargetPath, token);
                         }
                     }
