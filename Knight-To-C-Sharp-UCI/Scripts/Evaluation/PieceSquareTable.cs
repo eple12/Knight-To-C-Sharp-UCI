@@ -109,7 +109,7 @@ public static class PieceSquareTable
 	// VERIFIED
     public static int Read(int[] table, int square, bool white)
     {
-        return table[white ? SquareUtils.FlipIndex(square) : square];
+        return table[white ? square.FlipRank() : square];
     }
 
 	

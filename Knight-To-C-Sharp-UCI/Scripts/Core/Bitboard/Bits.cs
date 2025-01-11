@@ -3,12 +3,12 @@ public static class Bits
     public static ulong Full = ulong.MaxValue;
 
     // Board Representation Bitboards
-    public static ulong Rank1 = 0xFF;
-    public static ulong Rank8 = Rank1 << 56;
-    public static ulong FileA = 0x0101010101010101;
-    public static ulong FileH = FileA << 7;
-    public static ulong NotFileA = ulong.MaxValue ^ FileA;
-    public static ulong NotFileH = ulong.MaxValue ^ FileH;
+    public const ulong Rank1 = 0xFF;
+    public const ulong Rank8 = Rank1 << 56;
+    public const ulong FileA = 0x0101010101010101;
+    public const ulong FileH = FileA << 7;
+    public const ulong NotFileA = ulong.MaxValue ^ FileA;
+    public const ulong NotFileH = ulong.MaxValue ^ FileH;
 
     public static ulong[] RankMask;
 
@@ -25,7 +25,7 @@ public static class Bits
     public static ulong LightSquares;
     public static ulong DarkSquares;
 
-    public static ulong AllEdge;
+    public static readonly ulong AllEdge;
     public static ulong[,] LineBitboards;
     public static ulong[,] BetweenBitboards;
 
@@ -61,9 +61,6 @@ public static class Bits
         {
             WhiteForwardMask[i] = Full << 8 * (i + 1);
             BlackForwardMask[i] = Full >> 8 * (8 - i);
-
-            // Bitboard.Print(WhiteForwardMask[i]);
-            // Bitboard.Print(BlackForwardMask[i]);
         }
 
         WhitePassedPawnMask = new ulong[64];

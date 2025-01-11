@@ -1,23 +1,23 @@
 public static class PieceUtils
 {
     // Piece type
-    public static readonly int None = 0;
-    public static readonly int Pawn = 1;
-    public static readonly int Knight = 2;
-    public static readonly int Bishop = 3;
-    public static readonly int Rook = 4;
-    public static readonly int Queen = 5;
-    public static readonly int King = 6;
+    public const int None = 0;
+    public const int Pawn = 1;
+    public const int Knight = 2;
+    public const int Bishop = 3;
+    public const int Rook = 4;
+    public const int Queen = 5;
+    public const int King = 6;
 
     // Piece color
-    public static readonly int White = 8;
-    public static readonly int Black = 16;
+    public const int White = 8;
+    public const int Black = 16;
 
     // Masks
-    static readonly int typeMask = 0b00111;
-    static readonly int colorMask = 0b11000;
+    const int typeMask = 0b00111;
+    const int colorMask = 0b11000;
 
-    public static Dictionary<char, int> charToPiece = new Dictionary<char, int>()
+    public static Dictionary<char, Piece> charToPiece = new()
     {
         {'P', White | Pawn}, {'N', White | Knight}, {'B', White | Bishop}, 
         {'R', White | Rook}, {'Q', White | Queen}, {'K', White | King}, 
@@ -27,27 +27,40 @@ public static class PieceUtils
     };
 
     public static string PieceIndexToChar = "PNBRQKpnbrqkWB ";
+
+    [Inline]
+    public static int Color(this Piece piece) {
+        return piece & colorMask;
+    }
+    [Inline]
+    public static bool IsWhite(this Piece piece) {
+        return IsWhitePiece(piece);
+    }
+    [Inline]
+    public static int Type(this Piece piece) {
+        return GetType(piece);
+    }
     
     [Inline]
-    public static bool IsColor(int piece, int color)
+    public static bool IsColor(Piece piece, int color)
     {
         return (piece & colorMask) == color;
     }
 
     [Inline]
-    public static bool IsWhitePiece(int piece)
+    public static bool IsWhitePiece(Piece piece)
     {
         return IsColor(piece, White);
     }
 
     [Inline]
-    public static int GetType(int piece)
+    public static int GetType(Piece piece)
     {
         return piece & typeMask;
     }
 
     [Inline]
-    public static int GetPieceIndex(int piece)
+    public static PieceIndexer GetPieceIndex(Piece piece)
     {
         if (piece == None)
         {
@@ -58,21 +71,21 @@ public static class PieceUtils
     }
 
     [Inline]
-    public static bool IsDiagonalPiece(int piece)
+    public static bool IsDiagonalPiece(Piece piece)
     {
         int type = GetType(piece);
         return type == Bishop || type == Queen;
     }
 
     [Inline]
-    public static bool IsStraightPiece(int piece)
+    public static bool IsStraightPiece(Piece piece)
     {
         int type = GetType(piece);
         return type == Rook || type == Queen;
     }
 
     [Inline]
-    public static char PieceToChar(int piece)
+    public static char PieceToChar(Piece piece)
     {
         return PieceIndexToChar[GetPieceIndex(piece)];
     }
@@ -106,31 +119,6 @@ public struct PieceIndex
     public const int Queen = 4;
     public const int King = 5;
 
-    static readonly string[] names = { 
-        "WhitePawn", "WhiteKnight", "WhiteBishop", "WhiteRook", "WhiteQueen", "WhiteKing",
-        "BlackPawn", "BlackKnight", "BlackBishop", "BlackRook", "BlackQueen", "BlackKing", 
-        "WhiteAll", "BlackAll"
-    };
-
-    [Inline]
-    public static bool IsWhite(int index)
-    {
-        return index < Black;
-    }
-
-    [Inline]
-    public static string ToString(int index)
-    {
-        if (index >= WhitePawn && index <= BlackAll)
-        {
-            return names[index];
-        }
-        else
-        {
-            return "Invalid";
-        }
-    }
-    
     [Inline]
     public static int MakePawn(bool white)
     {
@@ -165,5 +153,31 @@ public struct PieceIndex
     public static int MakeAll(bool white)
     {
         return white ? WhiteAll : BlackAll;
+    }
+}
+
+public static class PieceIndexerUtils {
+    static readonly string[] names = { 
+        "WhitePawn", "WhiteKnight", "WhiteBishop", "WhiteRook", "WhiteQueen", "WhiteKing",
+        "BlackPawn", "BlackKnight", "BlackBishop", "BlackRook", "BlackQueen", "BlackKing", 
+        "WhiteAll", "BlackAll"
+    };
+
+    [Inline]
+    public static string ToString(this PieceIndexer index) {
+        if (index >= PieceIndex.WhitePawn && index <= PieceIndex.BlackAll)
+        {
+            return names[index];
+        }
+        else
+        {
+            return "Invalid";
+        }
+    }
+
+    [Inline]
+    public static bool IsWhiteIndex(this PieceIndexer index)
+    {
+        return index < PieceIndex.Black;
     }
 }

@@ -9,35 +9,50 @@ public static class SquareUtils
 
     public static int Index(string name)
     {
-        return FileNumber[name[0]] + ((int)Char.GetNumericValue(name[1]) - 1) * 8;
+        return FileNumber[name[0]] + ((int) char.GetNumericValue(name[1]) - 1) * 8;
     }
-    public static string Name(int square)
+    public static string Name(Square square)
     {
-        return Files[square % 8] + Convert.ToString((square / 8) + 1);
+        return Files[square.File()] + Convert.ToString(square.Rank() + 1);
     }
-    public static int Index(int file, int rank)
+
+    [Inline]
+    public static Square Index(int file, int rank)
     {
         return file + rank * 8;
     }
-
+    [Inline]
+    public static int File(this Square square) {
+        return square & 7;
+    }
+    [Inline]
+    public static int Rank(this Square square) {
+        return square >> 3;
+    }
+    
+    [Inline]
     public static bool IsLightSquare(this Square square)
     {
         return ((1ul << square) & Bits.LightSquares) != 0;
     }
 
-    public static int FlipIndex(int square)
+    [Inline]
+    public static Square FlipRank(this Square square)
     {
-        return (square % 8) + (7 - square / 8) * 8;
+        return Index(square.File(), 7 - square.Rank());
     }
 
+    [Inline]
     public static bool IsValidSquare(int file, int rank)
     {
         if (file >= 0 && file < 8 && rank >= 0 && rank < 8)
         {
             return true;
         }
+
         return false;
     }
+
     public static bool IsValidSquareExceptOutline(int square)
     {
         int file = square % 8;
@@ -61,7 +76,7 @@ public static class SquareUtils
 
         return enpFile + (!isWhiteTurn ? 16 : 40);
     }
-    public static int EnpassantAvailablePawnIndex(int enpFile, bool isWhiteTurn)
+    public static int EnpassantStartMid(int enpFile, bool isWhiteTurn)
     {
         if (enpFile == 8)
         {
@@ -70,7 +85,7 @@ public static class SquareUtils
 
         return enpFile + (!isWhiteTurn ? 24 : 32);
     }
-    public static bool IsValidEnpassantFile(int enpFile, Board board)
+    public static bool IsEnpassantPossible(int enpFile, Board board)
     {
         if (enpFile == 8)
         {
@@ -78,7 +93,7 @@ public static class SquareUtils
         }
 
         // Get opponent's possible enpassant pawn square
-        int enpSquare = EnpassantAvailablePawnIndex(enpFile, !board.Turn);
+        int enpSquare = EnpassantStartMid(enpFile, !board.Turn);
 
         // There's a pawn on the left
         if (enpFile > 0)
@@ -88,6 +103,7 @@ public static class SquareUtils
                 return true;
             }
         }
+
         // There's a pawn on the right
         if (enpFile < 7)
         {

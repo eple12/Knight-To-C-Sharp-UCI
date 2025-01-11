@@ -65,7 +65,7 @@ public static class MateChecker
             }
             if (wn == 0 && bn == 0 && wb.Count == 1 && bb.Count == 1)
             {
-                if (((wb[0] % 8) + (wb[0] / 8)) % 2 == ((bb[0] % 8) + (bb[0] / 8)) % 2)
+                if (wb[0].IsLightSquare() == bb[0].IsLightSquare())
                 {
                     return true;
                 }

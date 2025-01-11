@@ -12,7 +12,7 @@ public class BitboardSet
     public void Add(int pieceIndex, int square)
     {
         bitboards[pieceIndex] = bitboards[pieceIndex].Add(square);
-        int allIndex = PieceIndex.IsWhite(pieceIndex) ? PieceIndex.WhiteAll : PieceIndex.BlackAll;
+        int allIndex = pieceIndex.IsWhiteIndex() ? PieceIndex.WhiteAll : PieceIndex.BlackAll;
         bitboards[allIndex] = bitboards[allIndex].Add(square);
     }
 
@@ -25,7 +25,7 @@ public class BitboardSet
     public void Remove(int pieceIndex, int square)
     {
         bitboards[pieceIndex] = bitboards[pieceIndex].Remove(square);
-        int allIndex = PieceIndex.IsWhite(pieceIndex) ? PieceIndex.WhiteAll : PieceIndex.BlackAll;
+        int allIndex = pieceIndex.IsWhiteIndex() ? PieceIndex.WhiteAll : PieceIndex.BlackAll;
         bitboards[allIndex] = bitboards[allIndex].Remove(square);
     }
 
@@ -33,7 +33,7 @@ public class BitboardSet
     {
         for (int i = 0; i < 14; i++)
         {
-            Console.WriteLine("Bitboard: " + PieceIndex.ToString(i));
+            Console.WriteLine("Bitboard: " + i.ToString());
             bitboards[i].Print();
         }
     }
@@ -51,7 +51,7 @@ public class BitboardSet
                 int pieceIndex = PieceUtils.GetPieceIndex(piece);
                 tempBitboards[pieceIndex] = tempBitboards[pieceIndex].Add(i);
 
-                int allIndex = PieceIndex.IsWhite(pieceIndex) ? PieceIndex.WhiteAll : PieceIndex.BlackAll;
+                int allIndex = pieceIndex.IsWhiteIndex() ? PieceIndex.WhiteAll : PieceIndex.BlackAll;
                 tempBitboards[allIndex] = tempBitboards[allIndex].Add(i);
             }
         }
@@ -59,7 +59,7 @@ public class BitboardSet
         string s = "";
         for (int i = 0; i < 14; i++)
         {
-            s += "Index: " + PieceIndex.ToString(i) + ", Result: ";
+            s += "Index: " + i.ToString() + ", Result: ";
             s += (tempBitboards[i] == bitboards[i]) ? "Pass" : "Fail";
             s += '\n';
         }

@@ -33,7 +33,7 @@ e1f1 e1e2 e1d2 e1g1 a1b1 a1c1 h1g1 h1f1 g5h6 g5f6 g5f4 g5e3 g5d2 g5c1 g5h4 c4d5 
 
 8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1
 
-FEN 3rr1k1/1bq1bppp/pn1p1n2/1ppPpN2/4P3/1PP2N1P/P1B2PP1/R1BQR1K1 b - - 4 17
+3rr1k1/1bq1bppp/pn1p1n2/1ppPpN2/4P3/1PP2N1P/P1B2PP1/R1BQR1K1 b - - 4 17
 THIS POSITION TAKES FOREVER TO SEARCH
 QSearch is taking so long
 

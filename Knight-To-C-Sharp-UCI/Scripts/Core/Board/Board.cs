@@ -316,7 +316,7 @@ public class Board
         {
             if (move.flag == MoveFlag.EnpassantCapture) // En passant
             {
-                int capturedPawnSquare = SquareUtils.EnpassantAvailablePawnIndex(EnpassantFile, Turn);
+                int capturedPawnSquare = SquareUtils.EnpassantStartMid(EnpassantFile, Turn);
 
                 Squares[capturedPawnSquare] = PieceUtils.None;
 
@@ -333,7 +333,7 @@ public class Board
 
         EnpassantFile = 8;
 
-        if (move.flag == MoveFlag.PawnTwoForward && SquareUtils.IsValidEnpassantFile(targetSquare % 8, this)) // Enp. Square Calculation;
+        if (move.flag == MoveFlag.PawnTwoForward && SquareUtils.IsEnpassantPossible(targetSquare % 8, this)) // Enp. Square Calculation;
         {
             EnpassantFile = targetSquare % 8;
         }
@@ -611,7 +611,7 @@ public class Board
         // If En-passant
         if (move.flag == MoveFlag.EnpassantCapture)
         {
-            int enpassantPawnSquare = SquareUtils.EnpassantAvailablePawnIndex(EnpassantFile, Turn);
+            int enpassantPawnSquare = SquareUtils.EnpassantStartMid(EnpassantFile, Turn);
             Squares[enpassantPawnSquare] = (Turn ? PieceUtils.Black : PieceUtils.White) | PieceUtils.Pawn;
 
             int enemyPawnIndex = Turn ? PieceIndex.BlackPawn : PieceIndex.WhitePawn;
