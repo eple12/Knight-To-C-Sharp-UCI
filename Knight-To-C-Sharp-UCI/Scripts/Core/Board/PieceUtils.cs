@@ -1,6 +1,4 @@
-using System;
-
-public static class Piece
+public static class PieceUtils
 {
     // Piece type
     public static readonly int None = 0;
@@ -11,7 +9,6 @@ public static class Piece
     public static readonly int Queen = 5;
     public static readonly int King = 6;
 
-
     // Piece color
     public static readonly int White = 8;
     public static readonly int Black = 16;
@@ -19,7 +16,6 @@ public static class Piece
     // Masks
     static readonly int typeMask = 0b00111;
     static readonly int colorMask = 0b11000;
-
 
     public static Dictionary<char, int> charToPiece = new Dictionary<char, int>()
     {
@@ -32,51 +28,60 @@ public static class Piece
 
     public static string PieceIndexToChar = "PNBRQKpnbrqkWB ";
     
+    [Inline]
     public static bool IsColor(int piece, int color)
     {
         return (piece & colorMask) == color;
     }
 
+    [Inline]
     public static bool IsWhitePiece(int piece)
     {
         return IsColor(piece, White);
     }
 
+    [Inline]
     public static int GetType(int piece)
     {
         return piece & typeMask;
     }
 
+    [Inline]
     public static int GetPieceIndex(int piece)
     {
         if (piece == None)
         {
             return PieceIndex.Invalid;
         }
+        
         return GetType(piece) - 1 + (IsWhitePiece(piece) ? 0 : 6);
     }
 
+    [Inline]
     public static bool IsDiagonalPiece(int piece)
     {
         int type = GetType(piece);
         return type == Bishop || type == Queen;
     }
 
+    [Inline]
     public static bool IsStraightPiece(int piece)
     {
         int type = GetType(piece);
         return type == Rook || type == Queen;
     }
 
+    [Inline]
     public static char PieceToChar(int piece)
     {
         return PieceIndexToChar[GetPieceIndex(piece)];
     }
 }
 
-public struct PieceIndex{
-    public const int WhitePawn = 0; 
-    public const int WhiteKnight = 1; 
+public struct PieceIndex
+{
+    public const int WhitePawn = 0;
+    public const int WhiteKnight = 1;
     public const int WhiteBishop = 2; 
     public const int WhiteRook = 3;
     public const int WhiteQueen = 4;
@@ -101,14 +106,19 @@ public struct PieceIndex{
     public const int Queen = 4;
     public const int King = 5;
 
-    static readonly string[] names = {"WhitePawn", "WhiteKnight", "WhiteBishop", "WhiteRook", "WhiteQueen", "WhiteKing",
-    "BlackPawn", "BlackKnight", "BlackBishop", "BlackRook", "BlackQueen", "BlackKing", "WhiteAll", "BlackAll"};
+    static readonly string[] names = { 
+        "WhitePawn", "WhiteKnight", "WhiteBishop", "WhiteRook", "WhiteQueen", "WhiteKing",
+        "BlackPawn", "BlackKnight", "BlackBishop", "BlackRook", "BlackQueen", "BlackKing", 
+        "WhiteAll", "BlackAll"
+    };
 
+    [Inline]
     public static bool IsWhite(int index)
     {
         return index < Black;
     }
 
+    [Inline]
     public static string ToString(int index)
     {
         if (index >= WhitePawn && index <= BlackAll)
@@ -120,41 +130,38 @@ public struct PieceIndex{
             return "Invalid";
         }
     }
-
-    public static int Index(int piece)
-    {
-        return (Piece.IsWhitePiece(piece) ? White : Black) + Piece.GetType(piece) - 1;
-    }
     
-    public static int Index(int color, int type)
-    {
-        return color + type;
-    }
-
+    [Inline]
     public static int MakePawn(bool white)
     {
         return white ? WhitePawn : BlackPawn;
     }
+    [Inline]
     public static int MakeKnight(bool white)
     {
         return white ? WhiteKnight : BlackKnight;
     }
+    [Inline]
     public static int MakeBishop(bool white)
     {
         return white ? WhiteBishop : BlackBishop;
     }
+    [Inline]
     public static int MakeRook(bool white)
     {
         return white ? WhiteRook : BlackRook;
     }
+    [Inline]
     public static int MakeQueen(bool white)
     {
         return white ? WhiteQueen : BlackQueen;
     }
+    [Inline]
     public static int MakeKing(bool white)
     {
         return white ? WhiteKing : BlackKing;
     }
+    [Inline]
     public static int MakeAll(bool white)
     {
         return white ? WhiteAll : BlackAll;

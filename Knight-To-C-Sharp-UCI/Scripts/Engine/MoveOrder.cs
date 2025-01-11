@@ -69,9 +69,9 @@ public class MoveOrder
 
         int movePiece = board.Squares[startSquare];
         int capturePiece = board.Squares[targetSquare];
-        int capturePieceType = Piece.GetType(capturePiece);
+        int capturePieceType = PieceUtils.GetType(capturePiece);
         int capturePieceValue = Evaluation.GetAbsPieceValue(capturePieceType);
-        bool isCapture = capturePieceType != Piece.None;
+        bool isCapture = capturePieceType != PieceUtils.None;
         int flag = move.flag;
 
         if (flag == MoveFlag.PromoteToQueen)
@@ -88,7 +88,7 @@ public class MoveOrder
         {
             int baseCapture = (flag == MoveFlag.EnpassantCapture || MoveFlag.IsPromotion(flag) || SEE.IsGoodCapture(board, move, pinData)) ? GoodCaptureBaseScore : BadCaptureBaseScore;
 
-            return baseCapture + MostValueableVictimLeastValuableAttacker[Piece.GetPieceIndex(movePiece)][Piece.GetPieceIndex(capturePieceType)];
+            return baseCapture + MostValueableVictimLeastValuableAttacker[PieceUtils.GetPieceIndex(movePiece)][PieceUtils.GetPieceIndex(capturePieceType)];
         }
 
         if (MoveFlag.IsPromotion(flag))
@@ -99,10 +99,10 @@ public class MoveOrder
         if (!inQSearch)
         {
             bool isKiller = ply < MaxKillerPly && KillerMoves[ply].Match(move);
-            return BaseMoveScore + (isKiller ? KillerMoveValue : 0) + History[board.Turn ? 0 : 1, startSquare, targetSquare] * 100 + PieceSquareTable.ReadTableFromPiece(movePiece, targetSquare, Piece.IsWhitePiece(movePiece), board);
+            return BaseMoveScore + (isKiller ? KillerMoveValue : 0) + History[board.Turn ? 0 : 1, startSquare, targetSquare] * 100 + PieceSquareTable.ReadTableFromPiece(movePiece, targetSquare, PieceUtils.IsWhitePiece(movePiece), board);
         }
 
-        return BaseMoveScore + PieceSquareTable.ReadTableFromPiece(movePiece, targetSquare, Piece.IsWhitePiece(movePiece), board);
+        return BaseMoveScore + PieceSquareTable.ReadTableFromPiece(movePiece, targetSquare, PieceUtils.IsWhitePiece(movePiece), board);
     }
 
     public static void Quicksort(ref Span<Move> values, int[] scores, int low, int high)

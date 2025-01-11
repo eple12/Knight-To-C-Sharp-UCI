@@ -1,15 +1,14 @@
-
 public static class Zobrist
 {
-    const int seed = 29426028;
+    const int seed = ProgramSettings.ZobristSeed;
     static Random rng = new Random(seed);
 
     public static readonly ulong[,] pieceArray = new ulong[12, 64];
-    public static readonly ulong[] castlingArray = new ulong[16]; // No, K, Q, KQ (4 Possible states for each side) -> 4 ** 2
-    public static readonly ulong[] enpassantArray = new ulong[9]; // index 8 => No ENP
+    public static readonly ulong[] castlingArray = new ulong[16]; // ( - / K / Q / KQ ) for each side, 4^2 possibility
+    public static readonly ulong[] enpassantArray = new ulong[9]; // enpassantArray[8] means en-passant is not legal
     public static readonly ulong sideToMove = NextUlong(rng);
 
-    public static void GenerateZobristTable() // CALLED INITIALLY;
+    public static void GenerateZobristTable() // Called Initially
     {   
         for (int squareIndex = 0; squareIndex < 64; squareIndex++)
         {
@@ -36,8 +35,8 @@ public static class Zobrist
 
         for (int squareIndex = 0; squareIndex < 64; squareIndex++)
         {
-            // Returns invalid BitboardIndex if failed to find piece
-            int pieceBitboardIndex = Piece.GetPieceIndex(board.Squares[squareIndex]);
+            // Could be invalid
+            int pieceBitboardIndex = PieceUtils.GetPieceIndex(board.Squares[squareIndex]);
 
             if (pieceBitboardIndex != PieceIndex.Invalid)
             {
@@ -62,5 +61,4 @@ public static class Zobrist
         rng.NextBytes(buffer);
         return BitConverter.ToUInt64(buffer, 0);
     }
-
 }

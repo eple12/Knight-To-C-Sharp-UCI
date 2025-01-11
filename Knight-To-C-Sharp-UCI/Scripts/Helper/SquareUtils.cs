@@ -1,4 +1,4 @@
-public static class Square
+public static class SquareUtils
 {   
     // Files
     static readonly Dictionary<char, int> FileNumber = new Dictionary<char, int>()
@@ -6,7 +6,6 @@ public static class Square
         {'a', 0}, {'b', 1}, {'c', 2}, {'d', 3}, {'e', 4}, {'f', 5}, {'g', 6}, {'h', 7}
     };
     static readonly string Files = "abcdefgh";
-    public const int Invalid = -1;
 
     public static int Index(string name)
     {
@@ -21,7 +20,7 @@ public static class Square
         return file + rank * 8;
     }
 
-    public static bool IsLightSquare(int square)
+    public static bool IsLightSquare(this Square square)
     {
         return ((1ul << square) & Bits.LightSquares) != 0;
     }
@@ -84,7 +83,7 @@ public static class Square
         // There's a pawn on the left
         if (enpFile > 0)
         {
-            if (board.Squares[enpSquare - 1] == (Piece.Pawn | (!board.Turn ? Piece.White : Piece.Black)))
+            if (board.Squares[enpSquare - 1] == (PieceUtils.Pawn | (!board.Turn ? PieceUtils.White : PieceUtils.Black)))
             {
                 return true;
             }
@@ -92,7 +91,7 @@ public static class Square
         // There's a pawn on the right
         if (enpFile < 7)
         {
-            if (board.Squares[enpSquare + 1] == (Piece.Pawn | (!board.Turn ? Piece.White : Piece.Black)))
+            if (board.Squares[enpSquare + 1] == (PieceUtils.Pawn | (!board.Turn ? PieceUtils.White : PieceUtils.Black)))
             {
                 return true;
             }

@@ -284,7 +284,7 @@ public static class PreComputedMoveGenData // Pre-Computed Data to speed move ge
                     int thisFile = aFile + (signFile * dst);
                     int thisRank = aRank + (signRank * dst);
 
-                    if (Square.IsValidSquare(thisFile, thisRank))
+                    if (SquareUtils.IsValidSquare(thisFile, thisRank))
                     {
                         AlignMask[squareA, squareB] |= (ulong) 1 << (thisFile + 8 * thisRank);
                     }

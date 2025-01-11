@@ -1,11 +1,14 @@
 public static class MainProcess
 {
-    public static Board board = new Board();
-    public static Bot engine = new Bot(board);
+    public static Board board = new();
+    public static Bot engine = new(board);
 
-    public static void Start()
-    {
-        PreCalculate();
+    static MainProcess() {
+        Zobrist.GenerateZobristTable();
+        
+        board.LoadInitialPosition();
+
+        Book.GenerateTable();
     }
 
     public static int CommandUpdate()
@@ -23,14 +26,5 @@ public static class MainProcess
         }
         
         return Command.RecieveCommand(command);
-    }
-
-    static void PreCalculate()
-    {
-        Zobrist.GenerateZobristTable();
-        
-        board.LoadPositionFromFen(Board.InitialFen);
-
-        Book.GenerateTable();
     }
 }

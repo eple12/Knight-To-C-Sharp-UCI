@@ -8,8 +8,6 @@ public class Program
         Console.WriteLine("#   Launching the engine..   #");
         Console.WriteLine("##############################");
 
-        MainProcess.Start();
-
         while (true)
         {
             int updateResult = MainProcess.CommandUpdate();

@@ -44,10 +44,10 @@ public static class Command
                 break;
         }
 
-        if (!MainProcess.board.Loaded)
-        {
-            return 0;
-        }
+        // if (!MainProcess.board.Loaded)
+        // {
+        //     return 0;
+        // }
 
         // Available Commands After Loading UCI-New Game
         switch (prefix)
@@ -149,11 +149,11 @@ public static class Command
                 {
                     if (tokens[1] == "print")
                     {
-                        MainProcess.board.BitboardSet.Print();
+                        MainProcess.board.BBSet.Print();
                     }
                     else if (tokens[1] == "test")
                     {
-                        MainProcess.board.BitboardSet.Test(MainProcess.board);
+                        MainProcess.board.BBSet.Test(MainProcess.board);
                     }
                 }
             }
@@ -191,9 +191,9 @@ public static class Command
                     case "movement":
                         for (int i = 0; i < 64; i++)
                         {
-                            Console.WriteLine($"Rook, Bishop on square {Square.Name(i)}");
-                            Bitboard.Print(Magic.RookMasks[i]);
-                            Bitboard.Print(Magic.BishopMasks[i]);
+                            Console.WriteLine($"Rook, Bishop on square {SquareUtils.Name(i)}");
+                            Magic.RookMasks[i].Print();
+                            Magic.BishopMasks[i].Print();
                         }
                         break;
 

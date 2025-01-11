@@ -20,7 +20,7 @@ public static class SEE
             ? MoveFlag.GetPromotionPiece(move.flag, turn)
             : board.Squares[move.startSquare];
 
-        score -= MaterialValues[Piece.GetType(next)];
+        score -= MaterialValues[PieceUtils.GetType(next)];
 
         // If risking our piece being fully lost and the exchange value is still >= 0
         if (score >= 0)
@@ -28,14 +28,14 @@ public static class SEE
             return true;
         }
         
-        ulong occupancy = board.BitboardSet.Bitboards[PieceIndex.WhiteAll] | board.BitboardSet.Bitboards[PieceIndex.BlackAll];
+        ulong occupancy = board.BBSet[PieceIndex.WhiteAll] | board.BBSet[PieceIndex.BlackAll];
         occupancy ^= 1ul << move.startSquare;
         occupancy ^= 1ul << move.targetSquare;
 
         // All sliders
-        ulong queens = board.BitboardSet.Bitboards[PieceIndex.WhiteQueen] | board.BitboardSet.Bitboards[PieceIndex.BlackQueen];
-        ulong rooks = board.BitboardSet.Bitboards[PieceIndex.WhiteRook] | board.BitboardSet.Bitboards[PieceIndex.BlackRook] | queens;
-        ulong bishops = board.BitboardSet.Bitboards[PieceIndex.WhiteBishop] | board.BitboardSet.Bitboards[PieceIndex.BlackBishop] | queens;
+        ulong queens = board.BBSet[PieceIndex.WhiteQueen] | board.BBSet[PieceIndex.BlackQueen];
+        ulong rooks = board.BBSet[PieceIndex.WhiteRook] | board.BBSet[PieceIndex.BlackRook] | queens;
+        ulong bishops = board.BBSet[PieceIndex.WhiteBishop] | board.BBSet[PieceIndex.BlackBishop] | queens;
 
         ulong attackers = GetAllAttackersTo(board, move.targetSquare, occupancy, rooks, bishops);
 
@@ -48,7 +48,7 @@ public static class SEE
 
         while (true)
         {
-            ulong ourOccupancy = board.BitboardSet.Bitboards[PieceIndex.MakeAll(us)];
+            ulong ourOccupancy = board.BBSet[PieceIndex.MakeAll(us)];
             ulong ourAttackers = attackers & ourOccupancy;
 
             if (((us ? pinData.BlackPinners : pinData.WhitePinners) & occupancy) != 0)
@@ -65,12 +65,12 @@ public static class SEE
             int nextPieceType = nextPieceTypeIndex + 1;
 
             // After removing an attacker, there could be a sliding piece attack
-            if (Piece.IsDiagonalPiece(nextPieceType))
+            if (PieceUtils.IsDiagonalPiece(nextPieceType))
             {
                 attackers |= Magic.GetBishopAttacks(move.targetSquare, occupancy) & bishops;
             }
 
-            if (Piece.IsStraightPiece(nextPieceType))
+            if (PieceUtils.IsStraightPiece(nextPieceType))
             {
                 attackers |= Magic.GetRookAttacks(move.targetSquare, occupancy) & rooks;
             }
@@ -111,7 +111,7 @@ public static class SEE
             ? MoveFlag.GetPromotionPiece(move.flag, turn)
             : board.Squares[move.startSquare];
 
-        score -= MaterialValues[Piece.GetType(next)];
+        score -= MaterialValues[PieceUtils.GetType(next)];
 
         // If risking our piece being fully lost and the exchange value is still >= 0
         if (score >= 0)
@@ -119,14 +119,14 @@ public static class SEE
             return true;
         }
         
-        ulong occupancy = board.BitboardSet.Bitboards[PieceIndex.WhiteAll] | board.BitboardSet.Bitboards[PieceIndex.BlackAll];
+        ulong occupancy = board.BBSet[PieceIndex.WhiteAll] | board.BBSet[PieceIndex.BlackAll];
         occupancy ^= 1ul << move.startSquare;
         occupancy ^= 1ul << move.targetSquare;
 
         // All sliders
-        ulong queens = board.BitboardSet.Bitboards[PieceIndex.WhiteQueen] | board.BitboardSet.Bitboards[PieceIndex.BlackQueen];
-        ulong rooks = board.BitboardSet.Bitboards[PieceIndex.WhiteRook] | board.BitboardSet.Bitboards[PieceIndex.BlackRook] | queens;
-        ulong bishops = board.BitboardSet.Bitboards[PieceIndex.WhiteBishop] | board.BitboardSet.Bitboards[PieceIndex.BlackBishop] | queens;
+        ulong queens = board.BBSet[PieceIndex.WhiteQueen] | board.BBSet[PieceIndex.BlackQueen];
+        ulong rooks = board.BBSet[PieceIndex.WhiteRook] | board.BBSet[PieceIndex.BlackRook] | queens;
+        ulong bishops = board.BBSet[PieceIndex.WhiteBishop] | board.BBSet[PieceIndex.BlackBishop] | queens;
 
         ulong attackers = GetAllAttackersTo(board, move.targetSquare, occupancy, rooks, bishops);
 
@@ -139,7 +139,7 @@ public static class SEE
 
         while (true)
         {
-            ulong ourOccupancy = board.BitboardSet.Bitboards[PieceIndex.MakeAll(us)];
+            ulong ourOccupancy = board.BBSet[PieceIndex.MakeAll(us)];
             ulong ourAttackers = attackers & ourOccupancy;
 
             if (((us ? pinData.BlackPinners : pinData.WhitePinners) & occupancy) != 0)
@@ -156,12 +156,12 @@ public static class SEE
             int nextPieceType = nextPieceTypeIndex + 1;
 
             // After removing an attacker, there could be a sliding piece attack
-            if (Piece.IsDiagonalPiece(nextPieceType))
+            if (PieceUtils.IsDiagonalPiece(nextPieceType))
             {
                 attackers |= Magic.GetBishopAttacks(move.targetSquare, occupancy) & bishops;
             }
 
-            if (Piece.IsStraightPiece(nextPieceType))
+            if (PieceUtils.IsStraightPiece(nextPieceType))
             {
                 attackers |= Magic.GetRookAttacks(move.targetSquare, occupancy) & rooks;
             }
@@ -196,13 +196,13 @@ public static class SEE
         }
         else if (move.flag == MoveFlag.EnpassantCapture)
         {
-            return MaterialValues[Piece.Pawn];
+            return MaterialValues[PieceUtils.Pawn];
         }
 
         int promotionValue = MoveFlag.GetPromotionPieceValue(move.flag);
         int targetPiece = board.Squares[move.targetSquare];
 
-        return promotionValue - (MoveFlag.IsPromotion(move.flag) ? MaterialValues[Piece.Pawn] : 0) + (targetPiece != Piece.None ? MaterialValues[Piece.GetType(targetPiece)] : 0);
+        return promotionValue - (MoveFlag.IsPromotion(move.flag) ? MaterialValues[PieceUtils.Pawn] : 0) + (targetPiece != PieceUtils.None ? MaterialValues[PieceUtils.GetType(targetPiece)] : 0);
     }
 
     // Returns TYPE PieceIndex
@@ -214,11 +214,11 @@ public static class SEE
         // Loop for PieceIndex, Pawn to King
         for (int i = 0; i < 6; i++)
         {
-            ulong overlap = attackers & board.BitboardSet.Bitboards[i + offset];
+            ulong overlap = attackers & board.BBSet[i + offset];
 
             if (overlap != 0)
             {
-                int square = Bitboard.PopLSB(ref overlap);
+                int square = BitboardUtils.PopLSB(ref overlap);
                 occupancy ^= 1ul << square;
 
                 return i;
@@ -234,13 +234,13 @@ public static class SEE
         return (rooks & Magic.GetRookAttacks(square, occupancy))
             | (bishops & Magic.GetBishopAttacks(square, occupancy))
 
-            | (board.BitboardSet.Bitboards[PieceIndex.WhitePawn] & PreComputedMoveGenData.blackPawnAttackMap[square]) // Reverse White
-            | (board.BitboardSet.Bitboards[PieceIndex.BlackPawn] & PreComputedMoveGenData.whitePawnAttackMap[square]) // Reverse Black
+            | (board.BBSet[PieceIndex.WhitePawn] & PreComputedMoveGenData.blackPawnAttackMap[square]) // Reverse White
+            | (board.BBSet[PieceIndex.BlackPawn] & PreComputedMoveGenData.whitePawnAttackMap[square]) // Reverse Black
 
-            | ((board.BitboardSet.Bitboards[PieceIndex.WhiteKnight] | board.BitboardSet.Bitboards[PieceIndex.BlackKnight])
+            | ((board.BBSet[PieceIndex.WhiteKnight] | board.BBSet[PieceIndex.BlackKnight])
              & PreComputedMoveGenData.KnightMap[square])
 
-            | (board.BitboardSet.Bitboards[PieceIndex.WhiteKing] | board.BitboardSet.Bitboards[PieceIndex.BlackKing])
+            | (board.BBSet[PieceIndex.WhiteKing] | board.BBSet[PieceIndex.BlackKing])
              & PreComputedMoveGenData.KingMap[square]
 
              & occupancy;
@@ -253,13 +253,13 @@ public static class SEE
         ulong blockers = 0;
         pinners = 0;
 
-        ulong queens = board.BitboardSet.Bitboards[PieceIndex.WhiteQueen] | board.BitboardSet.Bitboards[PieceIndex.BlackQueen];
-        ulong rooks = board.BitboardSet.Bitboards[PieceIndex.WhiteRook] | board.BitboardSet.Bitboards[PieceIndex.BlackRook] | queens;
-        ulong bishops = board.BitboardSet.Bitboards[PieceIndex.WhiteBishop] | board.BitboardSet.Bitboards[PieceIndex.BlackBishop] | queens;
+        ulong queens = board.BBSet[PieceIndex.WhiteQueen] | board.BBSet[PieceIndex.BlackQueen];
+        ulong rooks = board.BBSet[PieceIndex.WhiteRook] | board.BBSet[PieceIndex.BlackRook] | queens;
+        ulong bishops = board.BBSet[PieceIndex.WhiteBishop] | board.BBSet[PieceIndex.BlackBishop] | queens;
 
-        ulong all = board.BitboardSet.Bitboards[PieceIndex.WhiteAll] | board.BitboardSet.Bitboards[PieceIndex.BlackAll];
+        ulong all = board.BBSet[PieceIndex.WhiteAll] | board.BBSet[PieceIndex.BlackAll];
 
-        ulong friendlyAll = board.BitboardSet.Bitboards[Piece.IsWhitePiece(board.Squares[square]) ? PieceIndex.WhiteAll : PieceIndex.BlackAll];
+        ulong friendlyAll = board.BBSet[PieceUtils.IsWhitePiece(board.Squares[square]) ? PieceIndex.WhiteAll : PieceIndex.BlackAll];
 
         // Snipers are sliders that attack square when a piece and other snipers are removed
         ulong snipers = ((Magic.GetRookAttacks(square, 0) & rooks) | (Magic.GetBishopAttacks(square, 0) & bishops)) & sliders;
@@ -267,12 +267,12 @@ public static class SEE
 
         while (snipers != 0)
         {
-            int sniperSq = Bitboard.PopLSB(ref snipers);
+            int sniperSq = BitboardUtils.PopLSB(ref snipers);
             // b is the blocker bitboard
             ulong b = Bits.BetweenBitboards[square, sniperSq] & occupancy;
 
             // b has only one significant bit
-            if (b != 0 && !Bitboard.MoreThanOne(b))
+            if (b != 0 && !b.MoreThanOne())
             {
                 blockers |= b;
 
@@ -310,8 +310,8 @@ public static class SEE
             WhiteBlockers = 0;
             BlackBlockers = 0;
 
-            WhiteBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.BlackAll], board.PieceSquares[PieceIndex.WhiteKing].Squares[0], ref BlackPinners);
-            BlackBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.WhiteAll], board.PieceSquares[PieceIndex.BlackKing].Squares[0], ref WhitePinners);
+            WhiteBlockers = SliderBlockers(board, board.BBSet[PieceIndex.BlackAll], board.PieceSquares[PieceIndex.WhiteKing][0], ref BlackPinners);
+            BlackBlockers = SliderBlockers(board, board.BBSet[PieceIndex.WhiteAll], board.PieceSquares[PieceIndex.BlackKing][0], ref WhitePinners);
         }
     }
 }

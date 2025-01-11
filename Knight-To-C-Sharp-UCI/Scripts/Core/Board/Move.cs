@@ -125,7 +125,7 @@ public static class MoveHelper {
                     break;
             }
         }
-        return $"{Square.Name(move.startSquare)}{Square.Name(move.targetSquare)}{promotion}";
+        return $"{SquareUtils.Name(move.startSquare)}{SquareUtils.Name(move.targetSquare)}{promotion}";
     }
 
     public static void Print(this Move m) {
@@ -150,8 +150,8 @@ public static class MoveHelper {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Move OnlySquares(string s) {
-        int startSquare = Square.Index(s[0..2]);
-        int targetSquare = Square.Index(s[2..4]);
+        int startSquare = SquareUtils.Index(s[0..2]);
+        int targetSquare = SquareUtils.Index(s[2..4]);
 
         return new Move(startSquare, targetSquare);
     }
@@ -180,17 +180,17 @@ public readonly struct MoveFlag
         switch (flag)
         {
             case PromoteToQueen:
-                return (isWhite ? Piece.White : Piece.Black) | Piece.Queen;
+                return (isWhite ? PieceUtils.White : PieceUtils.Black) | PieceUtils.Queen;
             case PromoteToKnight:
-                return (isWhite ? Piece.White : Piece.Black) | Piece.Knight;
+                return (isWhite ? PieceUtils.White : PieceUtils.Black) | PieceUtils.Knight;
             case PromoteToRook:
-                return (isWhite ? Piece.White : Piece.Black) | Piece.Rook;
+                return (isWhite ? PieceUtils.White : PieceUtils.Black) | PieceUtils.Rook;
             case PromoteToBishop:
-                return (isWhite ? Piece.White : Piece.Black) | Piece.Bishop;
+                return (isWhite ? PieceUtils.White : PieceUtils.Black) | PieceUtils.Bishop;
         }
 
         // Just in case if the flag is not a promotion one, returns invalid Piece
-        return Piece.None;
+        return PieceUtils.None;
     }
 
     public static int GetPromotionPieceValue(int flag)
@@ -200,21 +200,21 @@ public readonly struct MoveFlag
 
     public static int GetPromotionFlag(int piece)
     {
-        int pieceType = Piece.GetType(piece);
+        int pieceType = PieceUtils.GetType(piece);
 
-        if (pieceType == Piece.Queen)
+        if (pieceType == PieceUtils.Queen)
         {
             return PromoteToQueen;
         }
-        else if (pieceType == Piece.Rook)
+        else if (pieceType == PieceUtils.Rook)
         {
             return PromoteToRook;
         }
-        else if (pieceType == Piece.Knight)
+        else if (pieceType == PieceUtils.Knight)
         {
             return PromoteToKnight;
         }
-        else if (pieceType == Piece.Bishop)
+        else if (pieceType == PieceUtils.Bishop)
         {
             return PromoteToBishop;
         }

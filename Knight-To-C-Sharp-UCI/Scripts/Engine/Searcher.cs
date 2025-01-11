@@ -293,7 +293,7 @@ public class Searcher
         MoveGen.GenerateMoves(ref moves, genOnlyCaptures: false);
 
         // Checkmate, Stalemate, Draws
-        MateChecker.MateState mateState = MateChecker.GetPositionState(board, moves, ExcludeRepetition: true, ExcludeFifty: true);
+        MateChecker.MateState mateState = MateChecker.GetPositionState(board, moves, ExcludeFifty: true);
         if (mateState != MateChecker.MateState.None)
         {
             pvTable.ClearFrom(nextPvIndex);
@@ -326,7 +326,7 @@ public class Searcher
         // Moves Loop
         for (int i = 0; i < moves.Length; i++)
         {
-            bool isCapture = board.Squares[moves[i].targetSquare] != Piece.None;
+            bool isCapture = board.Squares[moves[i].targetSquare] != PieceUtils.None;
 
             board.MakeMove(moves[i], inSearch: true);
 
@@ -533,16 +533,9 @@ public class Searcher
         }
     }
 
-    struct SearchRequestInfo
+    struct SearchRequestInfo(int maxDepth, Action? onSearchComplete)
     {
-        public int MaxDepth;
-        public Action? OnSearchComplete;
-
-        public SearchRequestInfo(int maxDepth, Action? onSearchComplete)
-        {
-            MaxDepth = maxDepth;
-            OnSearchComplete = onSearchComplete;
-        }
+        public int MaxDepth { get; } = maxDepth;
+        public Action? OnSearchComplete { get; } = onSearchComplete;
     }
-
 }

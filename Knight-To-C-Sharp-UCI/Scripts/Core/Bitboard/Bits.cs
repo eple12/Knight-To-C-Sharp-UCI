@@ -108,11 +108,11 @@ public static class Bits
         {
             for (int s2 = 0; s2 < 64; s2++)
             {
-                if ((Magic.GetRookAttacks(s1, 0) & Bitboard.Make(s2)) != 0)
+                if ((Magic.GetRookAttacks(s1, 0) & BitboardUtils.Make(s2)) != 0)
                 {
                     LineBitboards[s1, s2] = Magic.GetRookAttacks(s1, 0) & Magic.GetRookAttacks(s2, 0);
                 }
-                else if ((Magic.GetBishopAttacks(s1, 0) & Bitboard.Make(s2)) != 0)
+                else if ((Magic.GetBishopAttacks(s1, 0) & BitboardUtils.Make(s2)) != 0)
                 {
                     LineBitboards[s1, s2] = Magic.GetBishopAttacks(s1, 0) & Magic.GetBishopAttacks(s2, 0);
                 }
@@ -121,7 +121,7 @@ public static class Bits
                     continue;
                 }
 
-                LineBitboards[s1, s2] |= Bitboard.Make(s1, s2);
+                LineBitboards[s1, s2] |= BitboardUtils.Make(s1, s2);
             }
         }
 

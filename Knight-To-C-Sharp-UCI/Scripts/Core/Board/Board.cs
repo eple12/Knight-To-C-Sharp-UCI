@@ -1,7 +1,6 @@
 
 public class Board
 {
-    public bool Loaded;
     public MoveGenerator MoveGen;
 
     public int[] Squares;
@@ -15,7 +14,7 @@ public class Board
 
     // Piece Square Recognization
     public PieceList[] PieceSquares;
-    public Bitboard BitboardSet;
+    public BitboardSet BBSet;
 
     public Stack<uint> GameStack;
 
@@ -112,7 +111,7 @@ public class Board
     public int FiftyRuleHalfClock;
 
     // For Threefold detection
-    public Dictionary<ulong, int> PositionHistory = new Dictionary<ulong, int>(); // legacy
+    // public Dictionary<ulong, int> PositionHistory = new Dictionary<ulong, int>(); // legacy
     public HashSet<ulong> PlayedPositions = new();
 
     // In-Check Cache value
@@ -121,8 +120,6 @@ public class Board
 
     public Board()
     {
-        Loaded = false;
-
         Squares = new int[64];
         Turn = true;
 
@@ -130,7 +127,7 @@ public class Board
         ZobristKey = 0;
 
         PieceSquares = new PieceList[12];
-        BitboardSet = new Bitboard();
+        BBSet = new BitboardSet();
 
         GameStack = new Stack<uint>();
 
@@ -142,6 +139,13 @@ public class Board
 
         InCheckCachedValue = false;
         HasCachedInCheckValue = false;
+
+        LoadInitialPosition();
+    }
+
+    public void LoadInitialPosition()
+    {
+        LoadPositionFromFen(InitialFen);
     }
 
     public void PrintLargeBoard()
@@ -153,7 +157,7 @@ public class Board
             for (int file = 0; file < 8; file++)
             {
                 Console.Write("| ");
-                Console.Write(Piece.PieceToChar(Squares[8 * rank + file]));
+                Console.Write(PieceUtils.PieceToChar(Squares[8 * rank + file]));
                 Console.Write(" ");
             }
             Console.Write("| ");
@@ -171,7 +175,7 @@ public class Board
         {
             for (int file = 0; file < 8; file++)
             {
-                char c = Piece.PieceToChar(Squares[8 * rank + file]);
+                char c = PieceUtils.PieceToChar(Squares[8 * rank + file]);
                 Console.Write(c == ' ' ? '~' : c);
                 Console.Write(' ');
             }
@@ -187,7 +191,7 @@ public class Board
         {
             for (int file = 0; file < 8; file++)
             {
-                char c = Piece.PieceToChar(Squares[8 * rank + file]);
+                char c = PieceUtils.PieceToChar(Squares[8 * rank + file]);
                 s += (c == ' ' ? '~' : c);
                 s += (' ');
             }
@@ -200,17 +204,14 @@ public class Board
     public void AfterLoadingPosition()
     {
         UpdateLegalMoves();
-        Loaded = true;
         HasCachedInCheckValue = false;
     }
 
     public void Reset()
     {
-        Loaded = false;
-
         Squares = new int[64];
         PieceSquares = new PieceList[12];
-        BitboardSet = new Bitboard();
+        BBSet = new BitboardSet();
         GameStack = new Stack<uint>();
 
         Turn = true;
@@ -219,7 +220,6 @@ public class Board
         CastlingData = 0;
         EnpassantFile = 8;
         FiftyRuleHalfClock = 0;
-        PositionHistory.Clear();
         PlayedPositions.Clear();
 
         HasCachedInCheckValue = false;
@@ -232,11 +232,8 @@ public class Board
             return;
         }
 
-        Move m = LegalMoves.FindMove(move);
-
-        MakeMove(m);
+        MakeMove(LegalMoves.FindMove(move));
         UpdateLegalMoves();
-        // PrintBoardAndMoves();
     }
 
     public void MakeConsoleMove(Move move)
@@ -248,7 +245,7 @@ public class Board
 
     public void MakeMove(Move move, bool inSearch = false)
     {
-        if (move.moveValue == 0)
+        if (move.IsNull())
         {
             Console.WriteLine("WARNING: Could not make the move since it is a NULL move.");
             return;
@@ -260,7 +257,7 @@ public class Board
         int movingPiece = Squares[startSquare];
         int capturedPiece = Squares[targetSquare];
 
-        int movingPieceIndex = Piece.GetPieceIndex(movingPiece);
+        int movingPieceIndex = PieceUtils.GetPieceIndex(movingPiece);
 
         GameStack.Push((uint) (CastlingData | capturedPiece << 4 | EnpassantFile << 9 | FiftyRuleHalfClock << 13));
 
@@ -273,22 +270,22 @@ public class Board
         ZobristKey ^= Zobrist.castlingArray[CastlingData];
 
         // Resets fifty-move clock if a pawn moves
-        if (Piece.GetType(movingPiece) == Piece.Pawn)
+        if (PieceUtils.GetType(movingPiece) == PieceUtils.Pawn)
         {
             FiftyRuleHalfClock = 0;
         }
 
         // If the move is a capturing move;
-        if (capturedPiece != Piece.None)
+        if (capturedPiece != PieceUtils.None)
         {
-            int capturedPieceIndex = Piece.GetPieceIndex(capturedPiece);
+            int capturedPieceIndex = PieceUtils.GetPieceIndex(capturedPiece);
             FiftyRuleHalfClock = 0;
 
             // ZOBRIST UPDATE
-            ZobristKey ^= Zobrist.pieceArray[Piece.GetPieceIndex(capturedPiece), targetSquare];
+            ZobristKey ^= Zobrist.pieceArray[PieceUtils.GetPieceIndex(capturedPiece), targetSquare];
 
             // Rook Captured -> Disable Castling;
-            if (capturedPiece == (Piece.White | Piece.Rook))
+            if (capturedPiece == (PieceUtils.White | PieceUtils.Rook))
             {
                 if (WKCastle && targetSquare == 7)
                 {
@@ -299,7 +296,7 @@ public class Board
                     WQCastle = false;
                 }
             }
-            else if (capturedPiece == (Piece.Black | Piece.Rook))
+            else if (capturedPiece == (PieceUtils.Black | PieceUtils.Rook))
             {
                 if (BKCastle && targetSquare == 63)
                 {
@@ -313,15 +310,15 @@ public class Board
         
             // PIECE SQUARE UPDATE
             PieceSquares[capturedPieceIndex].Remove(targetSquare);
-            BitboardSet.Remove(capturedPieceIndex, targetSquare);
+            BBSet.Remove(capturedPieceIndex, targetSquare);
         }
         else // Checks if the move is enp.
         {
             if (move.flag == MoveFlag.EnpassantCapture) // En passant
             {
-                int capturedPawnSquare = Square.EnpassantAvailablePawnIndex(EnpassantFile, Turn);
+                int capturedPawnSquare = SquareUtils.EnpassantAvailablePawnIndex(EnpassantFile, Turn);
 
-                Squares[capturedPawnSquare] = Piece.None;
+                Squares[capturedPawnSquare] = PieceUtils.None;
 
                 int enemyPawnIndex = PieceIndex.MakePawn(!Turn);
 
@@ -330,13 +327,13 @@ public class Board
 
                 // PIECE SQUARE UPDATE
                 PieceSquares[enemyPawnIndex].Remove(capturedPawnSquare);
-                BitboardSet.Remove(enemyPawnIndex, capturedPawnSquare);
+                BBSet.Remove(enemyPawnIndex, capturedPawnSquare);
             }
         }
 
         EnpassantFile = 8;
 
-        if (move.flag == MoveFlag.PawnTwoForward && Square.IsValidEnpassantFile(targetSquare % 8, this)) // Enp. Square Calculation;
+        if (move.flag == MoveFlag.PawnTwoForward && SquareUtils.IsValidEnpassantFile(targetSquare % 8, this)) // Enp. Square Calculation;
         {
             EnpassantFile = targetSquare % 8;
         }
@@ -344,12 +341,12 @@ public class Board
         // CASTLING
         if (move.flag == MoveFlag.Castling)
         {
-            if (Piece.IsWhitePiece(movingPiece))
+            if (PieceUtils.IsWhitePiece(movingPiece))
             {
                 if (targetSquare == startSquare + 2)
                 {
-                    Squares[targetSquare + 1] = Piece.None;
-                    Squares[targetSquare - 1] = Piece.White | Piece.Rook;
+                    Squares[targetSquare + 1] = PieceUtils.None;
+                    Squares[targetSquare - 1] = PieceUtils.White | PieceUtils.Rook;
 
                     // ZOBRIST UPDATE
                     ZobristKey ^= Zobrist.pieceArray[PieceIndex.WhiteRook, targetSquare + 1];
@@ -360,13 +357,13 @@ public class Board
                     PieceSquares[PieceIndex.WhiteRook].Add(targetSquare - 1);
 
                     // Bitboard
-                    BitboardSet.Remove(PieceIndex.WhiteRook, targetSquare + 1);
-                    BitboardSet.Add(PieceIndex.WhiteRook, targetSquare - 1);
+                    BBSet.Remove(PieceIndex.WhiteRook, targetSquare + 1);
+                    BBSet.Add(PieceIndex.WhiteRook, targetSquare - 1);
                 }
                 else if (targetSquare == startSquare - 2)
                 {
-                    Squares[targetSquare - 2] = Piece.None;
-                    Squares[targetSquare + 1] = Piece.White | Piece.Rook;
+                    Squares[targetSquare - 2] = PieceUtils.None;
+                    Squares[targetSquare + 1] = PieceUtils.White | PieceUtils.Rook;
 
                     // ZOBRIST UPDATE
                     ZobristKey ^= Zobrist.pieceArray[PieceIndex.WhiteRook, targetSquare - 2];
@@ -377,16 +374,16 @@ public class Board
                     PieceSquares[PieceIndex.WhiteRook].Add(targetSquare + 1);
 
                     // Bitboard
-                    BitboardSet.Remove(PieceIndex.WhiteRook, targetSquare - 2);
-                    BitboardSet.Add(PieceIndex.WhiteRook, targetSquare + 1);
+                    BBSet.Remove(PieceIndex.WhiteRook, targetSquare - 2);
+                    BBSet.Add(PieceIndex.WhiteRook, targetSquare + 1);
                 }
             }
             else
             {
                 if (targetSquare == startSquare + 2)
                 {
-                    Squares[targetSquare + 1] = Piece.None;
-                    Squares[targetSquare - 1] = Piece.Black | Piece.Rook;
+                    Squares[targetSquare + 1] = PieceUtils.None;
+                    Squares[targetSquare - 1] = PieceUtils.Black | PieceUtils.Rook;
 
                     // ZOBRIST UPDATE
                     ZobristKey ^= Zobrist.pieceArray[PieceIndex.BlackRook, targetSquare + 1];
@@ -397,13 +394,13 @@ public class Board
                     PieceSquares[PieceIndex.BlackRook].Add(targetSquare - 1);
 
                     // Bitboard
-                    BitboardSet.Remove(PieceIndex.BlackRook, targetSquare + 1);
-                    BitboardSet.Add(PieceIndex.BlackRook, targetSquare - 1);
+                    BBSet.Remove(PieceIndex.BlackRook, targetSquare + 1);
+                    BBSet.Add(PieceIndex.BlackRook, targetSquare - 1);
                 }
                 else if (targetSquare == startSquare - 2)
                 {
-                    Squares[targetSquare - 2] = Piece.None;
-                    Squares[targetSquare + 1] = Piece.Black | Piece.Rook;
+                    Squares[targetSquare - 2] = PieceUtils.None;
+                    Squares[targetSquare + 1] = PieceUtils.Black | PieceUtils.Rook;
 
                     // ZOBRIST UPDATE
                     ZobristKey ^= Zobrist.pieceArray[PieceIndex.BlackRook, targetSquare - 2];
@@ -414,14 +411,14 @@ public class Board
                     PieceSquares[PieceIndex.BlackRook].Add(targetSquare + 1);
 
                     // Bitboard
-                    BitboardSet.Remove(PieceIndex.BlackRook, targetSquare - 2);
-                    BitboardSet.Add(PieceIndex.BlackRook, targetSquare + 1);
+                    BBSet.Remove(PieceIndex.BlackRook, targetSquare - 2);
+                    BBSet.Add(PieceIndex.BlackRook, targetSquare + 1);
                 }
             }
         }
 
         // Castling rights
-        if (movingPiece == (Piece.White | Piece.Rook))
+        if (movingPiece == (PieceUtils.White | PieceUtils.Rook))
         {
             if (startSquare == 0)
             {
@@ -432,7 +429,7 @@ public class Board
                 WKCastle = false;
             }
         }
-        if (movingPiece == (Piece.Black | Piece.Rook))
+        if (movingPiece == (PieceUtils.Black | PieceUtils.Rook))
         {
             if (startSquare == 56)
             {
@@ -444,12 +441,12 @@ public class Board
             }
         }
 
-        if (movingPiece == (Piece.White | Piece.King))
+        if (movingPiece == (PieceUtils.White | PieceUtils.King))
         {
             WKCastle = false;
             WQCastle = false;
         }
-        if (movingPiece == (Piece.Black | Piece.King))
+        if (movingPiece == (PieceUtils.Black | PieceUtils.King))
         {
             BKCastle = false;
             BQCastle = false;
@@ -457,7 +454,7 @@ public class Board
 
         // Move the piece
         Squares[targetSquare] = movingPiece;
-        Squares[startSquare] = Piece.None;
+        Squares[startSquare] = PieceUtils.None;
 
         // ZOBRIST UPDATE
         ZobristKey ^= Zobrist.pieceArray[movingPieceIndex, startSquare];
@@ -468,14 +465,14 @@ public class Board
         PieceSquares[movingPieceIndex].Add(targetSquare);
 
         // Bitboard
-        BitboardSet.Remove(movingPieceIndex, startSquare);
-        BitboardSet.Add(movingPieceIndex, targetSquare);
+        BBSet.Remove(movingPieceIndex, startSquare);
+        BBSet.Add(movingPieceIndex, targetSquare);
         
         // Promotion
         if (MoveFlag.IsPromotion(move.flag))
         {
             int promotionPiece = MoveFlag.GetPromotionPiece(move.flag, Turn);
-            int promotionPieceIndex = Piece.GetPieceIndex(promotionPiece);
+            int promotionPieceIndex = PieceUtils.GetPieceIndex(promotionPiece);
 
             Squares[targetSquare] = promotionPiece;
 
@@ -488,8 +485,8 @@ public class Board
             PieceSquares[movingPieceIndex].Remove(targetSquare);
 
             // Bitboard
-            BitboardSet.Remove(movingPieceIndex, targetSquare);
-            BitboardSet.Add(promotionPieceIndex, targetSquare);
+            BBSet.Remove(movingPieceIndex, targetSquare);
+            BBSet.Add(promotionPieceIndex, targetSquare);
         }
 
 
@@ -559,10 +556,10 @@ public class Board
         int targetSquare = move.targetSquare;
 
         int movingPiece = Squares[targetSquare];
-        int movingPieceIndex = Piece.GetPieceIndex(movingPiece);
+        int movingPieceIndex = PieceUtils.GetPieceIndex(movingPiece);
 
         Squares[startSquare] = movingPiece;
-        Squares[targetSquare] = Piece.None;
+        Squares[targetSquare] = PieceUtils.None;
 
         // ZOBRIST PIECE
         ZobristKey ^= Zobrist.pieceArray[movingPieceIndex, targetSquare];
@@ -573,8 +570,8 @@ public class Board
         PieceSquares[movingPieceIndex].Add(startSquare);
 
         // Bitboard
-        BitboardSet.Remove(movingPieceIndex, targetSquare);
-        BitboardSet.Add(movingPieceIndex, startSquare);
+        BBSet.Remove(movingPieceIndex, targetSquare);
+        BBSet.Add(movingPieceIndex, startSquare);
 
         uint previousGameState = GameStack.Pop();
 
@@ -596,16 +593,16 @@ public class Board
         int capturedPiece = (int) (previousGameState & CapturedPieceMask) >> 4;
 
         // If capture
-        if (capturedPiece != Piece.None)
+        if (capturedPiece != PieceUtils.None)
         {
             Squares[targetSquare] = capturedPiece;
 
-            int capturedPieceIndex = Piece.GetPieceIndex(capturedPiece);
+            int capturedPieceIndex = PieceUtils.GetPieceIndex(capturedPiece);
 
             // PIECE SQUARE UPDATE
             PieceSquares[capturedPieceIndex].Add(targetSquare);
 
-            BitboardSet.Add(capturedPieceIndex, targetSquare);
+            BBSet.Add(capturedPieceIndex, targetSquare);
 
             // ZOBRIST PIECE
             ZobristKey ^= Zobrist.pieceArray[capturedPieceIndex, targetSquare];
@@ -614,15 +611,15 @@ public class Board
         // If En-passant
         if (move.flag == MoveFlag.EnpassantCapture)
         {
-            int enpassantPawnSquare = Square.EnpassantAvailablePawnIndex(EnpassantFile, Turn);
-            Squares[enpassantPawnSquare] = (Turn ? Piece.Black : Piece.White) | Piece.Pawn;
+            int enpassantPawnSquare = SquareUtils.EnpassantAvailablePawnIndex(EnpassantFile, Turn);
+            Squares[enpassantPawnSquare] = (Turn ? PieceUtils.Black : PieceUtils.White) | PieceUtils.Pawn;
 
             int enemyPawnIndex = Turn ? PieceIndex.BlackPawn : PieceIndex.WhitePawn;
 
             // PIECE SQUARE UPDATE
             PieceSquares[enemyPawnIndex].Add(enpassantPawnSquare);
 
-            BitboardSet.Add(enemyPawnIndex, enpassantPawnSquare);
+            BBSet.Add(enemyPawnIndex, enpassantPawnSquare);
 
             // ZOBRIST ENP. CAPTURE
             ZobristKey ^= Zobrist.pieceArray[enemyPawnIndex, enpassantPawnSquare];
@@ -635,8 +632,8 @@ public class Board
             {
                 if (targetSquare == startSquare + 2)
                 {
-                    Squares[targetSquare - 1] = Piece.None;
-                    Squares[targetSquare + 1] = Piece.White | Piece.Rook;
+                    Squares[targetSquare - 1] = PieceUtils.None;
+                    Squares[targetSquare + 1] = PieceUtils.White | PieceUtils.Rook;
 
                     // ZOBRIST
                     ZobristKey ^= Zobrist.pieceArray[PieceIndex.WhiteRook, targetSquare - 1];
@@ -647,13 +644,13 @@ public class Board
                     PieceSquares[PieceIndex.WhiteRook].Add(targetSquare + 1);
 
                     // Bitboard
-                    BitboardSet.Remove(PieceIndex.WhiteRook, targetSquare - 1);
-                    BitboardSet.Add(PieceIndex.WhiteRook, targetSquare + 1);
+                    BBSet.Remove(PieceIndex.WhiteRook, targetSquare - 1);
+                    BBSet.Add(PieceIndex.WhiteRook, targetSquare + 1);
                 }
                 else
                 {
-                    Squares[targetSquare + 1] = Piece.None;
-                    Squares[targetSquare - 2] = Piece.White | Piece.Rook;
+                    Squares[targetSquare + 1] = PieceUtils.None;
+                    Squares[targetSquare - 2] = PieceUtils.White | PieceUtils.Rook;
 
                     // ZOBRIST
                     ZobristKey ^= Zobrist.pieceArray[PieceIndex.WhiteRook, targetSquare + 1];
@@ -664,16 +661,16 @@ public class Board
                     PieceSquares[PieceIndex.WhiteRook].Add(targetSquare - 2);
 
                     // Bitboard
-                    BitboardSet.Remove(PieceIndex.WhiteRook, targetSquare + 1);
-                    BitboardSet.Add(PieceIndex.WhiteRook, targetSquare - 2);
+                    BBSet.Remove(PieceIndex.WhiteRook, targetSquare + 1);
+                    BBSet.Add(PieceIndex.WhiteRook, targetSquare - 2);
                 }
             }
             else
             {
                 if (targetSquare == startSquare + 2)
                 {
-                    Squares[targetSquare - 1] = Piece.None;
-                    Squares[targetSquare + 1] = Piece.Black | Piece.Rook;
+                    Squares[targetSquare - 1] = PieceUtils.None;
+                    Squares[targetSquare + 1] = PieceUtils.Black | PieceUtils.Rook;
 
                     // ZOBRIST
                     ZobristKey ^= Zobrist.pieceArray[PieceIndex.BlackRook, targetSquare - 1];
@@ -684,13 +681,13 @@ public class Board
                     PieceSquares[PieceIndex.BlackRook].Add(targetSquare + 1);
 
                     // Bitboard
-                    BitboardSet.Remove(PieceIndex.BlackRook, targetSquare - 1);
-                    BitboardSet.Add(PieceIndex.BlackRook, targetSquare + 1);
+                    BBSet.Remove(PieceIndex.BlackRook, targetSquare - 1);
+                    BBSet.Add(PieceIndex.BlackRook, targetSquare + 1);
                 }
                 else
                 {
-                    Squares[targetSquare + 1] = Piece.None;
-                    Squares[targetSquare - 2] = Piece.Black | Piece.Rook;
+                    Squares[targetSquare + 1] = PieceUtils.None;
+                    Squares[targetSquare - 2] = PieceUtils.Black | PieceUtils.Rook;
 
                     // ZOBRIST
                     ZobristKey ^= Zobrist.pieceArray[PieceIndex.BlackRook, targetSquare + 1];
@@ -701,15 +698,15 @@ public class Board
                     PieceSquares[PieceIndex.BlackRook].Add(targetSquare - 2);
 
                     // Bitboard
-                    BitboardSet.Remove(PieceIndex.BlackRook, targetSquare + 1);
-                    BitboardSet.Add(PieceIndex.BlackRook, targetSquare - 2);
+                    BBSet.Remove(PieceIndex.BlackRook, targetSquare + 1);
+                    BBSet.Add(PieceIndex.BlackRook, targetSquare - 2);
                 }
             }
         }
 
         if (MoveFlag.IsPromotion(move.flag)) // If Promotion
         {
-            Squares[startSquare] = (Turn ? Piece.White : Piece.Black) | Piece.Pawn;
+            Squares[startSquare] = (Turn ? PieceUtils.White : PieceUtils.Black) | PieceUtils.Pawn;
 
             int pawnIndex = Turn ? PieceIndex.WhitePawn : PieceIndex.BlackPawn;
 
@@ -722,8 +719,8 @@ public class Board
             PieceSquares[pawnIndex].Add(startSquare);
 
             // Bitboard
-            BitboardSet.Remove(movingPieceIndex, startSquare);
-            BitboardSet.Add(pawnIndex, startSquare);
+            BBSet.Remove(movingPieceIndex, startSquare);
+            BBSet.Add(pawnIndex, startSquare);
         }
 
         HasCachedInCheckValue = false;
@@ -747,22 +744,21 @@ public class Board
 
     void PlaceSinglePiece(int piece, int square)
     {
-        if (piece == Piece.None)
+        if (piece == PieceUtils.None)
         {
             return;
         }
 
         Squares[square] = piece;
-        int pieceIndex = Piece.GetPieceIndex(piece);
+        int pieceIndex = PieceUtils.GetPieceIndex(piece);
 
         // Add square; (Piece Squares)
         PieceSquares[pieceIndex].Add(square);
-        BitboardSet.Add(pieceIndex, square);
+        BBSet.Add(pieceIndex, square);
     }
 
     public void LoadPositionFromFen(string fen)
     {
-        // Console.WriteLine(fen);
         Reset();
 
         for (int i = 0; i < 12; i++)
@@ -771,8 +767,7 @@ public class Board
             {
                 PieceSquares[i] = new PieceList();
             }
-            PieceSquares[i].Squares = new int[16]; // Resets piece squares to 0;
-            PieceSquares[i].Count = 0;
+            PieceSquares[i].Reset();
         }
 
         string[] splitFen = fen.Split(' ');
@@ -801,7 +796,7 @@ public class Board
                 }
                 else
                 {
-                    PlaceSinglePiece(Piece.charToPiece[character], Square.Index(file, rank));
+                    PlaceSinglePiece(PieceUtils.charToPiece[character], SquareUtils.Index(file, rank));
                     file++;
                 }
             }
@@ -821,8 +816,8 @@ public class Board
             BKCastle = false;
             BQCastle = false;
 
-            int whiteKingFile = PieceSquares[PieceIndex.WhiteKing].Squares[0] % 8;
-            int blackKingFile = PieceSquares[PieceIndex.BlackKing].Squares[0] % 8;
+            int whiteKingFile = PieceSquares[PieceIndex.WhiteKing][0] % 8;
+            int blackKingFile = PieceSquares[PieceIndex.BlackKing][0] % 8;
 
             if (castleFen == "-")
             {
@@ -865,7 +860,7 @@ public class Board
             }
             else
             {
-                EnpassantFile = Square.Index(enpassantFen) % 8;
+                EnpassantFile = SquareUtils.Index(enpassantFen) % 8;
             }
         }
     
@@ -875,8 +870,6 @@ public class Board
         }
 
         ZobristKey = Zobrist.GetZobristKey(this);
-        PositionHistory.Add(ZobristKey, 1);
-        // RepetitionData.Add(ZobristKey);
 
         AfterLoadingPosition();
     }
@@ -909,15 +902,15 @@ public class Board
     }
     bool CalculateInCheck()
     {
-        int friendlyKingSquare = PieceSquares[PieceIndex.MakeKing(Turn)].Squares[0];
-        ulong blockers = BitboardSet.Bitboards[PieceIndex.WhiteAll] | BitboardSet.Bitboards[PieceIndex.BlackAll];
+        int friendlyKingSquare = PieceSquares[PieceIndex.MakeKing(Turn)][0];
+        ulong blockers = BBSet[PieceIndex.WhiteAll] | BBSet[PieceIndex.BlackAll];
 
         int enemyBishop = PieceIndex.MakeBishop(!Turn);
         int enemyRook = PieceIndex.MakeRook(!Turn);
         int enemyQueen = PieceIndex.MakeQueen(!Turn);
 
-        ulong enemyStraightSliders = BitboardSet.Bitboards[enemyRook] | BitboardSet.Bitboards[enemyQueen];
-        ulong enemyDiagonalSliders = BitboardSet.Bitboards[enemyBishop] | BitboardSet.Bitboards[enemyQueen];
+        ulong enemyStraightSliders = BBSet[enemyRook] | BBSet[enemyQueen];
+        ulong enemyDiagonalSliders = BBSet[enemyBishop] | BBSet[enemyQueen];
 
         if (enemyStraightSliders != 0)
         {
@@ -936,13 +929,13 @@ public class Board
             }
         }
 
-        ulong enemyKnights = BitboardSet.Bitboards[PieceIndex.MakeKnight(!Turn)];
+        ulong enemyKnights = BBSet[PieceIndex.MakeKnight(!Turn)];
         if ((PreComputedMoveGenData.KnightMap[friendlyKingSquare] & enemyKnights) != 0)
         {
             return true;
         }
 
-        ulong enemyPawns = BitboardSet.Bitboards[PieceIndex.MakePawn(!Turn)];
+        ulong enemyPawns = BBSet[PieceIndex.MakePawn(!Turn)];
         ulong pawnAttackMask = Turn ? PreComputedMoveGenData.whitePawnAttackMap[friendlyKingSquare] : PreComputedMoveGenData.blackPawnAttackMap[friendlyKingSquare];
         if ((pawnAttackMask & enemyPawns) != 0)
         {

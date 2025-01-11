@@ -19,7 +19,7 @@ public class MagicHelper
                 int thisSquare = square + dst * offset;
                 // int nextSquare = square + (dst + 1) * offset;
 
-                if (dst == numToEdge ? Square.IsValidSquareExceptOutline(thisSquare) : true)
+                if (dst == numToEdge ? SquareUtils.IsValidSquareExceptOutline(thisSquare) : true)
                 {
                     mask |= (ulong) 1 << thisSquare;
                 }
@@ -39,7 +39,7 @@ public class MagicHelper
         List<int> moveSquareIndices = new();
         for (int i = 0; i < 64; i++)
         {
-            if (Bitboard.Contains(movementMask, i))
+            if (movementMask.Contains(i))
             {
                 moveSquareIndices.Add(i);
             }
@@ -75,7 +75,7 @@ public class MagicHelper
                 int thisSquare = square + dst * offset;
 
                 bitboard |= (ulong) 1 << thisSquare;
-                if (Bitboard.Contains(blockerBitboard, thisSquare))
+                if (blockerBitboard.Contains(thisSquare))
                 {
                     break;
                 }

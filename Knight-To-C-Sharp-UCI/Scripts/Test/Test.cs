@@ -19,23 +19,11 @@ public static class Test
 
     public static void SEEPopLeastAttackerTest()
     {
-        ulong occupancy = board.BitboardSet.Bitboards[PieceIndex.WhiteAll] | board.BitboardSet.Bitboards[PieceIndex.BlackAll];
-        ulong queens = board.BitboardSet.Bitboards[PieceIndex.WhiteQueen] | board.BitboardSet.Bitboards[PieceIndex.BlackQueen];
-        ulong rooks = board.BitboardSet.Bitboards[PieceIndex.WhiteRook] | board.BitboardSet.Bitboards[PieceIndex.BlackRook] | queens;
-        ulong bishops = board.BitboardSet.Bitboards[PieceIndex.WhiteBishop] | board.BitboardSet.Bitboards[PieceIndex.BlackBishop] | queens;
+        ulong occupancy = board.BBSet[PieceIndex.WhiteAll] | board.BBSet[PieceIndex.BlackAll];
+        ulong queens = board.BBSet[PieceIndex.WhiteQueen] | board.BBSet[PieceIndex.BlackQueen];
+        ulong rooks = board.BBSet[PieceIndex.WhiteRook] | board.BBSet[PieceIndex.BlackRook] | queens;
+        ulong bishops = board.BBSet[PieceIndex.WhiteBishop] | board.BBSet[PieceIndex.BlackBishop] | queens;
         ulong attackers = SEE.GetAllAttackersTo(board, d4, occupancy, rooks, bishops);
-
-        Console.WriteLine("occupancy");
-        Bitboard.Print(occupancy);
-
-        Console.WriteLine("Bishops");
-        Bitboard.Print(bishops);
-
-        Console.WriteLine("Rooks");
-        Bitboard.Print(rooks);
-
-        Console.WriteLine("Attackers");
-        Bitboard.Print(attackers);
 
         int result = SEE.PopLeastValuableAttacker(board, ref occupancy, attackers, !board.Turn);
         Console.WriteLine(result);
@@ -47,7 +35,7 @@ public static class Test
 
         for (int i = 0; i < board.LegalMoves.Length; i++)
         {
-            if (board.Squares[board.LegalMoves[i].targetSquare] == Piece.None)
+            if (board.Squares[board.LegalMoves[i].targetSquare] == PieceUtils.None)
             {
                 continue;
             }

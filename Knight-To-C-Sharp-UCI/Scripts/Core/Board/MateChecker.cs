@@ -1,25 +1,22 @@
-
 public static class MateChecker
 {
-    public enum MateState {None, Checkmate, Stalemate, FiftyDraw, Threefold, Material};
+    public enum MateState { None, Checkmate, Stalemate, FiftyDraw, Threefold, Material };
 
-    public static MateState GetPositionState(Board board, Span<Move> moves, bool ExcludeRepetition = false, bool ExcludeFifty = false)
+    public static MateState GetPositionState(Board board, Span<Move> moves, bool ExcludeFifty = false)
     {
         if (moves.Length == 0)
         {
-            if (board.MoveGen.InCheck())
+            if (board.InCheck())
             {
-                // Checkmate
                 return MateState.Checkmate;
             }
             else
             {
-                // Stalemate
                 return MateState.Stalemate;
             }
         }
         
-        if (!ExcludeFifty && board.FiftyRuleHalfClock == 100)
+        if (!ExcludeFifty && board.FiftyRuleHalfClock >= 100)
         {
             // Fifty-move rule
             return MateState.FiftyDraw;
@@ -30,38 +27,11 @@ public static class MateChecker
             // Insufficient Material
             return MateState.Material;
         }
-        
-        if (ExcludeRepetition)
-        {
-            // if (board.PositionHistory.ContainsKey(board.ZobristKey) && board.PositionHistory[board.ZobristKey] > 1)
-            // {
-            //     return MateState.Threefold;
-            // }
-        }
-        else if (board.PositionHistory[board.ZobristKey] >= 3)
-        // else if (board.RepetitionVerify.Contains(board.ZobristKey))
-        {
-            // Threefold repetition
-            return MateState.Threefold;
-        }
 
         return MateState.None;
     }
 
-    // public static int StorePositionHistory(Board board)
-    // {
-    //     if (board.positionHistory.ContainsKey(board.currentZobristKey))
-    //     {
-    //         board.positionHistory[board.currentZobristKey] += 1;
-    //         return board.positionHistory[board.currentZobristKey];
-    //     }
-    //     else
-    //     {
-    //         board.positionHistory.Add(board.currentZobristKey, 1);
-    //         return -1;
-    //     }
-    // }
-
+    [Inline]
     public static bool IsInsufficientMaterial(Board board)
     {
         int wq = board.PieceSquares[PieceIndex.WhiteQueen].Count;
@@ -76,10 +46,13 @@ public static class MateChecker
         int bn = board.PieceSquares[PieceIndex.BlackKnight].Count;
         int bp = board.PieceSquares[PieceIndex.BlackPawn].Count;
 
+        // Major pieces remaining
         if (wp != 0 || wq != 0 || wr != 0 || bp != 0 || bq != 0 || br != 0)
         {
             return false;
         }
+
+        // Insufficient Material
         if (wn <= 1 && bn <= 1 && wb.Count <= 1 && bb.Count <= 1)
         {
             if (!(wn == 1 && bn == 1) && wb.Count == 0 && bb.Count == 0)
@@ -92,7 +65,7 @@ public static class MateChecker
             }
             if (wn == 0 && bn == 0 && wb.Count == 1 && bb.Count == 1)
             {
-                if (((wb.Squares[0] % 8) + (wb.Squares[0] / 8)) % 2 == ((bb.Squares[0] % 8) + (bb.Squares[0] / 8)) % 2)
+                if (((wb[0] % 8) + (wb[0] / 8)) % 2 == ((bb[0] % 8) + (bb[0] / 8)) % 2)
                 {
                     return true;
                 }
@@ -104,10 +77,10 @@ public static class MateChecker
 
     public static void PrintMateState(MateState state)
     {
-        Console.WriteLine(ToString(state));
+        Console.WriteLine(state.ToMateString());
     }
 
-    public static string ToString(MateState state)
+    public static string ToMateString(this MateState state)
     {
         switch (state)
         {

@@ -46,7 +46,8 @@ public class MoveGenerator
     int enemyQueenIndex;
 
     // Bitboards
-    ulong[] bitboards;
+    // ulong[] bitboards;
+    BitboardSet bitboards => board.BBSet;
     ulong friendlyAll;
     ulong enemyAll;
     ulong allBitboard;
@@ -64,7 +65,7 @@ public class MoveGenerator
         this.board = board;
 
         position = board.Squares;
-        bitboards = board.BitboardSet.Bitboards;
+        // bitboards = board.BBSet.Bitboards;
     }
 
     public Span<Move> GenerateMoves(bool genOnlyCaptures = false)
@@ -103,12 +104,12 @@ public class MoveGenerator
         currMoveIndex = 0;
 
         position = board.Squares;
-        bitboards = board.BitboardSet.Bitboards;
+        // bitboards = board.BBSet.Bitboards;
 
         turn = board.Turn;
 
-        friendlyColor = turn ? Piece.White : Piece.Black;
-        enemyColor = turn ? Piece.Black : Piece.White;
+        friendlyColor = turn ? PieceUtils.White : PieceUtils.Black;
+        enemyColor = turn ? PieceUtils.Black : PieceUtils.White;
 
         enemyAttackMap = 0;
         enemyAttackMapNoPawns = 0;
@@ -116,7 +117,7 @@ public class MoveGenerator
         enemyKnightAttackMap = 0;
         enemyPawnAttackMap = 0;
 
-        friendlyKingSquare = board.PieceSquares[PieceIndex.MakeKing(turn)].Squares[0];
+        friendlyKingSquare = board.PieceSquares[PieceIndex.MakeKing(turn)][0];
 
         pinsExistInPosition = false;
         pinRayBitmask = 0;
@@ -189,7 +190,7 @@ public class MoveGenerator
         // Straight
         while (straight != 0)
         {
-            int startSquare = Bitboard.PopLSB(ref straight);
+            int startSquare = BitboardUtils.PopLSB(ref straight);
             ulong moveSquares = Magic.GetRookAttacks(startSquare, allBitboard) & moveMask;
 
             // If piece is pinned, it can only move along the pin ray
@@ -200,7 +201,7 @@ public class MoveGenerator
 
             while (moveSquares != 0)
             {
-                int targetSquare = Bitboard.PopLSB(ref moveSquares);
+                int targetSquare = BitboardUtils.PopLSB(ref moveSquares);
                 moves[currMoveIndex++] = new Move(startSquare, targetSquare);
             }
         }
@@ -208,7 +209,7 @@ public class MoveGenerator
         // Diagonal
         while (diagonal != 0)
         {
-            int startSquare = Bitboard.PopLSB(ref diagonal);
+            int startSquare = BitboardUtils.PopLSB(ref diagonal);
             ulong moveSquares = Magic.GetBishopAttacks(startSquare, allBitboard) & moveMask;
 
             // If piece is pinned, it can only move along the pin ray
@@ -219,7 +220,7 @@ public class MoveGenerator
 
             while (moveSquares != 0)
             {
-                int targetSquare = Bitboard.PopLSB(ref moveSquares);
+                int targetSquare = BitboardUtils.PopLSB(ref moveSquares);
                 moves[currMoveIndex++] = new Move(startSquare, targetSquare);
             }
         }
@@ -232,7 +233,7 @@ public class MoveGenerator
 
         while (kingMoves != 0)
         {
-            int targetSquare = Bitboard.PopLSB(ref kingMoves);
+            int targetSquare = BitboardUtils.PopLSB(ref kingMoves);
             moves[currMoveIndex++] = new Move(friendlyKingSquare, targetSquare);
         }
 
@@ -273,12 +274,12 @@ public class MoveGenerator
 
         while (knights != 0)
         {
-            int knightSquare = Bitboard.PopLSB(ref knights);
+            int knightSquare = BitboardUtils.PopLSB(ref knights);
             ulong moveSquares = PreComputedMoveGenData.KnightMap[knightSquare] & moveMask;
 
             while (moveSquares != 0)
             {
-                int targetSquare = Bitboard.PopLSB(ref moveSquares);
+                int targetSquare = BitboardUtils.PopLSB(ref moveSquares);
                 moves[currMoveIndex++] = new Move(knightSquare, targetSquare);
             }
         }
@@ -293,15 +294,15 @@ public class MoveGenerator
 
         ulong promotionRankMask = turn ? Bits.Rank8 : Bits.Rank1;
 
-        ulong singlePush = (Bitboard.Shift(pawns, pushOffset)) & emptySquares;
+        ulong singlePush = (pawns.Shift(pushOffset)) & emptySquares;
 
         ulong pushPromotions = singlePush & promotionRankMask & checkRayBitmask;
 
 
         ulong captureEdgeFileMask = turn ? Bits.NotFileA : Bits.NotFileH;
         ulong captureEdgeFileMask2 = turn ? Bits.NotFileH : Bits.NotFileA;
-        ulong captureA = Bitboard.Shift(pawns & captureEdgeFileMask, pushDir * 7) & enemyAll;
-        ulong captureB = Bitboard.Shift(pawns & captureEdgeFileMask2, pushDir * 9) & enemyAll;
+        ulong captureA = (pawns & captureEdgeFileMask).Shift(pushDir * 7) & enemyAll;
+        ulong captureB = (pawns & captureEdgeFileMask2).Shift(pushDir * 9) & enemyAll;
 
         ulong singlePushNoPromotions = singlePush & ~promotionRankMask & checkRayBitmask;
 
@@ -317,7 +318,7 @@ public class MoveGenerator
             // Generate single pawn pushes
             while (singlePushNoPromotions != 0)
             {
-                int targetSquare = Bitboard.PopLSB(ref singlePushNoPromotions);
+                int targetSquare = BitboardUtils.PopLSB(ref singlePushNoPromotions);
                 int startSquare = targetSquare - pushOffset;
                 if (!IsPinned(startSquare) || PreComputedMoveGenData.AlignMask[startSquare, friendlyKingSquare] == PreComputedMoveGenData.AlignMask[targetSquare, friendlyKingSquare])
                 {
@@ -327,11 +328,11 @@ public class MoveGenerator
 
             // Generate double pawn pushes
             ulong doublePushTargetRankMask = Bits.Rank1 << (turn ? 24 : 32);
-            ulong doublePush = Bitboard.Shift(singlePush, pushOffset) & emptySquares & doublePushTargetRankMask & checkRayBitmask;
+            ulong doublePush = singlePush.Shift(pushOffset) & emptySquares & doublePushTargetRankMask & checkRayBitmask;
 
             while (doublePush != 0)
             {
-                int targetSquare = Bitboard.PopLSB(ref doublePush);
+                int targetSquare = BitboardUtils.PopLSB(ref doublePush);
                 int startSquare = targetSquare - pushOffset * 2;
                 if (!IsPinned(startSquare) || PreComputedMoveGenData.AlignMask[startSquare, friendlyKingSquare] == PreComputedMoveGenData.AlignMask[targetSquare, friendlyKingSquare])
                 {
@@ -343,7 +344,7 @@ public class MoveGenerator
         // Captures
         while (captureA != 0)
         {
-            int targetSquare = Bitboard.PopLSB(ref captureA);
+            int targetSquare = BitboardUtils.PopLSB(ref captureA);
             int startSquare = targetSquare - pushDir * 7;
 
             if (!IsPinned(startSquare) || PreComputedMoveGenData.AlignMask[startSquare, friendlyKingSquare] == PreComputedMoveGenData.AlignMask[targetSquare, friendlyKingSquare])
@@ -354,7 +355,7 @@ public class MoveGenerator
 
         while (captureB != 0)
         {
-            int targetSquare = Bitboard.PopLSB(ref captureB);
+            int targetSquare = BitboardUtils.PopLSB(ref captureB);
             int startSquare = targetSquare - pushDir * 9;
 
             if (!IsPinned(startSquare) || PreComputedMoveGenData.AlignMask[startSquare, friendlyKingSquare] == PreComputedMoveGenData.AlignMask[targetSquare, friendlyKingSquare])
@@ -366,7 +367,7 @@ public class MoveGenerator
         // Promotions
         while (pushPromotions != 0)
         {
-            int targetSquare = Bitboard.PopLSB(ref pushPromotions);
+            int targetSquare = BitboardUtils.PopLSB(ref pushPromotions);
             int startSquare = targetSquare - pushOffset;
             if (!IsPinned(startSquare))
             {
@@ -377,7 +378,7 @@ public class MoveGenerator
 
         while (capturePromotionsA != 0)
         {
-            int targetSquare = Bitboard.PopLSB(ref capturePromotionsA);
+            int targetSquare = BitboardUtils.PopLSB(ref capturePromotionsA);
             int startSquare = targetSquare - pushDir * 7;
 
             if (!IsPinned(startSquare) || PreComputedMoveGenData.AlignMask[startSquare, friendlyKingSquare] == PreComputedMoveGenData.AlignMask[targetSquare, friendlyKingSquare])
@@ -388,7 +389,7 @@ public class MoveGenerator
 
         while (capturePromotionsB != 0)
         {
-            int targetSquare = Bitboard.PopLSB(ref capturePromotionsB);
+            int targetSquare = BitboardUtils.PopLSB(ref capturePromotionsB);
             int startSquare = targetSquare - pushDir * 9;
 
             if (!IsPinned(startSquare) || PreComputedMoveGenData.AlignMask[startSquare, friendlyKingSquare] == PreComputedMoveGenData.AlignMask[targetSquare, friendlyKingSquare])
@@ -405,13 +406,13 @@ public class MoveGenerator
             int targetSquare = epRankIndex * 8 + epFileIndex;
             int capturedPawnSquare = targetSquare - pushOffset;
 
-            if (Bitboard.Contains(checkRayBitmask, capturedPawnSquare))
+            if (checkRayBitmask.Contains(capturedPawnSquare))
             {
                 ulong pawnsThatCanCaptureEp = pawns & (turn ? PreComputedMoveGenData.blackPawnAttackMap[targetSquare] : PreComputedMoveGenData.whitePawnAttackMap[targetSquare]);
 
                 while (pawnsThatCanCaptureEp != 0)
                 {
-                    int startSquare = Bitboard.PopLSB(ref pawnsThatCanCaptureEp);
+                    int startSquare = BitboardUtils.PopLSB(ref pawnsThatCanCaptureEp);
                     if (!IsPinned(startSquare) || PreComputedMoveGenData.AlignMask[startSquare, friendlyKingSquare] == PreComputedMoveGenData.AlignMask[targetSquare, friendlyKingSquare])
                     {
                         if (!InCheckAfterEnPassant(startSquare, targetSquare, capturedPawnSquare))
@@ -479,7 +480,7 @@ public class MoveGenerator
                 int piece = position[squareIndex];
 
                 // This square contains a friendly piece
-                if (Piece.IsColor(piece, friendlyColor))
+                if (PieceUtils.IsColor(piece, friendlyColor))
                 {
                     // First friendly piece we have come across in this direction, so it might be pinned
                     if (!isFriendlyPieceAlongRay) {
@@ -493,10 +494,10 @@ public class MoveGenerator
                 }
                     
                 // This square contains an enemy piece
-                else if (Piece.IsColor(piece, enemyColor))
+                else if (PieceUtils.IsColor(piece, enemyColor))
                 {
                     // Check if piece is in bitmask of pieces able to move in current direction
-                    if (isDiagonal && Piece.IsDiagonalPiece(piece) || !isDiagonal && Piece.IsStraightPiece(piece))
+                    if (isDiagonal && PieceUtils.IsDiagonalPiece(piece) || !isDiagonal && PieceUtils.IsStraightPiece(piece))
                     {
                         // Friendly piece blocks the check, so this is a pin
                         if (isFriendlyPieceAlongRay)
@@ -534,10 +535,10 @@ public class MoveGenerator
 
         for (int knightIndex = 0; knightIndex < opponentKnights.Count; knightIndex++)
         {
-            int startSquare = opponentKnights.Squares[knightIndex];
+            int startSquare = opponentKnights[knightIndex];
             enemyKnightAttackMap |= PreComputedMoveGenData.KnightMap[startSquare];
 
-            if (!isKnightCheck && Bitboard.Contains(enemyKnightAttackMap, friendlyKingSquare))
+            if (!isKnightCheck && enemyKnightAttackMap.Contains(friendlyKingSquare))
             {
                 isKnightCheck = true;
                 inDoubleCheck = inCheck; // if already in check, then this is double check
@@ -552,11 +553,11 @@ public class MoveGenerator
         bool isPawnCheck = false;
 
         for (int pawnIndex = 0; pawnIndex < opponentPawns.Count; pawnIndex++) {
-            int pawnSquare = opponentPawns.Squares[pawnIndex];
+            int pawnSquare = opponentPawns[pawnIndex];
             ulong pawnAttacks = turn ? PreComputedMoveGenData.blackPawnAttackMap[pawnSquare] : PreComputedMoveGenData.whitePawnAttackMap[pawnSquare];
             enemyPawnAttackMap |= pawnAttacks;
 
-            if (!isPawnCheck && Bitboard.Contains(pawnAttacks, friendlyKingSquare)) {
+            if (!isPawnCheck && pawnAttacks.Contains(friendlyKingSquare)) {
                 isPawnCheck = true;
                 inDoubleCheck = inCheck; // If already in check, then this is double check
                 inCheck = true;
@@ -564,7 +565,7 @@ public class MoveGenerator
             }
         }
 
-        int enemyKingSquare = board.PieceSquares[PieceIndex.MakeKing(!turn)].Squares[0];
+        int enemyKingSquare = board.PieceSquares[PieceIndex.MakeKing(!turn)][0];
 
         enemyAttackMapNoPawns = enemySlidingAttackMap | enemyKnightAttackMap | PreComputedMoveGenData.KingMap[enemyKingSquare];
         enemyAttackMap = enemyAttackMapNoPawns | enemyPawnAttackMap;
@@ -588,7 +589,7 @@ public class MoveGenerator
 
         while (pieces != 0)
         {
-            int startSquare = Bitboard.PopLSB(ref pieces);
+            int startSquare = BitboardUtils.PopLSB(ref pieces);
             ulong moveBoard = Magic.GetSliderAttacks(startSquare, blockers, isDiagonal);
             // Console.WriteLine($"start {Square.Name(startSquare)}");
             // Bitboard.Print(moveBoard);

@@ -116,7 +116,7 @@ public class Evaluation
         PieceList pawns = board.PieceSquares[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
         for (int i = 0; i < pawns.Count; i++)
         {
-            int square = pawns.Squares[i];
+            int square = pawns[i];
 
             ulong passedPawnMask = (white ? Bits.WhitePassedPawnMask : Bits.BlackPassedPawnMask)[square];
             if ((passedPawnMask & enemyPawns) == 0)
@@ -166,20 +166,20 @@ public class Evaluation
             ulong frontMask = (Bits.RankMask[frontRank]) & triple;
             ulong distantMask = (Bits.RankMask[distantRank]) & triple;
 
-            ulong pawns = board.BitboardSet.Bitboards[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
-            ulong pieces = board.BitboardSet.Bitboards[white ? PieceIndex.WhiteAll : PieceIndex.BlackAll] ^ pawns;
+            ulong pawns = board.BBSet[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
+            ulong pieces = board.BBSet[white ? PieceIndex.WhiteAll : PieceIndex.BlackAll] ^ pawns;
 
             ulong shieldPawns = pawns & frontMask;
             ulong shieldPieces = pieces & frontMask;
             ulong distantPawns = pawns & distantMask;
             ulong distantPieces = pieces & distantMask;
 
-            int totalProtection = Bitboard.Count(frontMask) * DirectKingFrontPawnPenalty;
+            int totalProtection = frontMask.Count() * DirectKingFrontPawnPenalty;
             int protection = 
-            Bitboard.Count(shieldPawns) * DirectKingFrontPawnPenalty
-             + Bitboard.Count(shieldPieces) * DirectKingFrontPiecePenalty
-             + Bitboard.Count(distantPawns) * DistantKingFrontPawnPenalty
-             + Bitboard.Count(distantPieces) * DistantKingFrontPiecePenalty;
+            shieldPawns.Count() * DirectKingFrontPawnPenalty
+             + shieldPieces.Count() * DirectKingFrontPiecePenalty
+             + distantPawns.Count() * DistantKingFrontPawnPenalty
+             + distantPieces.Count() * DistantKingFrontPiecePenalty;
 
             r += Math.Max(totalProtection - protection, 0);
         }
@@ -244,7 +244,7 @@ public class Evaluation
 
         for (int i = 0; i < pieceList.Count; i++)
         {
-            value += PieceSquareTable.Read(table, pieceList.Squares[i], white);
+            value += PieceSquareTable.Read(table, pieceList[i], white);
         }
 
         return value;
@@ -285,7 +285,7 @@ public class Evaluation
 
         for (int i = 0; i < rooks.Count; i++)
         {
-            int square = rooks.Squares[i];
+            int square = rooks[i];
             if (IsOpenFile(square))
             {
                 r += OpenFileBonus;
@@ -302,14 +302,14 @@ public class Evaluation
     {
         int file = square % 8;
 
-        ulong pawnsMask = board.BitboardSet.Bitboards[PieceIndex.WhitePawn] | board.BitboardSet.Bitboards[PieceIndex.BlackPawn];
+        ulong pawnsMask = board.BBSet[PieceIndex.WhitePawn] | board.BBSet[PieceIndex.BlackPawn];
         return ((FileMask << file) & pawnsMask) == 0;
     }
     bool IsOpenFileFromSide(int square, bool white)
     {
         int file = square % 8;
 
-        ulong pawnsMask = board.BitboardSet.Bitboards[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
+        ulong pawnsMask = board.BBSet[white ? PieceIndex.WhitePawn : PieceIndex.BlackPawn];
         ulong resultMask = (FileMask << file) & pawnsMask;
         return resultMask == 0;
     }
@@ -321,25 +321,25 @@ public class Evaluation
     // Move Ordering
     public static int GetAbsPieceValue(int piece)
     {
-        int pieceType = Piece.GetType(piece);
+        int pieceType = PieceUtils.GetType(piece);
 
-        if (pieceType == Piece.Queen)
+        if (pieceType == PieceUtils.Queen)
         {
             return MaterialInfo.QueenValue;
         }
-        else if (pieceType == Piece.Rook)
+        else if (pieceType == PieceUtils.Rook)
         {
             return MaterialInfo.RookValue;
         }
-        else if (pieceType == Piece.Knight)
+        else if (pieceType == PieceUtils.Knight)
         {
             return MaterialInfo.KnightValue;
         }
-        else if (pieceType == Piece.Bishop)
+        else if (pieceType == PieceUtils.Bishop)
         {
             return MaterialInfo.BishopValue;
         }
-        else if (pieceType == Piece.Pawn)
+        else if (pieceType == PieceUtils.Pawn)
         {
             return MaterialInfo.PawnValue;
         }
@@ -412,7 +412,7 @@ public class Evaluation
             int numKnights = board.PieceSquares[PieceIndex.MakeKnight(white)].Count;
             int numPawns = board.PieceSquares[PieceIndex.MakePawn(white)].Count;
 
-            int kingSquare = board.PieceSquares[PieceIndex.MakeKing(white)].Squares[0];
+            int kingSquare = board.PieceSquares[PieceIndex.MakeKing(white)][0];
 
             return new MaterialInfo(numQueens, numRooks, numBishops, numKnights, numPawns, kingSquare);
         }
@@ -447,7 +447,8 @@ public class Evaluation
             whitePawnBehind = blackPawnBehind = 0;
 
             // bool white = board.Turn;
-            ulong[] bitboards = board.BitboardSet.Bitboards;
+            // ulong[] bitboards = board.BBSet.Bitboards;
+            ref BitboardSet bitboards = ref board.BBSet;
             
             whiteKing = bitboards[PieceIndex.WhiteKing];
             blackKing = bitboards[PieceIndex.BlackKing];
@@ -467,7 +468,7 @@ public class Evaluation
             ulong whitePawnClone = whitePawns;
             while (whitePawnClone != 0)
             {
-                int square = Bitboard.PopLSB(ref whitePawnClone);
+                int square = BitboardUtils.PopLSB(ref whitePawnClone);
                 int file = square % 8;
                 int rank = square / 8;
 
@@ -479,7 +480,7 @@ public class Evaluation
             ulong blackPawnClone = blackPawns;
             while (blackPawnClone != 0)
             {
-                int square = Bitboard.PopLSB(ref blackPawnClone);
+                int square = BitboardUtils.PopLSB(ref blackPawnClone);
                 int file = square % 8;
                 int rank = square / 8;
 
