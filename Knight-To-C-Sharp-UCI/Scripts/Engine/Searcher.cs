@@ -128,8 +128,10 @@ public class Searcher
 
         int lastSearchEval = Infinity.NegativeInfinity;
 
+        maxDepth = Math.Min(maxDepth, Configuration.MaxDepth - 1);
+
         // Iterative Deepening
-        for (int depth = 1; depth < maxDepth; depth++)
+        for (int depth = 1; depth <= maxDepth; depth++)
         {
             if (!Configuration.UseAspirationWindows || depth < Configuration.AspirationWindowMinDepth || lastSearchEval == Infinity.NegativeInfinity)
             {
@@ -515,6 +517,7 @@ public class Searcher
         {
             OnSearchComplete += onSearchComplete;
         }
+
         cancellationRequested = true;
     }
     

@@ -13,7 +13,7 @@ public class Bot
 
     public void StartSearch(int depth, Action? onSearchComplete = null)
     {
-        if (TryToGetBookMove(onSearchComplete))
+        if (TryGetBookMove(onSearchComplete))
         {
             return;
         }
@@ -68,8 +68,8 @@ public class Bot
         return (int) thinkTimeDouble;
     }
     
-    // Returns if it found a book move or not
-    bool TryToGetBookMove(Action? onSearchComplete)
+    // Returns true if a book move was found
+    bool TryGetBookMove(Action? onSearchComplete)
     {
         // Try to find this position in the Opening Book
         Move bookMove = Book.GetRandomMove(board);
@@ -94,16 +94,16 @@ public class Bot
             engine.CancelSearch(onSearchComplete);
         }
     }
+    
     public void CancelAndWait()
     {
-        // Console.WriteLine($"info string {nameof(CancelAndWait)} called");
-
         if (!IsSearching())
         {
             return;
         }
 
         CancelSearch();
+
         while (IsSearching())
         {
 

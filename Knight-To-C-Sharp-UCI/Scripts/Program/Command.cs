@@ -1,13 +1,12 @@
-
 public static class Command
 {
-    const int MaxThinkTime = 3000 * 1000;
+    const int MaxThinkTime = 60 * 60 * 1000;
     const int MinThinkTime = 50;
 
     public static int RecieveCommand(string command)
     {
         string[] tokens = command.Split(' ');
-        string prefix = tokens[0];
+        string prefix = tokens.FirstOrDefault(string.Empty);
 
         // Available Commands Pre-UCI Load
         switch (prefix)
@@ -39,24 +38,11 @@ public static class Command
                 MainProcess.board.PrintBoardAndMoves();
             }
             break;
-            
-            default:
-                break;
-        }
-
-        // if (!MainProcess.board.Loaded)
-        // {
-        //     return 0;
-        // }
-
-        // Available Commands After Loading UCI-New Game
-        switch (prefix)
-        {
             case "cmd":
             {
                 if (tokens.Length > 1)
                 {
-                    RecieveCustomCommand(command.Substring(4));
+                    RecieveCustomCommand(command[4..]);
                 }
             }
             break;
@@ -80,7 +66,7 @@ public static class Command
                 Console.WriteLine("readyok");
             }
             break;
-                        
+
             default:
                 break;
         }
@@ -91,7 +77,7 @@ public static class Command
     public static int RecieveCustomCommand(string command)
     {
         string[] tokens = command.Split(' ');
-        string prefix = tokens[0];
+        string prefix = tokens.FirstOrDefault(string.Empty);
 
         switch (prefix)
         {
@@ -247,7 +233,6 @@ public static class Command
             }
             break;
 
-
             default:
                 break;
         }
@@ -255,12 +240,7 @@ public static class Command
         return 0;
     }
 
-
-
-
-
     // COMMAND FUNCTIONS
-
     static void Perft()
     {
         PerftHelper.Go(MainProcess.board);
@@ -269,27 +249,7 @@ public static class Command
     // Temporary Tests
     static void Temp()
     {
-        // Console.WriteLine(PreComputedData.numSquaresToEdge[Square.Index("a1"), 5]);
-        // foreach (ulong bitboard in MagicHelper.CreateAllBlockerBitboards(Magic.RookMasks[0]))
-        // {
-        //     Bitboard.Print(bitboard);
-        // }
-        // Bitboard.Print(Magic.GetBishopAttacks(Square.Index("d4"), 1ul << Square.Index("b2") | 1ul << Square.Index("c3") | 1ul << Square.Index("b6")));
-        // Bitboard.Print(PreComputedData.DirRayMask[4, Square.Index("d4")]);
-        // Bitboard.Print(PreComputedData.AlignMask[Square.Index("d5"), Square.Index("e8")]);
-        // Console.WriteLine(TranspositionTable.Entry.GetSize() + "bytes.");
-        // Console.WriteLine($"Move: {System.Runtime.InteropServices.Marshal.SizeOf<Move>()}");
-        // Console.WriteLine(MainProcess.engine.GetEngine().GetTT().size);
-        // Bitboard.Print(Bits.WhitePassedPawnMask[Square.Index("e4")]);
-        // Bitboard.Print(Bits.BlackPassedPawnMask[Square.Index("h7")]);
 
-        // Move.PrintMoveList(MainProcess.board.MoveGen.GenerateMoves(true).ToArray());
-
-        // PerftHelper.Test(MainProcess.board, 10, 0, qSearch: true, print: true);
-        Console.WriteLine(PerftHelper.CalculateInfiniteQSearch(MainProcess.board, print: true));
-        // Span<Move> moves = stackalloc Move[128];
-        // moves = MainProcess.board.MoveGen.GenerateMoves(ref moves, true);
-        // Console.WriteLine(moves.Length);
     }
     
     // Time Tests
@@ -301,23 +261,21 @@ public static class Command
         for (int i = 0; i < cases; i++)
         {
             Console.WriteLine($"Case {i + 1}");
-            string s = "\tMS | ";
-            double[] msarr = new double[suiteIteration];
+
+            double[] msArr = new double[suiteIteration];
             for (int suite = 0; suite < suiteIteration; suite++)
             {
                 System.Diagnostics.Stopwatch sw = new ();
+
                 sw.Start();
-
                 action?.Invoke();
-
                 sw.Stop();
-                double milliseconds = sw.ElapsedTicks / (double)TimeSpan.TicksPerMillisecond;
-                s += $"{milliseconds:F5}" + "ms. ";
-                msarr[suite] = milliseconds; 
+
+                msArr[suite] = sw.ElapsedTicks / (double)TimeSpan.TicksPerMillisecond; 
             }
 
-            Console.WriteLine(s);
-            Console.WriteLine($"\tAVG | {msarr.Average():F5}");
+            Console.WriteLine($"\tMS | {string.Join(" ", msArr.Select(ms => $"{ms:F5}ms."))}");
+            Console.WriteLine($"\tAVG | {msArr.Average():F5}");
         }
 
         Console.WriteLine("###############");
@@ -331,7 +289,7 @@ public static class Command
         }
 
         bool containsMoves = tokens.Contains("moves");
-        string subCommand = tokens[1];
+        string subCommand = tokens[1..].FirstOrDefault(string.Empty);
         
         if (subCommand == "fen")
         {
@@ -349,6 +307,7 @@ public static class Command
             {
                 fen = command.Substring(13);
             }
+
             MainProcess.board.LoadPositionFromFen(fen);
         }
         else if (subCommand == "startpos")
@@ -453,16 +412,13 @@ public static class Command
         }
 
         Console.WriteLine($"info string searchtime {(!infinite ? thinkTime : "infinite")}");
-        // Console.WriteLine("huh");
         
         if (infinite)
         {
-            // Console.WriteLine("inf");
             MainProcess.engine.StartTimedSearch(depth, -1);
         }
         else
         {
-            // Console.WriteLine("not inf");
             MainProcess.engine.StartTimedSearch(depth, thinkTime);
         }
     }
@@ -472,7 +428,10 @@ public static class Command
 
         if (Array.IndexOf(tokens, label) + 1 < tokens.Length)
         {
-            int.TryParse(tokens[Array.IndexOf(tokens, label) + 1], out result);
+            if (!int.TryParse(tokens[Array.IndexOf(tokens, label) + 1], out result))
+            {
+                result = 0;
+            }
         }
 
         return result;
@@ -490,7 +449,7 @@ public static class Command
         }
         for (int i = 0; i < bp.Moves.Count; i++)
         {
-            Console.WriteLine(bp.Moves[i].San + ' ' + bp.Num[i]);
+            Console.WriteLine($"{bp.Moves[i].San} {bp.Num[i]}");
         }
     }
 }
