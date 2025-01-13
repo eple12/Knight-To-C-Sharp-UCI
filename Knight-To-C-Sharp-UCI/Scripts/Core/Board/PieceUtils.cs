@@ -44,6 +44,10 @@ public static class PieceUtils
     public static PieceIndexer PieceIndexer(this Piece piece) {
         return GetPieceIndex(piece);
     }
+    [Inline]
+    public static bool IsNone(this Piece piece) {
+        return piece == None;
+    }
     
     [Inline]
     public static bool IsColor(Piece piece, int color)
