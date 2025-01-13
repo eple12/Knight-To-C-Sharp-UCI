@@ -4,12 +4,13 @@ public class PieceList
     int[] Squares = new Square[64];
     int[] map = new int[64];
 	private int count = 0;
+
     public int Count
 	{
 		get { return count; }
 	}
 
-    public PieceList() // index 0 ~ count - 1 => valid square index / out of the range (index count ~ ) => garbage data
+    public PieceList() // Valid Index: 0..(Count - 1)
     {
 
     }
@@ -37,6 +38,10 @@ public class PieceList
     
 	public Square this[int index] {
 		get {
+			if (index >= Count) {
+				return SquareRepresentation.InvalidSquare;
+			}
+
 			return Squares[index];
 		}
 	}

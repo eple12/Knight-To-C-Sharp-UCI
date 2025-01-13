@@ -1,13 +1,13 @@
 public class Bot
 {
     // EngineSettings settings;
-    Searcher engine;
+    Searcher searcher;
     Board board;
 
     public Bot(Board _board)
     {
         // settings = new EngineSettings();
-        engine = new Searcher(_board);
+        searcher = new Searcher(_board);
         board = _board;
     }
 
@@ -22,7 +22,7 @@ public class Bot
         onSearchComplete += () => {
             ReportBestMove(GetMove());
         };
-        engine.RequestSearch(depth, onSearchComplete);
+        searcher.RequestSearch(depth, onSearchComplete);
     }
     public void StartTimedSearch(int depth, int timeMS, Action? onSearchComplete = null)
     {
@@ -76,7 +76,7 @@ public class Bot
 
         if (!bookMove.IsNull())
         {
-            engine.SetBookMove(bookMove);
+            searcher.SetBookMove(bookMove);
             ReportBestMove(bookMove);
             
             onSearchComplete?.Invoke();
@@ -91,7 +91,7 @@ public class Bot
     {
         if (IsSearching())
         {
-            engine.CancelSearch(onSearchComplete);
+            searcher.CancelSearch(onSearchComplete);
         }
     }
     
@@ -112,15 +112,15 @@ public class Bot
 
     public Move GetMove()
     {
-        return engine.GetMove();
+        return searcher.GetMove();
     }
     public bool IsSearching()
     {
-        return engine.IsSearching();
+        return searcher.IsSearching();
     }
-    public Searcher GetEngine()
+    public Searcher GetSearcher()
     {
-        return engine;
+        return searcher;
     }
 
     public void ReportBestMove(Move move)

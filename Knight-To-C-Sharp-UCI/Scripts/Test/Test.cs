@@ -12,9 +12,7 @@ public static class Test
     public static void CurrentTest()
     {
         // Add Tests Here
-        // SEEPopLeastAttackerTest();
         SEEPositive();
-        // MoveOrderGetScoresTest();
     }
 
     public static void SEEPopLeastAttackerTest()
@@ -28,6 +26,7 @@ public static class Test
         int result = SEE.PopLeastValuableAttacker(board, ref occupancy, attackers, !board.Turn);
         Console.WriteLine(result);
     }
+
     public static void SEEPositive()
     {
         SEE.SEEPinData pinData = new();
@@ -47,22 +46,13 @@ public static class Test
 
     public static void MoveOrderGetScoresTest()
     {
-        MoveOrder moveOrder = new(MainProcess.engine.GetEngine());
+        MoveOrder moveOrder = new(MainProcess.engine.GetSearcher());
 
         Span<Move> moves = stackalloc Move[128];
         MainProcess.board.MoveGen.GenerateMoves(ref moves, genOnlyCaptures: true);
         moveOrder.GetOrderedList(ref moves, Move.NullMove, inQSearch: true, 0, default, new int[moves.Length]);
 
         int[] scores = moveOrder.GetLastMoveScores();
-        foreach (var item in scores)
-        {
-            Console.WriteLine(item);
-        }
+        Console.WriteLine(string.Join("\n", scores));
     }
-
-
-
-
-
-
 }

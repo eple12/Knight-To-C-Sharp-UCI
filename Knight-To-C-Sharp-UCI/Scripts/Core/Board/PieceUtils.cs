@@ -40,6 +40,10 @@ public static class PieceUtils
     public static int Type(this Piece piece) {
         return GetType(piece);
     }
+    [Inline]
+    public static PieceIndexer PieceIndexer(this Piece piece) {
+        return GetPieceIndex(piece);
+    }
     
     [Inline]
     public static bool IsColor(Piece piece, int color)
@@ -67,27 +71,27 @@ public static class PieceUtils
             return PieceIndex.Invalid;
         }
         
-        return GetType(piece) - 1 + (IsWhitePiece(piece) ? 0 : 6);
+        return piece.Type() - 1 + (piece.IsWhite() ? 0 : 6);
     }
 
     [Inline]
     public static bool IsDiagonalPiece(Piece piece)
     {
-        int type = GetType(piece);
+        int type = piece.Type();
         return type == Bishop || type == Queen;
     }
 
     [Inline]
     public static bool IsStraightPiece(Piece piece)
     {
-        int type = GetType(piece);
+        int type = piece.Type();
         return type == Rook || type == Queen;
     }
 
     [Inline]
     public static char PieceToChar(Piece piece)
     {
-        return PieceIndexToChar[GetPieceIndex(piece)];
+        return PieceIndexToChar[piece.PieceIndexer()];
     }
 }
 

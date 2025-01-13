@@ -1,5 +1,10 @@
 public static class Command
 {
+    // References
+    static Board board => MainProcess.board;
+    static Bot engine => MainProcess.engine;
+    static TranspositionTable tt => engine.GetSearcher().GetTT();
+
     const int MaxThinkTime = 60 * 60 * 1000;
     const int MinThinkTime = 50;
 
@@ -13,9 +18,9 @@ public static class Command
         {
             case "quit":
             {
-                MainProcess.engine.CancelAndWait();
+                engine.CancelAndWait();
+                return 1;
             }
-            return 1;
             case "uci":
             {
                 Console.WriteLine("id name Knight-To-C-Sharp");
@@ -25,17 +30,17 @@ public static class Command
             break;
             case "ucinewgame":
             {
-                if (MainProcess.engine.IsSearching())
+                if (engine.IsSearching())
                 {
-                    MainProcess.engine.CancelAndWait();
+                    engine.CancelAndWait();
                 }
 
-                MainProcess.board.LoadPositionFromFen(Board.InitialFen);
+                board.LoadInitialPosition();
             }
             break;
             case "d":
             {
-                MainProcess.board.PrintBoardAndMoves();
+                board.PrintBoardAndMoves();
             }
             break;
             case "cmd":
@@ -58,7 +63,7 @@ public static class Command
             break;
             case "stop":
             {
-                MainProcess.engine.CancelAndWait();
+                engine.CancelAndWait();
             }
             break;
             case "isready":
@@ -87,17 +92,18 @@ public static class Command
                 {
                     break;
                 }
-                MainProcess.board.MakeConsoleMove(tokens[1]);
+                
+                board.MakeConsoleMove(tokens[1]);
             }
             break;
             case "eval":
             {
-                Console.WriteLine("debug cmd eval: " + MainProcess.engine.GetEngine().GetEvaluation().Evaluate(verbose: true));
+                Console.WriteLine($"debug cmd eval: {engine.GetSearcher().GetEvaluation().Evaluate(verbose: true)}");
             }
             break;
             case "zobrist":
             {
-                Console.WriteLine("debug cmd zobrist: " + MainProcess.board.ZobristKey);
+                Console.WriteLine($"debug cmd zobrist: {board.ZobristKey}");
             }
             break;
             case "parsebook":
@@ -107,7 +113,7 @@ public static class Command
             break;
             case "dir":
             {
-                Console.WriteLine("Current Directory: " + Environment.CurrentDirectory);
+                Console.WriteLine($"Current Directory: {Environment.CurrentDirectory}");
             }
             break;
             case "keybook":
@@ -121,12 +127,12 @@ public static class Command
             break;
             case "booktest":
             {
-                Book.GetRandomMove(MainProcess.board).Print();
+                Book.GetRandomMove(board).Print();
             }
             break;
             case "book":
             {
-                PrintBookMoves(MainProcess.board.ZobristKey);
+                PrintBookMoves(board.ZobristKey);
             }
             break;
             case "bitboard":
@@ -135,11 +141,11 @@ public static class Command
                 {
                     if (tokens[1] == "print")
                     {
-                        MainProcess.board.BBSet.Print();
+                        board.BBSet.Print();
                     }
                     else if (tokens[1] == "test")
                     {
-                        MainProcess.board.BBSet.Test(MainProcess.board);
+                        board.BBSet.Test(board);
                     }
                 }
             }
@@ -150,23 +156,22 @@ public static class Command
                 {
                     int time = int.Parse(tokens[1]);
                     
-                    MainProcess.engine.StartTimedSearch(0, time, () => {
-                        MainProcess.board.MakeMove(MainProcess.engine.GetMove());
-                        MainProcess.board.UpdateLegalMoves();
-                        MainProcess.board.PrintBoardAndMoves();
+                    engine.StartTimedSearch(0, time, () => {
+                        board.MakeMove(engine.GetMove());
+                        board.UpdateLegalMoves();
+                        board.PrintBoardAndMoves();
                     });
                 }
-                
             }
             break;
             case "tt":
             {
-                Console.WriteLine("key: " + MainProcess.board.ZobristKey + " tt: " + MainProcess.engine.GetEngine().GetTT().LookupEvaluation(0, 0, 0, 0) + " move: " + MainProcess.engine.GetEngine().GetTT().GetStoredMove().San + " Index: " + MainProcess.engine.GetEngine().GetTT().Index);
+                Console.WriteLine($"key: {board.ZobristKey} tt: {tt.LookupEvaluation(0, 0, 0, 0)} move: {tt.GetStoredMove().San} Index: {tt.Index}");
             }
             break;
             case "ttprint":
             {
-                MainProcess.engine.GetEngine().GetTT().Print();
+                tt.Print();
             }
             break;
             case "magic":
@@ -203,7 +208,7 @@ public static class Command
                     {
                         case "movegen":
                         {
-                            GeneralTimeTest(() => MainProcess.board.MoveGen.GenerateMoves(), testName: "Legal Move Generation", cases: 10);
+                            GeneralTimeTest(() => board.MoveGen.GenerateMoves(), testName: "Legal Move Generation", cases: 10);
                         }
                         break;
                         case "perft":
@@ -213,7 +218,7 @@ public static class Command
                         break;
                         case "see":
                         {
-                            GeneralTimeTest(() => {Test.SEEPositive();}, testName: "SEE Positive", cases: 3, suiteIteration: 5);
+                            GeneralTimeTest(Test.SEEPositive, testName: "SEE Positive", cases: 3, suiteIteration: 5);
                         }
                         break;
                         default:
@@ -240,10 +245,10 @@ public static class Command
         return 0;
     }
 
-    // COMMAND FUNCTIONS
+    // Command Funcitons
     static void Perft()
     {
-        PerftHelper.Go(MainProcess.board);
+        PerftHelper.Go(board);
     }
 
     // Temporary Tests
@@ -283,9 +288,9 @@ public static class Command
 
     static void ProcessPositionCommand(string command, string[] tokens)
     {
-        if (MainProcess.engine.IsSearching())
+        if (engine.IsSearching())
         {
-            MainProcess.engine.CancelAndWait();
+            engine.CancelAndWait();
         }
 
         bool containsMoves = tokens.Contains("moves");
@@ -308,11 +313,11 @@ public static class Command
                 fen = command.Substring(13);
             }
 
-            MainProcess.board.LoadPositionFromFen(fen);
+            board.LoadPositionFromFen(fen);
         }
         else if (subCommand == "startpos")
         {
-            MainProcess.board.LoadPositionFromFen(Board.InitialFen);
+            board.LoadPositionFromFen(Board.InitialFen);
         }
         
         if (containsMoves)
@@ -320,15 +325,15 @@ public static class Command
             int index = Array.IndexOf(tokens, "moves");
             for (int i = index + 1; i < tokens.Length; i++)
             {
-                MainProcess.board.MakeConsoleMove(tokens[i]);
+                board.MakeConsoleMove(tokens[i]);
             }
         }
     }
     static void ProcessGoCommand(string[] tokens)
     {
-        if (MainProcess.engine.IsSearching())
+        if (engine.IsSearching())
         {
-            MainProcess.engine.CancelAndWait();
+            engine.CancelAndWait();
         }
 
         int tokenIndex = 0;
@@ -352,7 +357,7 @@ public static class Command
             if (subCommand == "perft")
             {
                 int d = GetIntegerAfterLabel(subCommand, tokens);
-                PerftHelper.Test(MainProcess.board, d, 0, true);
+                PerftHelper.Test(board, d, 0, true);
                 return;
             }
             else if (subCommand == "depth")
@@ -408,18 +413,18 @@ public static class Command
         // Choose Think Time
         if (!gotThinkTime)
         {
-            thinkTime = MainProcess.engine.DecideThinkTime(wtime, btime, winc, binc, MaxThinkTime, MinThinkTime);
+            thinkTime = engine.DecideThinkTime(wtime, btime, winc, binc, MaxThinkTime, MinThinkTime);
         }
 
         Console.WriteLine($"info string searchtime {(!infinite ? thinkTime : "infinite")}");
         
         if (infinite)
         {
-            MainProcess.engine.StartTimedSearch(depth, -1);
+            engine.StartTimedSearch(depth, -1);
         }
         else
         {
-            MainProcess.engine.StartTimedSearch(depth, thinkTime);
+            engine.StartTimedSearch(depth, thinkTime);
         }
     }
     static int GetIntegerAfterLabel(string label, string[] tokens)
@@ -439,8 +444,8 @@ public static class Command
     
     static void PrintBookMoves(ulong key)
     {
-        MainProcess.board.PrintLargeBoard();
-        Console.WriteLine("Zobrist Key: " + MainProcess.board.ZobristKey);
+        board.PrintLargeBoard();
+        Console.WriteLine($"Zobrist Key: {board.ZobristKey}");
 
         BookPosition bp = Book.TryToGetBookPosition(key);
         if (bp.IsEmpty())
