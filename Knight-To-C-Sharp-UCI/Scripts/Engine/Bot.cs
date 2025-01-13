@@ -1,12 +1,11 @@
 public class Bot
 {
-    // EngineSettings settings;
+    // References
     Searcher searcher;
     Board board;
 
     public Bot(Board _board)
     {
-        // settings = new EngineSettings();
         searcher = new Searcher(_board);
         board = _board;
     }
@@ -24,6 +23,7 @@ public class Bot
         };
         searcher.RequestSearch(depth, onSearchComplete);
     }
+
     public void StartTimedSearch(int depth, int timeMS, Action? onSearchComplete = null)
     {
         if (timeMS > 0)
@@ -52,10 +52,13 @@ public class Bot
         // Think Time
         int myTime = MainProcess.board.Turn ? wtime : btime;
         int myInc = MainProcess.board.Turn ? winc : binc;
+
         // Get a fraction of remaining time to use for current move
         double thinkTimeDouble = myTime / 30.0;
+
         // Clamp think time if a maximum limit is imposed
         thinkTimeDouble = Math.Min(max, thinkTimeDouble);
+
         // Add increment
         if (myTime > myInc * 2)
         {
@@ -125,7 +128,6 @@ public class Bot
 
     public void ReportBestMove(Move move)
     {
-        Console.WriteLine("bestmove " + move.San);
+        Console.WriteLine($"bestmove {move.San}");
     }
-
 }

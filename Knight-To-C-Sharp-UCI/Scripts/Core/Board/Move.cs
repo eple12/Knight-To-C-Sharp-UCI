@@ -1,9 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 
 public struct Move
 {
-    // moveValue => Stores data (startSquare, targetSquare, moveFlag)
+    // Data stored in this move
     public ushort moveValue;
 
     const ushort startSquareMask = 0b0000000000111111;
@@ -87,8 +86,6 @@ public struct Move
     public override int GetHashCode() {
         return base.GetHashCode();
     }
-
-
 }
 
 public static class MoveHelper {
@@ -150,8 +147,8 @@ public static class MoveHelper {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Move OnlySquares(string s) {
-        int startSquare = SquareUtils.Index(s[0..2]);
-        int targetSquare = SquareUtils.Index(s[2..4]);
+        Square startSquare = SquareUtils.Index(s[0..2]);
+        Square targetSquare = SquareUtils.Index(s[2..4]);
 
         return new Move(startSquare, targetSquare);
     }
@@ -169,11 +166,13 @@ public readonly struct MoveFlag
     public const int PromoteToBishop = 6;
     public const int PawnTwoForward = 7;
 
+    [Inline]
     public static bool IsPromotion(int flag)
     {
         return flag >= PromoteToQueen && flag <= PromoteToBishop;
     }
 
+    [Inline]
     public static int GetPromotionPiece(int flag, bool isWhite = true)
     {
         // Returns Piece Value
@@ -193,14 +192,16 @@ public readonly struct MoveFlag
         return PieceUtils.None;
     }
 
+    [Inline]
     public static int GetPromotionPieceValue(int flag)
     {
         return Evaluation.GetAbsPieceValue(GetPromotionPiece(flag));
     }
 
-    public static int GetPromotionFlag(int piece)
+
+    public static int GetPromotionFlag(Piece piece)
     {
-        int pieceType = PieceUtils.GetType(piece);
+        int pieceType = piece.Type();
 
         if (pieceType == PieceUtils.Queen)
         {

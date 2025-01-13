@@ -5,7 +5,7 @@ public static class Zobrist
 
     public static readonly ulong[,] pieceArray = new ulong[12, 64];
     public static readonly ulong[] castlingArray = new ulong[16]; // ( - / K / Q / KQ ) for each side, 4^2 possibility
-    public static readonly ulong[] enpassantArray = new ulong[9]; // enpassantArray[8] means en-passant is not legal
+    public static readonly ulong[] enpassantArray = new ulong[9]; // Index 8: En-Passant not available
     public static readonly ulong sideToMove = NextUlong(rng);
 
     public static void GenerateZobristTable() // Called Initially

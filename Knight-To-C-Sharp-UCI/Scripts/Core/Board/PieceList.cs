@@ -24,10 +24,10 @@ public class PieceList
 
 	public void Remove(Square square)
     {
-		int index = map[square]; // get the index of this element in the squares array
+		int index = map[square]; // Get the index of this element in the squares array
 		
-		Squares[index] = Squares[Count - 1]; // move last element in array to the place of the removed  ERROR
-		map[Squares[index]] = index; // update map to point to the moved element's new location in the array
+		Squares[index] = Squares[Count - 1]; // mMve last element in array to the place of the removed
+		map[Squares[index]] = index; // Update the map to point to the moved element's new location in the array
 		count--;
 	}
 

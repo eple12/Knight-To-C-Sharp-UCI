@@ -1,4 +1,3 @@
-
 public static class PerftHelper
 {
     static PerftPosition[] PerftPositions;
@@ -23,7 +22,7 @@ public static class PerftHelper
         ];
     }
 
-    public static void Go(Board board, bool qSearch = false)
+    public static void Go(Board board)
     {
         Console.WriteLine("##############################");
         Console.WriteLine("Perft Tests\n");
@@ -33,8 +32,6 @@ public static class PerftHelper
         {
             Case(board, position.Get(5), qSearch: false);
         }
-        // Case(board, PerftPositions[1].Get(5), print: true);
-        // Case(board, new PerftCase("8/2p5/3p4/KP5r/1R2Pp1k/8/6P1/8 b - - 0 1", 1, 0));
 
         board.LoadPositionFromFen(Board.InitialFen);
         Console.WriteLine("##############################");
