@@ -17,6 +17,7 @@ public static class Configuration
     // SEE Reduction
     public const int SEE_BadCaptureReduction = 2;
 
+    // Move Generation
     public const int MaxLegalMovesCount = 256;
     
     public static readonly int[][] LMR_Reductions = new int[MaxDepth][];

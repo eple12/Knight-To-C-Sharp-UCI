@@ -234,8 +234,8 @@ public static class SEE
         return (rooks & Magic.GetRookAttacks(square, occupancy))
             | (bishops & Magic.GetBishopAttacks(square, occupancy))
 
-            | (board.BBSet[PieceIndex.WhitePawn] & PreComputedMoveGenData.blackPawnAttackMap[square]) // Reverse White
-            | (board.BBSet[PieceIndex.BlackPawn] & PreComputedMoveGenData.whitePawnAttackMap[square]) // Reverse Black
+            | (board.BBSet[PieceIndex.WhitePawn] & PreComputedMoveGenData.BlackPawnAttackMap[square]) // Reverse White
+            | (board.BBSet[PieceIndex.BlackPawn] & PreComputedMoveGenData.WhitePawnAttackMap[square]) // Reverse Black
 
             | ((board.BBSet[PieceIndex.WhiteKnight] | board.BBSet[PieceIndex.BlackKnight])
              & PreComputedMoveGenData.KnightMap[square])

@@ -132,7 +132,5 @@ public static class Bits
                 BetweenBitboards[s1, s2] = b & (b - 1);
             }
         }
-    }
-
-    
+    }    
 }

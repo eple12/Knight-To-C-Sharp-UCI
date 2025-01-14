@@ -323,6 +323,11 @@ public class Searcher
             ++depth;
         }
 
+        // Make sure the depth is always below MaxDepth
+        if (depth >= Configuration.MaxDepth) {
+            depth = Configuration.MaxDepth - 1;
+        }
+
         Move bestMoveInThisPosition = moves[0];
 
         // Moves Loop

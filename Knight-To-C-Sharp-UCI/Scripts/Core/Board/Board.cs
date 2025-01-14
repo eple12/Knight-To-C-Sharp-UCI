@@ -693,7 +693,7 @@ public class Board
         }
 
         ulong enemyPawns = BBSet[PieceIndex.MakePawn(!Turn)];
-        ulong pawnAttackMask = Turn ? PreComputedMoveGenData.whitePawnAttackMap[friendlyKingSquare] : PreComputedMoveGenData.blackPawnAttackMap[friendlyKingSquare];
+        ulong pawnAttackMask = Turn ? PreComputedMoveGenData.WhitePawnAttackMap[friendlyKingSquare] : PreComputedMoveGenData.BlackPawnAttackMap[friendlyKingSquare];
         if ((pawnAttackMask & enemyPawns) != 0)
         {
             return true;

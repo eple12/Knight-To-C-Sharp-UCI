@@ -1,6 +1,6 @@
 public class MoveGenerator
 {
-    public const int MaxMoves = 218;
+    public const int MaxMoves = Configuration.MaxLegalMovesCount;
     static readonly int[] directionOffsets = PreComputedMoveGenData.Directions;
 
     // Move array
@@ -408,7 +408,7 @@ public class MoveGenerator
 
             if (checkRayBitmask.Contains(capturedPawnSquare))
             {
-                ulong pawnsThatCanCaptureEp = pawns & (turn ? PreComputedMoveGenData.blackPawnAttackMap[targetSquare] : PreComputedMoveGenData.whitePawnAttackMap[targetSquare]);
+                ulong pawnsThatCanCaptureEp = pawns & (turn ? PreComputedMoveGenData.BlackPawnAttackMap[targetSquare] : PreComputedMoveGenData.WhitePawnAttackMap[targetSquare]);
 
                 while (pawnsThatCanCaptureEp != 0)
                 {
@@ -554,7 +554,7 @@ public class MoveGenerator
 
         for (int pawnIndex = 0; pawnIndex < opponentPawns.Count; pawnIndex++) {
             int pawnSquare = opponentPawns[pawnIndex];
-            ulong pawnAttacks = turn ? PreComputedMoveGenData.blackPawnAttackMap[pawnSquare] : PreComputedMoveGenData.whitePawnAttackMap[pawnSquare];
+            ulong pawnAttacks = turn ? PreComputedMoveGenData.BlackPawnAttackMap[pawnSquare] : PreComputedMoveGenData.WhitePawnAttackMap[pawnSquare];
             enemyPawnAttackMap |= pawnAttacks;
 
             if (!isPawnCheck && pawnAttacks.Contains(friendlyKingSquare)) {

@@ -2,25 +2,28 @@
 
 public static class Magic
 {
-    public static ulong[] RookMasks;
-    public static ulong[] BishopMasks;
+    public static Bitboard[] RookMasks;
+    public static Bitboard[] BishopMasks;
 
     // [Square] [Key]
-    public static ulong[][] RookAttacks;
-    public static ulong[][] BishopAttacks;
+    public static Bitboard[][] RookAttacks;
+    public static Bitboard[][] BishopAttacks;
 
-    public static ulong GetSliderAttacks(int square, ulong blockers, bool diagonal)
+    [Inline]
+    public static ulong GetSliderAttacks(Square square, Bitboard blockers, bool diagonal)
     {
         return diagonal ? GetBishopAttacks(square, blockers) : GetRookAttacks(square, blockers);
     }
 
-    public static ulong GetRookAttacks(int square, ulong blockers)
+    [Inline]
+    public static ulong GetRookAttacks(Square square, Bitboard blockers)
     {
         ulong key = ((blockers & RookMasks[square]) * PreComputedMagic.RookMagics[square]) >> PreComputedMagic.RookShifts[square];
         return RookAttacks[square][key];
     }
 
-    public static ulong GetBishopAttacks(int square, ulong blockers)
+    [Inline]
+    public static ulong GetBishopAttacks(Square square, Bitboard blockers)
     {
         ulong key = ((blockers & BishopMasks[square]) * PreComputedMagic.BishopMagics[square]) >> PreComputedMagic.BishopShifts[square];
         return BishopAttacks[square][key];
@@ -52,24 +55,22 @@ public static class Magic
         }
     }
 
-    static ulong[] CreateTable(int square, bool diagonal, ulong magic, int leftShift)
+    static Bitboard[] CreateTable(Square square, bool diagonal, ulong magic, int leftShift)
     {
         int numBits = 64 - leftShift;
         int lookupSize = 1 << numBits;
-        ulong[] table = new ulong[lookupSize];
+        Bitboard[] table = new ulong[lookupSize];
 
         ulong movementMask = MagicHelper.CreateMovementMask(square, diagonal);
-        ulong[] blockerPatterns = MagicHelper.CreateAllBlockerBitboards(movementMask);
+        Bitboard[] blockerPatterns = MagicHelper.CreateAllBlockerBitboards(movementMask);
 
-        foreach (ulong pattern in blockerPatterns)
+        foreach (Bitboard pattern in blockerPatterns)
         {
             ulong index = (pattern * magic) >> leftShift;
-            ulong moves = MagicHelper.LegalMoveBitboardFromBlockers(square, pattern, diagonal);
+            Bitboard moves = MagicHelper.LegalMoveBitboardFromBlockers(square, pattern, diagonal);
             table[index] = moves;
         }
 
         return table;
     }
-
-
 }

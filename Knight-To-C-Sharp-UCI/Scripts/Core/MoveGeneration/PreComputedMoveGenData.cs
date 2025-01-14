@@ -1,43 +1,39 @@
-
-public static class PreComputedMoveGenData // Pre-Computed Data to speed move generation up
+public static class PreComputedMoveGenData // Pre-Computed Data to speed the move generation up
 {
     public static int[,] NumSquaresToEdge = new int[64, 8];
     public static Dictionary<int, int> OffsetToNumEdgeIndex = new Dictionary<int, int> {
         {1, 0}, {8, 1}, {-1, 2}, {-8, 3}, {9, 4}, {7, 5}, {-9, 6}, {-7, 7}
     };
-    public static int[] Directions = {1, 8, -1, -8, 9, 7, -9, -7};
+    public static int[] Directions = { 1, 8, -1, -8, 9, 7, -9, -7 };
 
-    // Pre-Computed Bitboard (ulong)
-    public static ulong[] KnightMap = new ulong[64];
-    public static ulong[] KingMap = new ulong[64];
-    public static ulong[] whitePawnAttackMap = new ulong[64];
-    public static ulong[] blackPawnAttackMap = new ulong[64];
-
-    // Pre-Computed Squares (Index)
-    public static List<int>[] knightSquares = new List<int>[64];
+    // Pre-Computed Bitboards
+    public static Bitboard[] KnightMap = new Bitboard[64];
+    public static Bitboard[] KingMap = new Bitboard[64];
+    public static Bitboard[] WhitePawnAttackMap = new Bitboard[64];
+    public static Bitboard[] BlackPawnAttackMap = new Bitboard[64];
 
     // Pre-Computed Direction Lookup Table
-    // Index : directionLookup[targetSquare - startSquare + 63]
-    // Values with index of impossible pin ray such as 126 are invalid (targetSquare = 63, startSquare = 0 -> THIS CANNOT BE A PIN RAY)
+    // Index: directionLookup[ targetSquare - startSquare + 63 ]
+    // Values with index of impossible pin ray such as 126 are invalid
+    // (targetSquare = 63, startSquare = 0): This cannot be a pin ray.
     public static int[] DirectionLookup = new int[127];
 
     // Direction-Ray Masks
-    // [Direction Index , From Square] => Ray Mask from Square in Direction
-    // Does not include the square
-    public static ulong[,] DirRayMask = new ulong[8, 64];
+    // [ Direction Index, From Square ] => Ray Mask from Square in Direction
+    // Does not include the square itself
+    public static Bitboard[,] DirRayMask = new Bitboard[8, 64];
 
     // Aligned Rays
     // [ SquareA , SquareB ] => SquareA to SquareB Ray
-    public static ulong[,] AlignMask = new ulong[64, 64];
+    public static Bitboard[,] AlignMask = new Bitboard[64, 64];
 
     // Move Generation Bitboards
-    public static ulong WhiteKingSideCastlingMask = (ulong) 0b11 << 5;
-    public static ulong WhiteQueenSideCastlingMask = (ulong) 0b11 << 2;
-    public static ulong WhiteQueenSideCastlingBlockMask = (ulong) 0b111 << 1;
-    public static ulong BlackKingSideCastlingMask = (ulong) 0b11 << 61;
-    public static ulong BlackQueenSideCastlingMask = (ulong) 0b11 << 58;
-    public static ulong BlackQueenSideCastlingBlockMask = (ulong) 0b111 << 57;
-
+    public static Bitboard WhiteKingSideCastlingMask = (Bitboard) 0b11 << 5;
+    public static Bitboard WhiteQueenSideCastlingMask = (Bitboard) 0b11 << 2;
+    public static Bitboard WhiteQueenSideCastlingBlockMask = (Bitboard) 0b111 << 1;
+    public static Bitboard BlackKingSideCastlingMask = (Bitboard) 0b11 << 61;
+    public static Bitboard BlackQueenSideCastlingMask = (Bitboard) 0b11 << 58;
+    public static Bitboard BlackQueenSideCastlingBlockMask = (Bitboard) 0b111 << 57;
 
     static PreComputedMoveGenData()
     {
@@ -87,133 +83,120 @@ public static class PreComputedMoveGenData // Pre-Computed Data to speed move ge
         GenerateKingMap();
         GeneratePawnAttackMap();
     }
-
     static void GenerateKnightMap()
     {
         for (int square = 0; square < 64; square++)
         {
-            knightSquares[square] = new List<int>();
-
-            int file = square % 8;
-            int rank = square / 8;
+            int file = square.File();
+            int rank = square.Rank();
 
             if (file < 6 && rank < 7)
             {
-                KnightMap[square] |= (ulong) 1 << square + 10;
-                knightSquares[square].Add(square + 10);
+                KnightMap[square] |= 1ul << square + 10;
             }
             if (file < 7 && rank < 6)
             {
-                KnightMap[square] |= (ulong) 1 << square + 17;
-                knightSquares[square].Add(square + 17);
+                KnightMap[square] |= 1ul << square + 17;
             }
             if (file > 0 && rank < 6)
             {
-                KnightMap[square] |= (ulong) 1 << square + 15;
-                knightSquares[square].Add(square + 15);
+                KnightMap[square] |= 1ul << square + 15;
             }
             if (file > 1 && rank < 7)
             {
-                KnightMap[square] |= (ulong) 1 << square + 6;
-                knightSquares[square].Add(square + 6);
+                KnightMap[square] |= 1ul << square + 6;
             }
 
             if (file > 1 && rank > 0)
             {
-                KnightMap[square] |= (ulong) 1 << square - 10;
-                knightSquares[square].Add(square - 10);
+                KnightMap[square] |= 1ul << square - 10;
             }
             if (file > 0 && rank > 1)
             {
-                KnightMap[square] |= (ulong) 1 << square - 17;
-                knightSquares[square].Add(square - 17);
+                KnightMap[square] |= 1ul << square - 17;
             }
             if (file < 7 && rank > 1)
             {
-                KnightMap[square] |= (ulong) 1 << square - 15;
-                knightSquares[square].Add(square - 15);
+                KnightMap[square] |= 1ul << square - 15;
             }
             if (file < 6 && rank > 0)
             {
-                KnightMap[square] |= (ulong) 1 << square - 6;
-                knightSquares[square].Add(square - 6);
+                KnightMap[square] |= 1ul << square - 6;
             }
         }
     }
-
     static void GenerateKingMap()
     {
         for (int square = 0; square < 64; square++)
         {
-            int file = square % 8;
-            int rank = square / 8;
+            int file = square.File();
+            int rank = square.Rank();
 
             if (file < 7)
             {
-                KingMap[square] |= (ulong) 1 << square + 1;
+                KingMap[square] |= 1ul << square + 1;
             }
             if (file > 0)
             {
-                KingMap[square] |= (ulong) 1 << square - 1;
+                KingMap[square] |= 1ul << square - 1;
             }
             if (rank < 7)
             {
                 if (file < 7)
                 {
-                    KingMap[square] |= (ulong) 1 << square + 9;
+                    KingMap[square] |= 1ul << square + 9;
                 }
                 
-                KingMap[square] |= (ulong) 1 << square + 8;
+                KingMap[square] |= 1ul << square + 8;
                 
                 if (file > 0)
                 {
-                    KingMap[square] |= (ulong) 1 << square + 7;
+                    KingMap[square] |= 1ul << square + 7;
                 }
             }
             if (rank > 0)
             {
                 if (file < 7)
                 {
-                    KingMap[square] |= (ulong) 1 << square - 7;
+                    KingMap[square] |= 1ul << square - 7;
                 }
 
-                KingMap[square] |= (ulong) 1 << square - 8;
+                KingMap[square] |= 1ul << square - 8;
 
                 if (file > 0)
                 {
-                    KingMap[square] |= (ulong) 1 << square - 9;
+                    KingMap[square] |= 1ul << square - 9;
                 }
             }
         }
     }
-
     static void GeneratePawnAttackMap()
     {
         for (int square = 0; square < 64; square++)
         {
-            int file = square % 8;
-            int rank = square / 8;
+            int file = square.File();
+            int rank = square.Rank();
 
             if (rank < 7)
             {
                 if (file < 7)
                 {
-                    whitePawnAttackMap[square] |= (ulong) 1 << (square + 9);
+                    WhitePawnAttackMap[square] |= 1ul << (square + 9);
                 }
                 if (file > 0)
                 {
-                    whitePawnAttackMap[square] |= (ulong) 1 << (square + 7);
+                    WhitePawnAttackMap[square] |= 1ul << (square + 7);
                 }
             }
             if (rank > 0)
             {
                 if (file < 7)
                 {
-                    blackPawnAttackMap[square] |= (ulong) 1 << (square - 7);
+                    BlackPawnAttackMap[square] |= 1ul << (square - 7);
                 }
                 if (file > 0)
                 {
-                    blackPawnAttackMap[square] |= (ulong) 1 << (square - 9);
+                    BlackPawnAttackMap[square] |= 1ul << (square - 9);
                 }
             }
         }
@@ -257,7 +240,7 @@ public static class PreComputedMoveGenData // Pre-Computed Data to speed move ge
                 {
                     int thisSquare = square + dst * dirOffset;
 
-                    mask |= (ulong) 1 << thisSquare;
+                    mask |= 1ul << thisSquare;
                 }
 
                 DirRayMask[dirIndex, square] = mask;
@@ -270,11 +253,11 @@ public static class PreComputedMoveGenData // Pre-Computed Data to speed move ge
         {
             for (int squareB = 0; squareB < 64; squareB++)
             {
-                int aFile = squareA % 8;
-                int aRank = squareA / 8;
+                int aFile = squareA.File();
+                int aRank = squareA.Rank();
 
-                int deltaFile = (squareB % 8) - aFile;
-                int deltaRank = (squareB / 8) - aRank;
+                int deltaFile = squareB.File() - aFile;
+                int deltaRank = squareB.Rank() - aRank;
 
                 int signFile = Math.Sign(deltaFile);
                 int signRank = Math.Sign(deltaRank);
@@ -286,12 +269,10 @@ public static class PreComputedMoveGenData // Pre-Computed Data to speed move ge
 
                     if (SquareUtils.IsValidSquare(thisFile, thisRank))
                     {
-                        AlignMask[squareA, squareB] |= (ulong) 1 << (thisFile + 8 * thisRank);
+                        AlignMask[squareA, squareB] |= 1ul << (thisFile + 8 * thisRank);
                     }
                 }
             }
         }
     }
-
-
 }
