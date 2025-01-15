@@ -66,4 +66,22 @@ public static class SquareRepresentation
     public const Square h8 = 63;
 
     public const Square InvalidSquare = 64;
+
+    public const int FileA = 0;
+    public const int FileB = 1;
+    public const int FileC = 2;
+    public const int FileD = 3;
+    public const int FileE = 4;
+    public const int FileF = 5;
+    public const int FileG = 6;
+    public const int FileH = 7;
+
+    public const int Rank1 = 0;
+    public const int Rank2 = 1;
+    public const int Rank3 = 2;
+    public const int Rank4 = 3;
+    public const int Rank5 = 4;
+    public const int Rank6 = 5;
+    public const int Rank7 = 6;
+    public const int Rank8 = 7;
 }
