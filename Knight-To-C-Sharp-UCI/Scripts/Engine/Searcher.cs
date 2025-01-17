@@ -141,8 +141,6 @@ public class Searcher
             {
                 // Aspiration Window
                 int window = Configuration.AspirationWindowBase;
-                // Temporary reduction for fail-highs
-                int failHighReduction = 0;
                 
                 int numFailHighs = 0;
                 int numFailLows = 0;
@@ -160,39 +158,32 @@ public class Searcher
                     }
                     ++numAspirations;
 
-                    int eval = Search(depth - failHighReduction, alpha, beta, 0);
+                    int eval = Search(depth, alpha, beta, 0);
 
-                    // Console.WriteLine($"info string AspirationWindows {numAspirations}: Alpha {alpha} Beta {beta} Eval {eval}");
                     window += window >> 1; // Adds window / 2
 
                     if (alpha >= eval) // Fail Low
                     {
                         alpha = Math.Max(Infinity.NegativeInfinity, eval - window);
                         beta = (alpha + beta) >> 1; // (alpha + beta) / 2
-                        failHighReduction = 0;
                         numFailLows++;
                     }
                     else if (beta <= eval)
                     {
                         beta = Math.Min(Infinity.PositiveInfinity, eval + window);
-                        ++failHighReduction;
                         numFailHighs++;
                     }
                     else
                     {
                         break;
                     }
-                }
-                
-                // Console.WriteLine($"info string Aspiration Windows at depth {depth} fail-low {numFailLows} fail-high {numFailHighs}");
-            }
 
-            // if (cancellationRequested)
-            // {
-            //     bestEval = lastSearchEval;
-            //     bestMove = bestMoveLastIteration;
-            //     break;
-            // }
+                    if (numFailLows + numFailHighs >= 2) {
+                        alpha = Infinity.NegativeInfinity;
+                        beta = Infinity.PositiveInfinity;
+                    }
+                }
+            }
 
             lastSearchEval = bestEval;
 
@@ -207,18 +198,6 @@ public class Searcher
             // PV Line
             string pvLine = pvTable.GetRootString();
             pvLine = string.IsNullOrEmpty(pvLine) ? bestMove.San : pvLine;
-            // pvLine = bestMove.San + ' ';
-            // if (BestPV.CMove <= 0)
-            // {
-            //     pvLine += bestMove.San + ' ';
-            // }
-            // else
-            // {
-            //     for (int i = 0; i < BestPV.CMove; i++)
-            //     {
-            //         pvLine += BestPV.ArgMoves[i].San + ' ';
-            //     }
-            // }
 
             Console.WriteLine($"info depth {depth} score {(!isMate ? $"cp {bestEval}" : $"mate {(bestEval > 0 ? (matePly + 1) / 2 : -matePly / 2)}")} nodes {numNodeSearched} nps {numNodeSearched * 1000 / (ulong) (searchTimeTimer.ElapsedMilliseconds != 0 ? searchTimeTimer.ElapsedMilliseconds : 1)} time {searchTimeTimer.ElapsedMilliseconds} pv {pvLine} multipv 1");
 
