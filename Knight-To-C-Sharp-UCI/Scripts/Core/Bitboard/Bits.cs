@@ -16,6 +16,7 @@ public static class Bits
     public static ulong[] AdjacentFilesMask;
     public static ulong[] TripleFileMask;
 
+    // Does not contain the rank itself
     public static ulong[] WhiteForwardMask;
     public static ulong[] BlackForwardMask;
 

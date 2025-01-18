@@ -281,7 +281,7 @@ public class Searcher
 
             if (mateState == MateChecker.MateState.Checkmate)
             {
-                return -Evaluation.CheckmateEval + ply;
+                return -EvaluationConstants.CheckmateEval + ply;
             }
             
             return 0;

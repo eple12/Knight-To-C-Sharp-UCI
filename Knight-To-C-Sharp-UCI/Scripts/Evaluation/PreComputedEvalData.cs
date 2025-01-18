@@ -11,8 +11,8 @@ public static class PreComputedEvalData
         DistanceFromCenter = new int[64];
         for (int square = 0; square < 64; square++)
         {
-            int file = square % 8;
-            int rank = square / 8;
+            int file = square.File();
+            int rank = square.Rank();
 
             if (rank >= 4)
             {
@@ -43,10 +43,10 @@ public static class PreComputedEvalData
         {
             for (int targetSquare = 0; targetSquare < 64; targetSquare++)
             {
-                int startFile = startSquare % 8;
-                int startRank = startSquare / 8;
-                int targetFile = targetSquare % 8;
-                int targetRank = targetSquare / 8;
+                int startFile = startSquare.File();
+                int startRank = startSquare.Rank();
+                int targetFile = targetSquare.File();
+                int targetRank = targetSquare.Rank();
 
                 DistanceFromSquare[startSquare, targetSquare] = Math.Abs(targetFile - startFile) + Math.Abs(targetRank - startRank);
             }
@@ -55,8 +55,8 @@ public static class PreComputedEvalData
         RangeDistanceFromCenter = new int[64];
         for (int square = 0; square < 64; square++)
         {
-            int file = square % 8;
-            int rank = square / 8;
+            int file = square.File();
+            int rank = square.Rank();
 
             if (rank >= 4)
             {
@@ -87,15 +87,13 @@ public static class PreComputedEvalData
         {
             for (int targetSquare = 0; targetSquare < 64; targetSquare++)
             {
-                int startFile = startSquare % 8;
-                int startRank = startSquare / 8;
-                int targetFile = targetSquare % 8;
-                int targetRank = targetSquare / 8;
+                int startFile = startSquare.File();
+                int startRank = startSquare.Rank();
+                int targetFile = targetSquare.File();
+                int targetRank = targetSquare.Rank();
 
                 RangeDistanceFromSquare[startSquare, targetSquare] = Math.Max(Math.Abs(targetFile - startFile), Math.Abs(targetRank - startRank));
             }
         }
-    
-
     }
 }
