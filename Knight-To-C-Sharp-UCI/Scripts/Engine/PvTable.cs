@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Runtime.CompilerServices;
 
 public class PvTable {
     // Indexes[ply] => Starting Index
@@ -34,12 +33,12 @@ public class PvTable {
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Inline]
     public void ClearFrom(int index) {
         Array.Clear(Pv, index, PvTableSize - index);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Inline]
     public void CopyFrom(int target, int source, int length) {
         if (Pv[source].IsNull()) {
             ClearFrom(target);
@@ -49,17 +48,17 @@ public class PvTable {
         Array.Copy(Pv, source, Pv, target, length);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Inline]
     public void ClearAll() {
         Array.Clear(Pv);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Inline]
     public string GetRootString() {
         return string.Join(' ', Pv[..Indexes[1]].Where(a => a != Move.NullMove).Select(a => a.San));
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Inline]
     public void ClearExceptRoot() {
         ClearFrom(Indexes[1]);
     }

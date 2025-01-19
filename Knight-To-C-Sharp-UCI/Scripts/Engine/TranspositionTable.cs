@@ -21,12 +21,13 @@ public class TranspositionTable
     {
         engine = _engine;
         board = engine.GetBoard();
-        size = (ulong) (Configuration.MaxDepth * 1024 * 1024 / Entry.GetSize());
+        size = (ulong) (Configuration.TTSizeInMB * 1024 * 1024 / Entry.GetSize());
         evaluation = engine.GetEvaluation();
 
         entries = new Entry[size];
     }
 
+    [Inline]
     public void Clear ()
     {
         entries = new Entry[size];
@@ -34,12 +35,14 @@ public class TranspositionTable
 
     public ulong Index
     {
+        [Inline]
         get
         {
             return board.ZobristKey % size;
         }
     }
 
+    [Inline]
     public Move GetStoredMove ()
     {
         return entries[Index].key == board.ZobristKey ? entries[Index].move : Move.NullMove;
@@ -103,6 +106,7 @@ public class TranspositionTable
     }
 
     // Position-Based Mate Eval
+    [Inline]
     int CorrectMateScoreForStorage (int score, int numPlySearched)
     {
         if (evaluation.IsMateScore (score))
@@ -113,6 +117,7 @@ public class TranspositionTable
         return score;
     }
 
+    [Inline]
     // Root-Based Mate Eval
     int CorrectRetrievedMateScore (int score, int numPlySearched)
     {
@@ -124,11 +129,12 @@ public class TranspositionTable
         return score;
     }
 
+    [Inline]
     public void Print()
     {
         Console.WriteLine("###############");
         Entry e = entries[Index];
-        Console.WriteLine("key: " + e.key + " val: " + e.value + " move: " + e.move.San + " index: " + Index + " depth " + e.depth + " type " + e.nodeType);
+        Console.WriteLine($"key: {e.key} val: {e.value} move: {e.move.San} index: {Index} depth: {e.depth} type: {e.nodeType}");
         Console.WriteLine("###############");
     }
 
@@ -149,6 +155,7 @@ public class TranspositionTable
             this.move = move;
         }
 
+        [Inline]
         public static int GetSize ()
         {
             return System.Runtime.InteropServices.Marshal.SizeOf<Entry> ();

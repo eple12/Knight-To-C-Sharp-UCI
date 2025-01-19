@@ -50,9 +50,10 @@ public static class Test
 
         Span<Move> moves = stackalloc Move[128];
         MainProcess.board.MoveGen.GenerateMoves(ref moves, genOnlyCaptures: true);
-        moveOrder.GetOrderedList(ref moves, Move.NullMove, inQSearch: true, 0, default, new int[moves.Length]);
-
-        int[] scores = moveOrder.GetLastMoveScores();
+        
+        int[] scores = new int[moves.Length];
+        moveOrder.GetOrderedList(ref moves, Move.NullMove, inQSearch: true, 0, default, scores);
+        
         Console.WriteLine(string.Join("\n", scores));
     }
 }

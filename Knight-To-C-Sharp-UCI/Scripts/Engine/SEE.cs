@@ -1,7 +1,6 @@
-using System.Runtime.CompilerServices;
-
 public static class SEE
 {
+    // Use Simplified Values
     public static int[] MaterialValues = { 0, 100, 300, 300, 500, 900, 0 };
 
     // Same function as HasPositiveScore, but only handles capture moves
@@ -40,11 +39,6 @@ public static class SEE
         ulong attackers = GetAllAttackersTo(board, move.targetSquare, occupancy, rooks, bishops);
 
         bool us = !turn;
-
-        // ulong whitePinners = 0;
-        // ulong blackPinners = 0;
-        // ulong whiteBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.BlackAll], board.PieceSquares[PieceIndex.WhiteKing].Squares[0], ref blackPinners);
-        // ulong blackBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.WhiteAll], board.PieceSquares[PieceIndex.BlackKing].Squares[0], ref whitePinners);
 
         while (true)
         {
@@ -132,11 +126,6 @@ public static class SEE
 
         bool us = !turn;
 
-        // ulong whitePinners = 0;
-        // ulong blackPinners = 0;
-        // ulong whiteBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.BlackAll], board.PieceSquares[PieceIndex.WhiteKing].Squares[0], ref blackPinners);
-        // ulong blackBlockers = SliderBlockers(board, board.BitboardSet.Bitboards[PieceIndex.WhiteAll], board.PieceSquares[PieceIndex.BlackKing].Squares[0], ref whitePinners);
-
         while (true)
         {
             ulong ourOccupancy = board.BBSet[PieceIndex.MakeAll(us)];
@@ -187,7 +176,7 @@ public static class SEE
         return turn != us;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Inline]
     public static int Gain(Board board, Move move)
     {
         if (move.flag == MoveFlag.Castling)
@@ -202,7 +191,7 @@ public static class SEE
         int promotionValue = MoveFlag.GetPromotionPieceValue(move.flag);
         int targetPiece = board.Squares[move.targetSquare];
 
-        return promotionValue - (MoveFlag.IsPromotion(move.flag) ? MaterialValues[PieceUtils.Pawn] : 0) + (targetPiece != PieceUtils.None ? MaterialValues[PieceUtils.GetType(targetPiece)] : 0);
+        return promotionValue - (MoveFlag.IsPromotion(move.flag) ? MaterialValues[PieceUtils.Pawn] : 0) + (targetPiece != PieceUtils.None ? MaterialValues[targetPiece.Type()] : 0);
     }
 
     // Returns TYPE PieceIndex
@@ -229,21 +218,22 @@ public static class SEE
         return PieceIndex.Invalid;
     }
 
+    [Inline]
     public static ulong GetAllAttackersTo(Board board, int square, ulong occupancy, ulong rooks, ulong bishops)
     {
-        return (rooks & Magic.GetRookAttacks(square, occupancy))
-            | (bishops & Magic.GetBishopAttacks(square, occupancy))
+        return (rooks & Magic.GetRookAttacks(square, occupancy)) | 
+            (bishops & Magic.GetBishopAttacks(square, occupancy)) | 
 
-            | (board.BBSet[PieceIndex.WhitePawn] & PreComputedMoveGenData.BlackPawnAttackMap[square]) // Reverse White
-            | (board.BBSet[PieceIndex.BlackPawn] & PreComputedMoveGenData.WhitePawnAttackMap[square]) // Reverse Black
+            (board.BBSet[PieceIndex.WhitePawn] & PreComputedMoveGenData.BlackPawnAttackMap[square]) |  // Reverse White
+            (board.BBSet[PieceIndex.BlackPawn] & PreComputedMoveGenData.WhitePawnAttackMap[square]) |  // Reverse Black
 
-            | ((board.BBSet[PieceIndex.WhiteKnight] | board.BBSet[PieceIndex.BlackKnight])
-             & PreComputedMoveGenData.KnightMap[square])
-
-            | (board.BBSet[PieceIndex.WhiteKing] | board.BBSet[PieceIndex.BlackKing])
-             & PreComputedMoveGenData.KingMap[square]
-
-             & occupancy;
+            (
+                (board.BBSet[PieceIndex.WhiteKnight] | board.BBSet[PieceIndex.BlackKnight]) & 
+                PreComputedMoveGenData.KnightMap[square]
+            ) | 
+            (board.BBSet[PieceIndex.WhiteKing] | board.BBSet[PieceIndex.BlackKing])
+             & 
+            PreComputedMoveGenData.KingMap[square] & occupancy;
     }
 
     // Returns the blockers (both colors) that blocks sliding attacks to square from sliders bitboard.
@@ -303,6 +293,7 @@ public static class SEE
             BlackBlockers = 0;
         }
 
+        [Inline]
         public void Calculate(Board board)
         {
             WhitePinners = 0;

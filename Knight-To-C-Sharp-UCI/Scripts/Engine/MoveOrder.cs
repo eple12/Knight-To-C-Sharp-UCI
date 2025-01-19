@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 public class MoveOrder
 {
     Board board;
@@ -11,6 +9,7 @@ public class MoveOrder
     public const int KillerMoveValue = 524_288;
     public const int PromotionMoveScore = 32_768;
     public const int BadCaptureBaseScore = 16_384;
+
     // Negative value to make sure history moves doesn't reach other important moves
     public const int BaseMoveScore = int.MinValue / 2;
 
@@ -28,10 +27,12 @@ public class MoveOrder
         moveScores = new int[MoveGenerator.MaxMoves];
     }
 
+    [Inline]
     public void ClearHistory()
     {
         History = new int[2, 64, 64];
     }
+    [Inline]
     public void ClearKillers()
     {
         KillerMoves = new Killers[MaxKillerPly];
@@ -57,7 +58,7 @@ public class MoveOrder
             moveScores[i] = ScoreMove(move, lastIteration, inQSearch, ply, pinData);
         }
     }
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Inline]
     int ScoreMove(Move move, Move hash, bool inQSearch, int ply, SEE.SEEPinData pinData)
     {
         if (move == hash)
@@ -69,9 +70,9 @@ public class MoveOrder
 
         int movePiece = board.Squares[startSquare];
         int capturePiece = board.Squares[targetSquare];
-        int capturePieceType = PieceUtils.GetType(capturePiece);
+        int capturePieceType = capturePiece.Type();
         int capturePieceValue = Evaluation.GetAbsPieceValue(capturePieceType);
-        bool isCapture = capturePieceType != PieceUtils.None;
+        bool isCapture = !capturePieceType.IsNone();
         int flag = move.flag;
 
         if (flag == MoveFlag.PromoteToQueen)
@@ -134,12 +135,6 @@ public class MoveOrder
         return i + 1;
     }
 
-    public int[] GetLastMoveScores()
-    {
-        return moveScores;
-    }
-
-
     public struct Killers
 	{
 		public Move moveA;
@@ -154,10 +149,9 @@ public class MoveOrder
 			}
 		}
 
+        [Inline]
 		public bool Match(Move move) => move == moveA || move == moveB;
-
 	}
-
 
     /// <summary>
     /// MVV LVA [attacker,victim] 12x11
@@ -187,5 +181,4 @@ public class MoveOrder
         /* q */ [1100, 3600, 4100, 5100, 11100, 0,     0,    0,    0,    0,     0 ], // 0],
         /* k */ [1000, 3500, 4001, 5000, 11000, 0,     0,    0,    0,    0,     0 ], // 0]
     ];
-
 }

@@ -1,9 +1,6 @@
-using System.Runtime.CompilerServices;
-using Microsoft.AspNetCore.Mvc.Rendering;
-
 public class StackDebugger {
     // Search Move Stack to track the current search line
-    // Todo: implement stack tracing
+
     bool DebugPushing = false;
     bool DebugPoping = false;
 
@@ -17,7 +14,7 @@ public class StackDebugger {
 
     Stack<Move> moveStack = new();
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Inline]
     public bool Push(Move m) {
         moveStack.Push(m);
 
@@ -31,7 +28,7 @@ public class StackDebugger {
         return false;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Inline]
     public bool Pop() {
         moveStack.Pop();
 
@@ -46,6 +43,7 @@ public class StackDebugger {
     }
 
     public string Current {
+        [Inline]
         get {
             return string.Join(" ", moveStack.Reverse().Select(a => a.San));
         }
@@ -53,13 +51,15 @@ public class StackDebugger {
 
     List<List<Move>> checkers = new();
 
+    [Inline]
     public void Add(List<string> moves) {
-        List<Move> m = moves.Select(a => MoveHelper.OnlySquares(a)).ToList();
+        List<Move> m = [.. moves.Select(MoveHelper.OnlySquares)];
         checkers.Add(m);
     }
 
+    [Inline]
     public void Add(string moves) {
-        Add(moves.Split(' ').ToList());
+        Add([.. moves.Split(' ')]);
     }
 
     public StackDebugger() {

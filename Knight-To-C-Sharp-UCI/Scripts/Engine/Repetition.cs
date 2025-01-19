@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 public class Repetition {
     Board board;
     HashSet<ulong> First;
@@ -7,12 +5,12 @@ public class Repetition {
 
     ulong Key => board.ZobristKey;
     
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Inline]
     public bool IsThreeFold() {
         return board.PlayedPositions.Contains(Key) || Second.Contains(Key);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Inline]
     public void Push() {
         if (First.Add(Key)) {
 
@@ -22,7 +20,7 @@ public class Repetition {
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Inline]
     public void Pop() {
         if (Second.Remove(Key)) {
 
@@ -39,6 +37,7 @@ public class Repetition {
         Second = new();
     }
 
+    [Inline]
     public void Clear() {
         First.Clear();
         Second.Clear();
