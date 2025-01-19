@@ -2,9 +2,9 @@ using static EvaluationConstants;
 
 public class Evaluation
 {
-    Searcher engine;
+    Searcher searcher;
     Board board;
-    // Calculation Variables
+    
     MaterialInfo whiteMaterial;
     MaterialInfo blackMaterial;
 
@@ -13,10 +13,10 @@ public class Evaluation
 
     EvaluationBitboards bitboards;
 
-    public Evaluation(Searcher _engine)
+    public Evaluation(Searcher _searcher)
     {
-        engine = _engine;
-        board = engine.GetBoard();
+        searcher = _searcher;
+        board = searcher.GetBoard();
 
         whiteEval = new EvaluationData();
         blackEval = new EvaluationData();

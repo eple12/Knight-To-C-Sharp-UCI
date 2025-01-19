@@ -12,7 +12,7 @@ public class Bot
 
     public void StartSearch(int depth, Action? onSearchComplete = null)
     {
-        if (TryGetBookMove(onSearchComplete))
+        if (!TryGetBookMove(onSearchComplete).IsNull())
         {
             return;
         }
@@ -21,6 +21,7 @@ public class Bot
         onSearchComplete += () => {
             ReportBestMove(GetMove());
         };
+
         searcher.RequestSearch(depth, onSearchComplete);
     }
 
@@ -47,6 +48,8 @@ public class Bot
 
         StartSearch(depth, onSearchComplete);
     }
+
+    [Inline]
     public int DecideThinkTime(int wtime, int btime, int winc, int binc, int max, int min)
     {
         // Think Time
@@ -71,8 +74,8 @@ public class Bot
         return (int) thinkTimeDouble;
     }
     
-    // Returns true if a book move was found
-    bool TryGetBookMove(Action? onSearchComplete)
+    // Returns a book move. Returns Null Move if not found
+    Move TryGetBookMove(Action? onSearchComplete)
     {
         // Try to find this position in the Opening Book
         Move bookMove = Book.GetRandomMove(board);
@@ -83,13 +86,12 @@ public class Bot
             ReportBestMove(bookMove);
             
             onSearchComplete?.Invoke();
-
-            return true;
         }
 
-        return false;
+        return bookMove;
     }
 
+    [Inline]
     public void CancelSearch(Action? onSearchComplete = null)
     {
         if (IsSearching())
@@ -113,19 +115,23 @@ public class Bot
         }
     }
 
+    [Inline]
     public Move GetMove()
     {
         return searcher.GetMove();
     }
+    [Inline]
     public bool IsSearching()
     {
         return searcher.IsSearching();
     }
+    [Inline]
     public Searcher GetSearcher()
     {
         return searcher;
     }
 
+    [Inline]
     public void ReportBestMove(Move move)
     {
         Console.WriteLine($"bestmove {move.San}");

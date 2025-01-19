@@ -18,9 +18,9 @@ public class MoveOrder
     public Killers[] KillerMoves;
     public const int MaxKillerPly = 32;
 
-    public MoveOrder(Searcher engine)
+    public MoveOrder(Searcher searcher)
     {
-        board = engine.GetBoard();
+        board = searcher.GetBoard();
 
         History = new int[2, 64, 64];
         KillerMoves = new Killers[MaxKillerPly];

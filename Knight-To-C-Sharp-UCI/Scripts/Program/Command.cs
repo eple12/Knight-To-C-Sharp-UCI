@@ -5,8 +5,8 @@ public static class Command
     static Bot engine => MainProcess.engine;
     static TranspositionTable tt => engine.GetSearcher().GetTT();
 
-    const int MaxThinkTime = 60 * 60 * 1000;
-    const int MinThinkTime = 50;
+    static int MaxThinkTime => Configuration.MaxThinkTime;
+    static int MinThinkTime => Configuration.MinThinkTime;
 
     public static int RecieveCommand(string command)
     {
@@ -84,6 +84,8 @@ public static class Command
         string[] tokens = command.Split(' ');
         string prefix = tokens.FirstOrDefault(string.Empty);
 
+        CancelSearch();
+
         switch (prefix)
         {
             case "move":
@@ -92,7 +94,7 @@ public static class Command
                 {
                     break;
                 }
-                
+
                 board.MakeConsoleMove(tokens[1]);
             }
             break;
@@ -288,10 +290,7 @@ public static class Command
 
     static void ProcessPositionCommand(string command, string[] tokens)
     {
-        if (engine.IsSearching())
-        {
-            engine.CancelAndWait();
-        }
+        CancelSearch();
 
         bool containsMoves = tokens.Contains("moves");
         string subCommand = tokens[1..].FirstOrDefault(string.Empty);
@@ -331,10 +330,7 @@ public static class Command
     }
     static void ProcessGoCommand(string[] tokens)
     {
-        if (engine.IsSearching())
-        {
-            engine.CancelAndWait();
-        }
+        CancelSearch();
 
         int tokenIndex = 0;
 
@@ -455,6 +451,13 @@ public static class Command
         for (int i = 0; i < bp.Moves.Count; i++)
         {
             Console.WriteLine($"{bp.Moves[i].San} {bp.Num[i]}");
+        }
+    }
+
+    [Inline]
+    static void CancelSearch() {
+        if (engine.IsSearching()) {
+            engine.CancelAndWait();
         }
     }
 }

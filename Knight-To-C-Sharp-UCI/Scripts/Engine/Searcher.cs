@@ -1,14 +1,12 @@
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 public class Searcher
 {
-    // Engine Classes
+    // References
     Board board;
     MoveGenerator MoveGen;
     TranspositionTable tt;
     MoveOrder moveOrder;
-    // EngineSettings settings;
     Evaluation evaluation;
     Repetition repetition;
     StackDebugger stackDebugger;
@@ -20,15 +18,12 @@ public class Searcher
     ulong numNodeSearched;
     SearchRequestInfo searchRequestInfo;
     Stopwatch searchTimeTimer;
-    // PvLine BestPV;
     PvTable pvTable;
 
     // Search Flags
     bool searchRequested;
     bool isSearching;
     bool cancellationRequested;
-    // bool searchedFirstLine;
-
 
     public event Action OnSearchComplete;
 
@@ -36,12 +31,10 @@ public class Searcher
     {
         board = _board;
         MoveGen = board.MoveGen;
-        // settings = _settings;
 
         evaluation = new Evaluation(this);
         tt = new TranspositionTable(this);
 
-        // RepetitionData = new();
         repetition = new(board);
         pvTable = new();
 
@@ -53,17 +46,14 @@ public class Searcher
 
         OnSearchComplete = () => {};
 
-
         Task.Factory.StartNew(SearchThread, TaskCreationOptions.LongRunning);
 
         searchTimeTimer = new();
         stackDebugger = new();
-
-        // stackDebugger.TurnPushingOn();
-        // stackDebugger.Add("h2h1 g2h1 h8h1 f1g2 e8h8 b3a5");
     }
 
     // Set the best move to the book move that has been already found
+    [Inline]
     public void SetBookMove(Move bookMove)
     {
         bestMove = bookMove;
@@ -87,8 +77,8 @@ public class Searcher
 
         Span<Move> preSearchMoves = MoveGen.GenerateMoves();
         bestMove = preSearchMoves.Length == 0 ? Move.NullMove : preSearchMoves[0];
-
         bestMoveLastIteration = Move.NullMove;
+
         moveOrder.ClearHistory();
         moveOrder.ClearKillers();
 
@@ -111,8 +101,6 @@ public class Searcher
             return;
         }
 
-        // BestPV = new();
-        // pvTable = new();
         pvTable.ClearAll();
 
         searchTimeTimer.Restart();
@@ -141,9 +129,6 @@ public class Searcher
             {
                 // Aspiration Window
                 int window = Configuration.AspirationWindowBase;
-                
-                int numFailHighs = 0;
-                int numFailLows = 0;
 
                 alpha = Math.Max(Infinity.NegativeInfinity, lastSearchEval - window);
                 beta = Math.Min(Infinity.PositiveInfinity, lastSearchEval + window);
@@ -165,20 +150,18 @@ public class Searcher
                     if (alpha >= eval) // Fail Low
                     {
                         alpha = Math.Max(Infinity.NegativeInfinity, eval - window);
-                        beta = (alpha + beta) >> 1; // (alpha + beta) / 2
-                        numFailLows++;
                     }
-                    else if (beta <= eval)
+                    else if (beta <= eval) // Fail High
                     {
                         beta = Math.Min(Infinity.PositiveInfinity, eval + window);
-                        numFailHighs++;
                     }
                     else
                     {
+                        // Search for this depth is complete
                         break;
                     }
 
-                    if (numFailLows + numFailHighs >= 2) {
+                    if (numAspirations >= Configuration.MaxAspirations || evaluation.IsMateScore(eval)) {
                         alpha = Infinity.NegativeInfinity;
                         beta = Infinity.PositiveInfinity;
                     }
@@ -199,8 +182,10 @@ public class Searcher
             string pvLine = pvTable.GetRootString();
             pvLine = string.IsNullOrEmpty(pvLine) ? bestMove.San : pvLine;
 
-            Console.WriteLine($"info depth {depth} score {(!isMate ? $"cp {bestEval}" : $"mate {(bestEval > 0 ? (matePly + 1) / 2 : -matePly / 2)}")} nodes {numNodeSearched} nps {numNodeSearched * 1000 / (ulong) (searchTimeTimer.ElapsedMilliseconds != 0 ? searchTimeTimer.ElapsedMilliseconds : 1)} time {searchTimeTimer.ElapsedMilliseconds} pv {pvLine} multipv 1");
+            string scoreString = !isMate ? $"cp {bestEval}" : $"mate {(bestEval > 0 ? (matePly + 1) / 2 : -matePly / 2)}";
+            ulong nps = numNodeSearched * 1000 / (ulong) (searchTimeTimer.ElapsedMilliseconds != 0 ? searchTimeTimer.ElapsedMilliseconds : 1);
 
+            Console.WriteLine($"info depth {depth} score {scoreString} nodes {numNodeSearched} nps {nps} time {searchTimeTimer.ElapsedMilliseconds} pv {pvLine} multipv 1");
             
             if (cancellationRequested)
             {
@@ -225,8 +210,9 @@ public class Searcher
         if (ply >= Configuration.MaxDepth - 1) {
             return evaluation.Evaluate();
         }
-        
-        if (cancellationRequested) // Return if the search is cancelled
+
+        // Return if the search is cancelled
+        if (cancellationRequested)
         {
             return 0;
         }
@@ -238,8 +224,9 @@ public class Searcher
         int pvIndex = PvTable.Indexes[ply];
         int nextPvIndex = PvTable.Indexes[ply + 1];
         pvTable[pvIndex] = Move.NullMove;
-
-        if (!isRoot) // Return 0 if drawn
+        
+        // Return 0 if drawn
+        if (!isRoot)
         {
             if (board.FiftyRuleHalfClock >= 100 || repetition.IsThreeFold())
             {
@@ -470,26 +457,31 @@ public class Searcher
         cancellationRequested = false;
     }
 
+    [Inline]
     public Move GetMove()
     {
         return bestMove;
     }
 
+    [Inline]
     public bool IsSearching()
     {
         return isSearching;
     }
 
+    [Inline]
     public TranspositionTable GetTT()
     {
         return tt;
     }
 
+    [Inline]
     public Board GetBoard()
     {
         return board;
     }
     
+    [Inline]
     public Evaluation GetEvaluation()
     {
         return evaluation;
@@ -504,11 +496,8 @@ public class Searcher
 
         cancellationRequested = true;
     }
-    
 
-
-
-
+    // Sub-Thread for searching
     void SearchThread()
     {
         while (true)

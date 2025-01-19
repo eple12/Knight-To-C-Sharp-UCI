@@ -3,8 +3,13 @@ public static class Configuration
     public const int TTSizeInMB = 64;
     public const int MaxDepth = 100;
 
+    // Searching
+    public const int MaxThinkTime = 60 * 60 * 1000;
+    public const int MinThinkTime = 50;
+
     // Aspiration Windows
     public const bool UseAspirationWindows = true;
+    public const int MaxAspirations = 3;
     public const int AspirationWindowMinDepth = 8;
     public const int AspirationWindowBase = 20;
 
