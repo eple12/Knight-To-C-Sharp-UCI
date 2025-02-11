@@ -3,6 +3,9 @@ public static class EvaluationConstants
     // Checkmate
     public const int CheckmateEval = 99999;
 
+    // Outpost
+    public const int OutpostBonus = 20;
+
     // Pawn structure
     public static readonly int[] PassedPawnBonus = { 0, 120, 80, 60, 40, 30, 15, 15 };
     public static readonly int[] IsolatedPawnPenaltyByCount = { 0, 10, 25, 50, 75, 75, 75, 75, 75 };

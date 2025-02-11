@@ -428,6 +428,13 @@ public class Searcher
 
         for (int i = 0; i < moves.Length; i++)
         {
+            // // Try this once the evaluation function is complete and precisely coordinated
+            // // QSearch SEE Pruning
+            // if (moveScores[i] < MoveOrder.PromotionMoveScore && moveScores[i] >= MoveOrder.BadCaptureBaseScore)
+            // {
+            //     continue;
+            // }
+
             board.MakeMove(moves[i], inSearch: true);
 
             eval = -QuiescenceSearch(-beta, -alpha);

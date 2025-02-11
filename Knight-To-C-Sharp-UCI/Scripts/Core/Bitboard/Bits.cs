@@ -69,8 +69,8 @@ public static class Bits
 
         for (int square = 0; square < 64; square++)
         {
-            int file = square % 8;
-            int rank = square / 8;
+            int file = square.File();
+            int rank = square.Rank();
 
             ulong adj = FileMask[file] | AdjacentFilesMask[file];
             ulong whiteForward = WhiteForwardMask[rank];
@@ -85,8 +85,8 @@ public static class Bits
 
         for (int i = 0; i < 64; i++)
         {
-            int file = i % 8;
-            int rank = i / 8;
+            int file = i.File();
+            int rank = i.Rank();
 
             if (((file + rank) % 2) == 1)
             {

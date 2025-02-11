@@ -37,6 +37,12 @@ public class Evaluation
         whiteEval.materialScore = whiteMaterial.materialValue;
         blackEval.materialScore = blackMaterial.materialValue;
 
+        whiteEval.pieceMobility = PieceMobility(white: true);
+        blackEval.pieceMobility = PieceMobility(white: false);
+
+        whiteEval.outpost = Outpost(white: true);
+        blackEval.outpost = Outpost(white: false);
+
         whiteEval.pieceSquareScore = PieceSquareTableScore(white: true, blackMaterial.endgameWeight);
         blackEval.pieceSquareScore = PieceSquareTableScore(white: false, whiteMaterial.endgameWeight);
 
@@ -64,6 +70,48 @@ public class Evaluation
         }
 
         return (whiteEval.Sum() - blackEval.Sum()) * sign;
+    }
+
+    // Piece Mobility
+    int PieceMobility(bool white)
+    {
+        int bishopMobility = 0;
+        PieceList bishops = board.PieceSquares[PieceIndex.MakeBishop(white)];
+        for (int i = 0; i < bishops.Count; i++)
+        {
+            Bitboard attackBB = Magic.GetBishopAttacks(bishops[i], bitboards.all);
+            bishopMobility += Math.Min(10, attackBB.Count());
+        }
+
+        int rookMobility = 0;
+        PieceList rooks = board.PieceSquares[PieceIndex.MakeRook(white)];
+        for (int i = 0; i < rooks.Count; i++)
+        {
+            Bitboard attackBB = Magic.GetRookAttacks(rooks[i], bitboards.all);
+            rookMobility += Math.Min(10, attackBB.Count());
+        }
+
+        return bishopMobility + rookMobility;
+    }
+
+    // Outpost
+    int Outpost(bool white)
+    {
+        int r = 0;
+        Bitboard enemyPawns = white ? bitboards.blackPawns : bitboards.whitePawns;
+
+        PieceList knights = board.PieceSquares[PieceIndex.MakeKnight(white)];
+
+        for (int i = 0; i < knights.Count; i++) {
+            int square = knights[i];
+
+            if (((white ? Bits.WhitePassedPawnMask : Bits.BlackPassedPawnMask)[square] & enemyPawns 
+            & Bits.AdjacentFilesMask[square.File()]) == 0) {
+                r += OutpostBonus;
+            }
+        }
+
+        return r;
     }
 
     // Pawns
@@ -94,6 +142,9 @@ public class Evaluation
         }
 
         eval -= IsolatedPawnPenaltyByCount[numIsolated];
+
+        // Space Advantage
+        eval += (white ? bitboards.whitePawnBehind : bitboards.blackPawnBehind).Count();
 
         return eval;
     }
@@ -409,6 +460,8 @@ public class Evaluation
         public ulong blackKnights;
         public ulong blackPawns;
 
+        public ulong all;
+
         // Pawn Space & Pieces behind the pawns
         public ulong whitePawnBehind;
         public ulong blackPawnBehind;
@@ -431,6 +484,8 @@ public class Evaluation
             blackBishops = bitboards[PieceIndex.BlackBishop];
             blackKnights = bitboards[PieceIndex.BlackKnight];
             blackPawns = bitboards[PieceIndex.BlackPawn];
+
+            all = bitboards[PieceIndex.WhiteAll] | bitboards[PieceIndex.BlackAll];
 
             ulong whitePawnClone = whitePawns;
             while (whitePawnClone != 0)
@@ -460,6 +515,8 @@ public class Evaluation
     struct EvaluationData
     {
         public int materialScore;
+        public int pieceMobility;
+        public int outpost;
         public int pieceSquareScore;
         public int mopUpScore;
         public int openFileScore;
@@ -469,13 +526,13 @@ public class Evaluation
         [Inline]
         public int Sum()
         {
-            return materialScore + pieceSquareScore + mopUpScore + openFileScore + pawnScore + kingSafety;
+            return materialScore + pieceMobility + outpost + pieceSquareScore + mopUpScore + openFileScore + pawnScore + kingSafety;
         }
 
         [Inline]
         public void Clear()
         {
-            materialScore = pieceSquareScore = mopUpScore = openFileScore = pawnScore = kingSafety = 0;
+            materialScore = pieceMobility = outpost = pieceSquareScore = mopUpScore = openFileScore = pawnScore = kingSafety = 0;
         }
 
         [Inline]
