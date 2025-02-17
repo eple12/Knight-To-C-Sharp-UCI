@@ -1,42 +1,60 @@
 public static class EvaluationConstants
 {
+    public struct Score {
+        int mg, eg;
+        public Score(int mg, int eg) : this() {
+            this.mg = mg;
+            this.eg = eg;
+        }
+
+        public int this[int index] => index == 0 ? mg : eg;
+    }
+    static Score S(int mg, int eg) => new(mg, eg);
+
     // Checkmate
     public const int CheckmateEval = 99999;
 
+    // Material
+    public static readonly Score[] MaterialValues = { S(100, 100), S(320, 320), S(325, 325), S(500, 500), S(900, 900) };
+
+    // Piece Mobility
+    public static readonly Score PieceMobilityPerSquare = S(1, 1);
+
     // Outpost
-    public const int OutpostBonus = 20;
+    public static readonly Score OutpostBonus = S(20, 20);
 
-    // Pawn structure
-    public static readonly int[] PassedPawnBonus = { 0, 120, 80, 60, 40, 30, 15, 15 };
-    public static readonly int[] IsolatedPawnPenaltyByCount = { 0, 10, 25, 50, 75, 75, 75, 75, 75 };
-
-    // King Safety
-    public const int DirectKingFrontPawnPenalty = 50;
-    public const int DistantKingFrontPawnPenalty = 30;
-    public const int DirectKingFrontPiecePenalty = 30;
-    public const int DistantKingFrontPiecePenalty = 20;
-
-    // King Open Files
-    public const int KingOpenPenalty = 75;
-    public const int KingAdjacentOpenPenalty = 25;
-
-    // King Safety Weight
-    public const int KingSafetyQueenWeight = 150;
-    public const int KingSafetyRookWeight = 100;
-    public const int KingSafetyMinorWeight = 50;
-    public const int KingSafetyMaxQueens = 1;
-    public const int KingSafetyMaxRooks = 2;
-    public const int KingSafetyMaxMinors = 3;
-    public const int KingSafetyTotalWeight = KingSafetyMaxQueens * KingSafetyQueenWeight + KingSafetyMaxRooks * KingSafetyRookWeight + KingSafetyMaxMinors * KingSafetyMinorWeight;
+    // Mop-Up
+    public const int CloserToEnemyKing = 8;
+    public const int EnemyKingCorner = 6;
+    public const int EnemyKingFriendlyBishopSquare = 8;
 
     // Open File
-    public const int OpenFileBonus = 20;
-    public const int SemiOpenFileBonus = 20;
+    public static readonly Score RookOnOpenFileBonus = S(20, 20);
+    public static readonly Score RookOnSemiOpenFileBonus = S(20, 20);
 
-    // Material Values
-    public const int PawnValue = 100;
-    public const int KnightValue = 320;
-    public const int BishopValue = 325;
-    public const int RookValue = 500;
-    public const int QueenValue = 900;
+    // Pawn structure
+    public static readonly Score[] PassedPawnBonus = 
+    { S(0, 0), S(120, 120), S(80, 80), S(60, 60), S(40, 40), S(30, 30), S(15, 15), S(15, 15) };
+    public static readonly Score[] IsolatedPawnPenaltyByCount = 
+    { S(0, 0), S(10, 10), S(25, 25), S(50, 50), S(75, 75), S(75, 75), S(75, 75), S(75, 75), S(75, 75) };
+    public static readonly Score SpaceAdvantagePerSquare = S(1, 1);
+
+    // King Safety
+    public static readonly Score DirectKingFrontPawnPenalty = S(50, 50);
+    public static readonly Score DistantKingFrontPawnPenalty = S(30, 30);
+    public static readonly Score DirectKingFrontPiecePenalty = S(30, 30);
+    public static readonly Score DistantKingFrontPiecePenalty = S(20, 20);
+
+    public static readonly int[] TotalKingShield = { 3 * DirectKingFrontPawnPenalty[0], 3 * DirectKingFrontPawnPenalty[1] };
+
+    // King Open Files
+    public static Score KingOpenPenalty = S(75, 20);
+    public static Score KingAdjacentOpenPenalty = S(25, 5);
+
+    // King Ring Attackers
+    public static readonly Score KingRingQueen = S(50, 50);
+    public static readonly Score KingRingRook = S(35, 35);
+    public static readonly Score KingRingBishop = S(20, 20);
+    public static readonly Score KingRingKnight = S(20, 20);
+    public static readonly Score KingRingPawn = S(15, 15);
 }

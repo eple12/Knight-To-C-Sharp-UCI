@@ -30,6 +30,8 @@ public static class Bits
     public static ulong[,] LineBitboards;
     public static ulong[,] BetweenBitboards;
 
+    public static ulong[] KingRing;
+
     static Bits()
     {
         RankMask = new ulong[8];
@@ -133,5 +135,10 @@ public static class Bits
                 BetweenBitboards[s1, s2] = b & (b - 1);
             }
         }
-    }    
+    
+        KingRing = new ulong[64];
+        for (int i = 0; i < 64; i++) {
+            KingRing[i] = PreComputedMoveGenData.KingMap[i] | (1ul << i);
+        }
+    }
 }

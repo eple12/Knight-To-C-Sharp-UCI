@@ -100,10 +100,10 @@ public class MoveOrder
         if (!inQSearch)
         {
             bool isKiller = ply < MaxKillerPly && KillerMoves[ply].Match(move);
-            return BaseMoveScore + (isKiller ? KillerMoveValue : 0) + History[board.Turn ? 0 : 1, startSquare, targetSquare] * 100 + PieceSquareTable.ReadTableFromPiece(movePiece, targetSquare, PieceUtils.IsWhitePiece(movePiece), board);
+            return BaseMoveScore + (isKiller ? KillerMoveValue : 0) + History[board.Turn ? 0 : 1, startSquare, targetSquare] * 100 + PieceSquareTable.ReadTableFromPiece(movePiece, targetSquare, PieceUtils.IsWhitePiece(movePiece));
         }
 
-        return BaseMoveScore + PieceSquareTable.ReadTableFromPiece(movePiece, targetSquare, PieceUtils.IsWhitePiece(movePiece), board);
+        return BaseMoveScore + PieceSquareTable.ReadTableFromPiece(movePiece, targetSquare, PieceUtils.IsWhitePiece(movePiece));
     }
 
     public static void Quicksort(ref Span<Move> values, int[] scores, int low, int high)
