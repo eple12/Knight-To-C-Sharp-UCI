@@ -1,4 +1,3 @@
-using System.Drawing;
 using static EvaluationConstants;
 
 public class Evaluation
@@ -30,18 +29,11 @@ public class Evaluation
         whiteMaterial.GetMaterialInfo(board, white: true);
         blackMaterial.GetMaterialInfo(board, white: false);
 
-        evalData.Initialize();
+        evalData.InitializePhaseSum();
 
         bitboards.Get(board);
         
-        if (evalData.currentPhase == 0) { // In the very opening, we don't have to calculate endgame score
-            EvaluateAllTerms(0);
-        }
-        else {
-            for (int phase = 0; phase < 2; phase++) {
-                EvaluateAllTerms(phase);
-            }
-        }
+        EvaluateAllTerms();
 
         if (verbose) {
             evalData.Print();
@@ -50,15 +42,18 @@ public class Evaluation
         return evalData.Sum() * sign;
     }
 
-    void EvaluateAllTerms(int phase) {
-        evalData.materialScore[phase] = Material(phase);
-        evalData.pieceMobility[phase] = PieceMobility(phase);
-        evalData.outpost[phase] = Outpost(phase);
-        evalData.pieceSquareScore[phase] = PieceSquareTableScore(phase);
-        evalData.mopUpScore[phase] = CalculateMopUpScore(phase);
-        evalData.openFileScore[phase] = CalculateOpenFileBonus(phase);
-        evalData.pawnScore[phase] = EvaluatePawns(phase);
-        evalData.kingSafety[phase] = KingSafety(phase);
+    void EvaluateAllTerms() {
+        int phase = evalData.currentPhase;
+
+        evalData.materialValue = Material(phase);
+        evalData.sum = evalData.materialValue;
+        evalData.sum += PieceMobility(phase);
+        evalData.sum += Outpost(phase);
+        evalData.sum += PieceSquareTableScore(phase);
+        evalData.sum += CalculateMopUpScore(phase);
+        evalData.sum += CalculateOpenFileBonus(phase);
+        evalData.sum += EvaluatePawns(phase);
+        evalData.sum += KingSafety(phase);
     }
 
     // Material
@@ -187,28 +182,24 @@ public class Evaluation
     // Mop-Up
     int CalculateMopUpScore(int phase)
     {
-        if (phase == 0) {
-            return 0;
-        }
-
         int score = 0;
 
         for (int color = 0; color < 2; color++) {
             bool white = color == 0;
 
-            int materialDelta = evalData.materialScore[1] * (white ? 1 : -1);
+            int materialDelta = evalData.materialValue * (white ? 1 : -1);
 
-            if (materialDelta - MaterialValues[0][1] * 2 >= 0) // Winning
+            if (materialDelta - MaterialValues[0][256] * 2 >= 0) // Winning
             {
                 int mopUpScore = 0;
                 int friendlyKingSquare = (white ? whiteMaterial : blackMaterial).kingSquare;
                 int enemyKingSquare = (white ? blackMaterial : whiteMaterial).kingSquare;
 
                 // Friendly king closer to the enemy king
-                mopUpScore += (14 - PreComputedEvalData.DistanceFromSquare[friendlyKingSquare, enemyKingSquare]) * CloserToEnemyKing;
+                mopUpScore += (14 - PreComputedEvalData.DistanceFromSquare[friendlyKingSquare, enemyKingSquare]) * CloserToEnemyKing[phase];
                 
                 // Enemy king in the corner
-                mopUpScore += PreComputedEvalData.DistanceFromCenter[enemyKingSquare] * EnemyKingCorner;
+                mopUpScore += PreComputedEvalData.DistanceFromCenter[enemyKingSquare] * EnemyKingCorner[phase];
 
                 // Force the enemy king to the corner of the friendly bishop's color
                 ulong friendlyBishop = white ? bitboards.whiteBishops : bitboards.blackBishops;
@@ -218,14 +209,14 @@ public class Evaluation
                         mopUpScore += (7 - Math.Min(
                             PreComputedEvalData.RangeDistanceFromSquare[enemyKingSquare, SquareRepresentation.a8], 
                             PreComputedEvalData.RangeDistanceFromSquare[enemyKingSquare, SquareRepresentation.h1]
-                        )) * EnemyKingFriendlyBishopSquare;
+                        )) * EnemyKingFriendlyBishopSquare[phase];
                     }
                     // Has a dark squared bishop
                     if ((friendlyBishop & Bits.DarkSquares) != 0) {
                         mopUpScore += (7 - Math.Min(
                             PreComputedEvalData.RangeDistanceFromSquare[enemyKingSquare, SquareRepresentation.h8], 
                             PreComputedEvalData.RangeDistanceFromSquare[enemyKingSquare, SquareRepresentation.a1]
-                        )) * EnemyKingFriendlyBishopSquare;
+                        )) * EnemyKingFriendlyBishopSquare[phase];
                     }
                 }
 
@@ -310,7 +301,7 @@ public class Evaluation
             eval -= IsolatedPawnPenaltyByCount[numIsolated][phase];
 
             // Space Advantage
-            eval += (white ? bitboards.whitePawnBehind : bitboards.blackPawnBehind).Count() * SpaceAdvantagePerSquare[phase];
+            // eval += (white ? bitboards.whitePawnBehind : bitboards.blackPawnBehind).Count() * SpaceAdvantagePerSquare[phase];
 
             if (white) {
                 score += eval;
@@ -606,29 +597,29 @@ public class Evaluation
 
             all = bitboards[PieceIndex.WhiteAll] | bitboards[PieceIndex.BlackAll];
 
-            ulong whitePawnClone = whitePawns;
-            while (whitePawnClone != 0)
-            {
-                int square = BitboardUtils.PopLSB(ref whitePawnClone);
-                int file = square.File();
-                int rank = square.Rank();
+        //     ulong whitePawnClone = whitePawns;
+        //     while (whitePawnClone != 0)
+        //     {
+        //         int square = BitboardUtils.PopLSB(ref whitePawnClone);
+        //         int file = square.File();
+        //         int rank = square.Rank();
 
-                ulong fileMask = Bits.FileMask[file];
-                whitePawnBehind |= fileMask & Bits.BlackForwardMask[rank];
-            }
-            whitePawnBehind |= Bits.Rank1;
+        //         ulong fileMask = Bits.FileMask[file];
+        //         whitePawnBehind |= fileMask & Bits.BlackForwardMask[rank];
+        //     }
+        //     whitePawnBehind |= Bits.Rank1;
 
-            ulong blackPawnClone = blackPawns;
-            while (blackPawnClone != 0)
-            {
-                int square = BitboardUtils.PopLSB(ref blackPawnClone);
-                int file = square.File();
-                int rank = square.Rank();
+        //     ulong blackPawnClone = blackPawns;
+        //     while (blackPawnClone != 0)
+        //     {
+        //         int square = BitboardUtils.PopLSB(ref blackPawnClone);
+        //         int file = square.File();
+        //         int rank = square.Rank();
 
-                ulong fileMask = Bits.FileMask[file];
-                blackPawnBehind |= fileMask & Bits.WhiteForwardMask[rank];
-            }
-            blackPawnBehind |= Bits.RankMask[7];
+        //         ulong fileMask = Bits.FileMask[file];
+        //         blackPawnBehind |= fileMask & Bits.WhiteForwardMask[rank];
+        //     }
+        //     blackPawnBehind |= Bits.RankMask[7];
         }
     }
     struct EvaluationData
@@ -646,36 +637,16 @@ public class Evaluation
         const int TotalEndgamePhase = 2 * QueenEndgamePhase + 4 * RookEndgamePhase + 4 * BishopEndgamePhase + 
         4 * KnightEndgamePhase;
 
-        public int[] materialScore;
-        public int[] pieceMobility;
-        public int[] outpost;
-        public int[] pieceSquareScore;
-        public int[] mopUpScore;
-        public int[] openFileScore;
-        public int[] pawnScore;
-        public int[] kingSafety;
-
-        int[][] terms;
-        readonly int termCount;
         public int currentPhase = 0;
+
+        public int sum = 0;
+        public int materialValue = 0;
 
         public EvaluationData(Board board)
         {
             this.board = board;
 
-            materialScore = new int[2];
-            pieceMobility = new int[2];
-            outpost = new int[2];
-            pieceSquareScore = new int[2];
-            mopUpScore = new int[2];
-            openFileScore = new int[2];
-            pawnScore = new int[2];
-            kingSafety = new int[2];
-
-            terms = [ materialScore, pieceMobility, outpost, pieceSquareScore, mopUpScore, openFileScore, pawnScore, kingSafety ];
-            termCount = terms.Length;
-
-            Initialize();
+            InitializePhaseSum();
         }
 
         [Inline]
@@ -693,58 +664,20 @@ public class Evaluation
         [Inline]
         public int Sum()
         {
-            return ((SumMid() * (256 - currentPhase)) + (SumEnd() * currentPhase)) >> 8;
-        }
-
-        [Inline]
-        int SumMid() {
-            int sum = 0;
-
-            for (int i = 0; i < termCount; i++) {
-                sum += terms[i][0];
-            }
-
-            return sum;
-        }
-        [Inline]
-        int SumEnd() {
-            int sum = 0;
-
-            for (int i = 0; i < termCount; i++) {
-                sum += terms[i][1];
-            }
-
             return sum;
         }
 
         [Inline]
-        public void Initialize()
+        public void InitializePhaseSum()
         {
             currentPhase = Phase();
+            sum = 0;
+            materialValue = 0;
         }
     
         [Inline]
         public void Print() {
-            for (int phase = 0; phase < 2; phase++) {
-                if (currentPhase == 0) {
-                    if (phase == 1) {
-                        continue;
-                    }
-                }
-
-                bool mid = phase == 0;
-
-                Console.WriteLine(new string('=', 20));
-                Console.WriteLine($"{(mid ? "Middle" : "End")} Game Eval");
-
-                for (int i = 0; i < termCount; i++) {
-                    Console.WriteLine($"Term {i + 1}. {terms[i][phase]}");
-                }
-                
-                Console.WriteLine(new string('=', 20));
-            }
-
-            Console.WriteLine($"> Phase: {currentPhase}");
+            Console.WriteLine($"Eval: {sum}");
         }
     }
 

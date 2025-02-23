@@ -7,7 +7,19 @@ public static class EvaluationConstants
             this.eg = eg;
         }
 
-        public int this[int index] => index == 0 ? mg : eg;
+        // phase => 0 ~ 256
+        public readonly int this[int phase] {
+            get {
+                if (phase == 0) {
+                    return mg;
+                }
+                else if (phase == 256) {
+                    return eg;
+                }
+
+                return (mg * (256 - phase) + eg * phase) >> 8;
+            }
+        }
     }
     static Score S(int mg, int eg) => new(mg, eg);
 
@@ -24,9 +36,9 @@ public static class EvaluationConstants
     public static readonly Score OutpostBonus = S(20, 20);
 
     // Mop-Up
-    public const int CloserToEnemyKing = 8;
-    public const int EnemyKingCorner = 6;
-    public const int EnemyKingFriendlyBishopSquare = 8;
+    public static readonly Score CloserToEnemyKing = S(0, 8);
+    public static readonly Score EnemyKingCorner = S(0, 6);
+    public static readonly Score EnemyKingFriendlyBishopSquare = S(0, 8);
 
     // Open File
     public static readonly Score RookOnOpenFileBonus = S(20, 20);
@@ -37,7 +49,7 @@ public static class EvaluationConstants
     { S(0, 0), S(120, 120), S(80, 80), S(60, 60), S(40, 40), S(30, 30), S(15, 15), S(15, 15) };
     public static readonly Score[] IsolatedPawnPenaltyByCount = 
     { S(0, 0), S(10, 10), S(25, 25), S(50, 50), S(75, 75), S(75, 75), S(75, 75), S(75, 75), S(75, 75) };
-    public static readonly Score SpaceAdvantagePerSquare = S(1, 1);
+    // public static readonly Score SpaceAdvantagePerSquare = S(1, 1);
 
     // King Safety
     public static readonly Score DirectKingFrontPawnPenalty = S(50, 50);
@@ -45,7 +57,7 @@ public static class EvaluationConstants
     public static readonly Score DirectKingFrontPiecePenalty = S(30, 30);
     public static readonly Score DistantKingFrontPiecePenalty = S(20, 20);
 
-    public static readonly int[] TotalKingShield = { 3 * DirectKingFrontPawnPenalty[0], 3 * DirectKingFrontPawnPenalty[1] };
+    public static readonly Score TotalKingShield = S(DirectKingFrontPawnPenalty[0] * 3, DirectKingFrontPawnPenalty[256] * 3);
 
     // King Open Files
     public static Score KingOpenPenalty = S(75, 20);
