@@ -319,155 +319,38 @@ public class Evaluation
     {
         int score = 0;
 
-        score -= KingRingAttackers(phase);
-        score -= KingOpenFilePenalty(phase);
-        score -= FrontPawnsPenalty(phase);
-        
-        return score;
-    }
-    int FrontPawnsPenalty(int phase)
-    {
-        int score = 0;
-
-        for (int color = 0; color < 2; color++)
-        {
-            int r = 0;
-            bool white = color == 0;
-            int kingSquare = (white ? whiteMaterial : blackMaterial).kingSquare;
-            int rank = kingSquare.Rank();
-
-            if ((white && rank > 1) || (!white && rank < 6))
-            {
-                // Too far away from safe square
-                r += 3 * DirectKingFrontPawnPenalty[phase];
-            }
-            else
-            {
-                int frontRank = rank + (white ? 1 : -1);
-                int distantRank = rank + (white ? 2 : -2);
-
-                ulong triple = Bits.TripleFileMask[kingSquare.File()];
-
-                ulong frontMask = (Bits.RankMask[frontRank]) & triple;
-                ulong distantMask = (Bits.RankMask[distantRank]) & triple;
-
-                ulong pawns = white ? bitboards.whitePawns : bitboards.blackPawns;
-                ulong pieces = board.BBSet[PieceIndex.MakeAll(white)] ^ pawns;
-
-                ulong shieldPawns = pawns & frontMask;
-                ulong shieldPieces = pieces & frontMask;
-                ulong distantPawns = pawns & distantMask;
-                ulong distantPieces = pieces & distantMask;
-
-                int totalProtection = TotalKingShield[phase];
-                int protection = 
-                shieldPawns.Count() * DirectKingFrontPawnPenalty[phase]
-                + shieldPieces.Count() * DirectKingFrontPiecePenalty[phase]
-                + distantPawns.Count() * DistantKingFrontPawnPenalty[phase]
-                + distantPieces.Count() * DistantKingFrontPiecePenalty[phase];
-
-                r += Math.Max(totalProtection - protection, 0);
-            }
-
-            if (white) {
-                score += r;
-            }
-            else {
-                score -= r;
-            }
-        }
-
-        return score;
-    }
-    int KingOpenFilePenalty(int phase)
-    {
-        int score = 0;
-
-        for (int color = 0; color < 2; color++)
-        {
-            int r = 0;
-
-            bool white = color == 0;
-            int kingFile = (white ? whiteMaterial : blackMaterial).kingSquare.File();
-            
-            if (IsOpenFile(kingFile) || IsSemiOpenFile(kingFile))
-            {
-                r += KingOpenPenalty[phase];
-            }
-            if (kingFile < 7)
-            {
-                if (IsOpenFile(kingFile + 1) || IsSemiOpenFile(kingFile + 1))
-                {
-                    r += KingAdjacentOpenPenalty[phase];
-                }
-            }
-            if (kingFile > 0)
-            {
-                if (IsOpenFile(kingFile - 1) || IsSemiOpenFile(kingFile - 1))
-                {
-                    r += KingAdjacentOpenPenalty[phase];
-                }
-            }
-
-            if (white) {
-                score += r;
-            }
-            else {
-                score -= r;
-            }
-        }
-
-        return score;
-    }
-
-    [Inline]
-    int KingRingAttackers(int phase) {
-        int score = 0;
-        
         for (int color = 0; color < 2; color++) {
-            bool white = color == 0;
-            int kingSquare = (white ? whiteMaterial : blackMaterial).kingSquare;
-            ulong kingRing = Bits.KingRing[kingSquare];
-            ulong ringCopy = kingRing;
+            bool isWhite = color == 0;
 
-            ulong allAttackers = 0;
-            int attackerScore = 0;
+            int kingSquare = (isWhite ? whiteMaterial : blackMaterial).kingSquare;
 
-            ulong enemyPawns = white ? bitboards.blackPawns : bitboards.whitePawns;
-            ulong enemyKnights = white ? bitboards.blackKnights : bitboards.whiteKnights;
-            ulong enemyBishops = white ? bitboards.blackBishops : bitboards.whiteBishops;
-            ulong enemyRooks = white ? bitboards.blackRooks : bitboards.whiteRooks;
-            ulong enemyQueens = white ? bitboards.blackQueens : bitboards.whiteQueens;
+            ulong totalAttacks = Magic.GetRookAttacks(kingSquare, bitboards.all) | Magic.GetBishopAttacks(kingSquare, bitboards.all);
+            ulong us = board.BBSet[PieceIndex.MakeAll(isWhite)];
 
-            while (ringCopy != 0) {
-                int ring = BitboardUtils.PopLSB(ref ringCopy);
+            totalAttacks &= ~(us | (isWhite ? bitboards.blackPawnAttacks : bitboards.whitePawnAttacks));
+            int val = totalAttacks.Count();
 
-                ulong pawns = kingRing & enemyPawns;
-                ulong knights = PreComputedMoveGenData.KnightMap[ring] & enemyKnights;
-                ulong bishops = Magic.GetBishopAttacks(ring, bitboards.all) & enemyBishops;
-                ulong rooks = Magic.GetRookAttacks(ring, bitboards.all) & enemyRooks;
-                ulong queens = Magic.GetBishopAttacks(ring, bitboards.all) & enemyQueens;
-                queens |= Magic.GetRookAttacks(ring, bitboards.all) & enemyQueens;
-
-                allAttackers |= pawns | knights | bishops | rooks | queens;
+            // Enemy Queen on the board
+            if ((board.BBSet[PieceIndex.MakeRook(!isWhite)] | board.BBSet[PieceIndex.MakeQueen(!isWhite)]) != 0) {
+                if (IsOpenFile(kingSquare)) {
+                    val += KingOpenFilePenalty[phase];
+                }
+                else if (IsSemiOpenFile(kingSquare)) {
+                    val += KingSemiOpenFilePenalty[phase];
+                }
             }
 
-            attackerScore += (allAttackers & enemyPawns).Count() * KingRingPawn[phase];
-            attackerScore += (allAttackers & enemyKnights).Count() * KingRingKnight[phase];
-            attackerScore += (allAttackers & enemyBishops).Count() * KingRingBishop[phase];
-            attackerScore += (allAttackers & enemyRooks).Count() * KingRingRook[phase];
-            attackerScore += (allAttackers & enemyQueens).Count() * KingRingQueen[phase];
+            int ownPiecesAroundCount = 
+            (PreComputedMoveGenData.KingMap[kingSquare] & board.BBSet[PieceIndex.MakePawn(isWhite)]).Count();
 
-            attackerScore *= allAttackers.Count();
-
-            if (white) {
-                score += attackerScore;
+            if (isWhite) {
+                score += val + ownPiecesAroundCount * KingShieldBonus[phase];
             }
             else {
-                score -= attackerScore;
+                score -= val + ownPiecesAroundCount * KingShieldBonus[phase];
             }
         }
-
+        
         return score;
     }
 
@@ -573,8 +456,8 @@ public class Evaluation
         public ulong all;
 
         // Pawn Space & Pieces behind the pawns
-        public ulong whitePawnBehind;
-        public ulong blackPawnBehind;
+        public ulong whitePawnAttacks;
+        public ulong blackPawnAttacks;
 
         public void Get(Board board)
         {
@@ -597,6 +480,21 @@ public class Evaluation
 
             all = bitboards[PieceIndex.WhiteAll] | bitboards[PieceIndex.BlackAll];
 
+            whitePawnAttacks = 0;
+            blackPawnAttacks = 0;
+
+            ulong whitePawnClone = whitePawns;
+            ulong blackPawnClone = blackPawns;
+
+            while (whitePawnClone != 0) {
+                int square = BitboardUtils.PopLSB(ref whitePawnClone);
+                whitePawnAttacks |= PreComputedMoveGenData.WhitePawnAttackMap[square];
+            }
+
+            while (blackPawnClone != 0) {
+                int square = BitboardUtils.PopLSB(ref blackPawnClone);
+                blackPawnAttacks |= PreComputedMoveGenData.BlackPawnAttackMap[square];
+            }
         //     ulong whitePawnClone = whitePawns;
         //     while (whitePawnClone != 0)
         //     {

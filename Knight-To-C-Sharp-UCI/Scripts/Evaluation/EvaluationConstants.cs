@@ -52,21 +52,14 @@ public static class EvaluationConstants
     // public static readonly Score SpaceAdvantagePerSquare = S(1, 1);
 
     // King Safety
-    public static readonly Score DirectKingFrontPawnPenalty = S(50, 50);
-    public static readonly Score DistantKingFrontPawnPenalty = S(30, 30);
-    public static readonly Score DirectKingFrontPiecePenalty = S(30, 30);
-    public static readonly Score DistantKingFrontPiecePenalty = S(20, 20);
+    public static readonly Score[] VirtualKingMobilityBonus = {
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), 
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), 
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0)
+    };
 
-    public static readonly Score TotalKingShield = S(DirectKingFrontPawnPenalty[0] * 3, DirectKingFrontPawnPenalty[256] * 3);
+    public static readonly Score KingOpenFilePenalty = S(-60, 0);
+    public static readonly Score KingSemiOpenFilePenalty = S(-30, 0);
 
-    // King Open Files
-    public static Score KingOpenPenalty = S(75, 20);
-    public static Score KingAdjacentOpenPenalty = S(25, 5);
-
-    // King Ring Attackers
-    public static readonly Score KingRingQueen = S(50, 50);
-    public static readonly Score KingRingRook = S(35, 35);
-    public static readonly Score KingRingBishop = S(20, 20);
-    public static readonly Score KingRingKnight = S(20, 20);
-    public static readonly Score KingRingPawn = S(15, 15);
+    public static readonly Score KingShieldBonus = S(15, 0);
 }
