@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 public class Program
 {
     public static int Main()
@@ -6,6 +8,10 @@ public class Program
         Console.WriteLine("#          Welcome!          #");
         Console.WriteLine("#   Launching the engine..   #");
         Console.WriteLine("##############################");
+
+        // Set the Process Priority
+        Process currentProcess = Process.GetCurrentProcess();
+        currentProcess.PriorityClass = ProcessPriorityClass.High;
 
         while (true)
         {

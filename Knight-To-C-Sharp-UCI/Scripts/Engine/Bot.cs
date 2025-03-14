@@ -83,6 +83,7 @@ public class Bot
         if (!bookMove.IsNull())
         {
             searcher.SetBookMove(bookMove);
+            searcher.PrintInfo(1, "cp 0", 1, 1, 1, bookMove.San);
             ReportBestMove(bookMove);
             
             onSearchComplete?.Invoke();

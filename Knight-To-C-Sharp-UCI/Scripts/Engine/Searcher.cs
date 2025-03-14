@@ -185,7 +185,7 @@ public class Searcher
             string scoreString = !isMate ? $"cp {bestEval}" : $"mate {(bestEval > 0 ? (matePly + 1) / 2 : -matePly / 2)}";
             ulong nps = numNodeSearched * 1000 / (ulong) (searchTimeTimer.ElapsedMilliseconds != 0 ? searchTimeTimer.ElapsedMilliseconds : 1);
 
-            Console.WriteLine($"info depth {depth} score {scoreString} nodes {numNodeSearched} nps {nps} time {searchTimeTimer.ElapsedMilliseconds} pv {pvLine} multipv 1");
+            PrintInfo(depth, scoreString, numNodeSearched, nps, searchTimeTimer.ElapsedMilliseconds, pvLine);
             
             if (cancellationRequested)
             {
@@ -469,25 +469,21 @@ public class Searcher
     {
         return bestMove;
     }
-
     [Inline]
     public bool IsSearching()
     {
         return isSearching;
     }
-
     [Inline]
     public TranspositionTable GetTT()
     {
         return tt;
     }
-
     [Inline]
     public Board GetBoard()
     {
         return board;
     }
-    
     [Inline]
     public Evaluation GetEvaluation()
     {
@@ -520,5 +516,9 @@ public class Searcher
     {
         public int MaxDepth { get; } = maxDepth;
         public Action? OnSearchComplete { get; } = onSearchComplete;
+    }
+
+    public void PrintInfo(int depth, string scoreString, ulong numNodeSearched, ulong nps, long time, string pvLine) {
+        Console.WriteLine($"info depth {depth} score {scoreString} nodes {numNodeSearched} nps {nps} time {time} pv {pvLine} multipv 1");
     }
 }
